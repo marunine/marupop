@@ -220,6 +220,12 @@ void PopupWindow::applyGeometry()
     const QPoint origin = m_surfaceScreen != nullptr ? m_surfaceScreen->geometry().topLeft() : QPoint{0, 0};
     layer->setMargins(QMargins{m_rect.x() - origin.x(), m_rect.y() - origin.y(), 0, 0});
     layer->setDesiredSize(m_rect.size());
+    // zwlr_layer_surface_v1 margins are double-buffered and take effect on the next
+    // wl_surface.commit, and LayerShellQt sends set_margin without one. Without a commit the card
+    // stays where it was drawn until new content is painted, which for hitMoved() is the next
+    // character rather than the next pointer sample. A one-pixel repaint on the border row, outside
+    // the view, makes the backing store flush commit the margins with an unchanged frame.
+    update(QRect{m_rect.width() / 2, 0, 1, 1});
 }
 
 void PopupWindow::mapSurface()

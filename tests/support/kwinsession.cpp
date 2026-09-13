@@ -2,13 +2,53 @@
 // SPDX-License-Identifier: LGPL-3.0-only
 #include "kwinsession.h"
 
+#include "capture/kwingrabber.h"
+
 #include <QDBusConnection>
 #include <QDBusMessage>
 #include <QDBusVariant>
+#include <QEventLoop>
+#include <QTimer>
 #include <QVariant>
+
+#include <cstdlib>
 
 namespace maru::test
 {
+
+QImage grabIncludingOwnWindows(const QRect &rect, QString *error)
+{
+    capture::KWinGrabber grabber;
+    capture::KWinGrabber::Options options;
+    options.includeOwnWindows = true;
+    options.nativeResolution = true;
+
+    QImage image;
+    QString message;
+    QEventLoop loop;
+    capture::KWinGrab *pending = grabber.captureArea(rect, options);
+    QObject::connect(pending, &capture::KWinGrab::finished, &loop, [&](const QImage &result) {
+        image = result;
+        loop.quit();
+    });
+    QObject::connect(
+        pending, &capture::KWinGrab::failed, &loop, [&](capture::KWinGrab::Error /*code*/, const QString &reason) {
+            message = reason;
+            loop.quit();
+        });
+    QTimer::singleShot(15000, &loop, &QEventLoop::quit);
+    loop.exec();
+    if (error != nullptr) {
+        *error = message;
+    }
+    return image;
+}
+
+bool coloursMatch(const QColor &left, const QColor &right, int tolerance)
+{
+    return std::abs(left.red() - right.red()) <= tolerance && std::abs(left.green() - right.green()) <= tolerance &&
+           std::abs(left.blue() - right.blue()) <= tolerance;
+}
 
 QString kwinCompositingType()
 {

@@ -16,7 +16,6 @@
 // explicit margins, because a Wayland client cannot otherwise know or choose its position on
 // the output, and the grab has to name a rectangle in the same coordinates.
 #include "capture/framesource.h"
-#include "capture/kwingrabber.h"
 #include "eventloop.h"
 #include "kwinsession.h"
 #include "ocr/grouping.h"
@@ -45,11 +44,6 @@ namespace
 // The top-left corner of the panel in logical desktop coordinates. Away from the origin so a
 // grab that ignored the requested position would return different pixels.
 constexpr QPoint kPanelOrigin{240, 160};
-
-// The number of channel steps two pixels may differ by and still count as the same colour. The
-// compositor can introduce rounding differences when compositing the surface and reading it
-// back, so the comparison allows a small tolerance per channel.
-constexpr int kChannelTolerance = 4;
 
 // A widget painting one QImage at its own size, shown as a layer surface at kPanelOrigin so its
 // logical geometry is a number this test chose rather than one the compositor did.
@@ -169,35 +163,6 @@ protected:
         return frame;
     }
 
-    // Grabs rect through capture::KWinGrabber with includeOwnWindows set, which is the one way
-    // this process sees its own panel: KWinFrameSource sends hide-caller-windows, so a grab
-    // through it never contains a window of the calling process.
-    QImage grabIncludingOwnWindows(const QRect &rect)
-    {
-        capture::KWinGrabber grabber;
-        capture::KWinGrabber::Options options;
-        options.includeOwnWindows = true;
-        options.nativeResolution = true;
-
-        QImage image;
-        QString error;
-        QEventLoop loop;
-        capture::KWinGrab *pending = grabber.captureArea(rect, options);
-        QObject::connect(pending, &capture::KWinGrab::finished, &loop, [&](const QImage &result) {
-            image = result;
-            loop.quit();
-        });
-        QObject::connect(
-            pending, &capture::KWinGrab::failed, &loop, [&](capture::KWinGrab::Error /*code*/, const QString &message) {
-                error = message;
-                loop.quit();
-            });
-        QTimer::singleShot(15000, &loop, &QEventLoop::quit);
-        loop.exec();
-        EXPECT_TRUE(error.isEmpty()) << error.toStdString();
-        return image;
-    }
-
     // The count of pixels darker than mid lightness inside cell, sampled from image at scale
     // image pixels per cell pixel. Text raises it above zero; a blank region leaves it at zero.
     static int inkPixels(const QImage &image, const QRect &cell, qreal scale)
@@ -223,14 +188,6 @@ protected:
     std::unique_ptr<Panel> panel;
 };
 
-// True where every channel of the two colours differs by at most kChannelTolerance.
-bool matches(const QColor &left, const QColor &right)
-{
-    return std::abs(left.red() - right.red()) <= kChannelTolerance &&
-           std::abs(left.green() - right.green()) <= kChannelTolerance &&
-           std::abs(left.blue() - right.blue()) <= kChannelTolerance;
-}
-
 } // namespace
 
 TEST_F(NestedPipelineTest, grabsTheRectangleTheRequestNamed)
@@ -247,7 +204,9 @@ TEST_F(NestedPipelineTest, grabsTheRectangleTheRequestNamed)
 
 TEST_F(NestedPipelineTest, returnsThePixelsThePanelDrew)
 {
-    const QImage grabbed = grabIncludingOwnWindows(panelRect());
+    QString error;
+    const QImage grabbed = test::grabIncludingOwnWindows(panelRect(), &error);
+    EXPECT_TRUE(error.isEmpty()) << error.toStdString();
     ASSERT_FALSE(grabbed.isNull());
     const qreal scale = static_cast<qreal>(grabbed.width()) / panelRect().width();
 
@@ -255,9 +214,9 @@ TEST_F(NestedPipelineTest, returnsThePixelsThePanelDrew)
     // grab of the panel from a grab of the desktop behind it.
     const QImage drawn = page->image();
     const QPoint backgroundPoint{4, 4};
-    EXPECT_TRUE(
-        matches(grabbed.pixelColor(QPoint(qRound(backgroundPoint.x() * scale), qRound(backgroundPoint.y() * scale))),
-                drawn.pixelColor(backgroundPoint)))
+    EXPECT_TRUE(test::coloursMatch(
+        grabbed.pixelColor(QPoint(qRound(backgroundPoint.x() * scale), qRound(backgroundPoint.y() * scale))),
+        drawn.pixelColor(backgroundPoint)))
         << "the grabbed background differs from the drawn background";
 
     if (!test::hasJapaneseFont()) {

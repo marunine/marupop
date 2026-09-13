@@ -6,7 +6,10 @@
 // time inside the nested compositor, where promotesTheCardToAnOverlayLayerSurfaceInAWaylandSession
 // runs instead of skipping, and a third time on two virtual outputs, which is where the three
 // monitor-boundary cases run.
+#include "capture/kwingrabber.h"
 #include "core/settings.h"
+#include "eventloop.h"
+#include "kwinsession.h"
 #include "popup/entrymodel.h"
 #include "popup/placement.h"
 #include "popup/popuppreview.h"
@@ -800,7 +803,7 @@ TEST(PopupWindowTest, crossesABoundaryFasterThanTheEightMillisecondPointerPump)
 }
 
 // Measure moving the popup at the cursor relay's 125 Hz update rate.
-// On Wayland this changes layer margins and flushes a surface commit; offscreen
+// On Wayland this changes layer margins and repaints one pixel so they are committed; offscreen
 // uses QWidget::move(). The interval covers showNear() and the event-loop flush,
 // but not an asynchronous compositor configure reply. The total sequence time
 // checks whether the client can sustain all moves within their pointer intervals.
@@ -873,6 +876,78 @@ TEST(PopupWindowTest, movesTheCardFasterThanTheEightMillisecondPointerPump)
     EXPECT_LT(p90, 8.0) << "repositioning the card cannot keep up with the 8 ms pointer pump; p50 " << p50
                         << " ms, p90 " << p90 << " ms, max " << costs.constLast() << " ms on "
                         << QGuiApplication::platformName().toStdString();
+    window.hidePopup();
+    resetSettings();
+}
+
+// A move that keeps the model in hand, which ScanController::hitMoved() drives on every pointer
+// sample inside one character. The other cases assert on the rectangle the client asked for; this
+// one reads the card back from the compositor, which draws it only once the margins are committed
+// (see PopupWindow::applyGeometry()).
+TEST(PopupWindowTest, compositorDrawsTheCardWhereAMoveWithTheSameModelPutsIt)
+{
+    if (!QGuiApplication::platformName().startsWith(QLatin1StringView("wayland"))) {
+        GTEST_SKIP() << "the platform plugin is " << QGuiApplication::platformName().toStdString()
+                     << ", which has no zwlr_layer_shell_v1; run this binary through "
+                        "tests/harness/nested-session.sh";
+    }
+    if (!capture::KWinGrabber::serviceAvailable()) {
+        GTEST_SKIP() << "org.kde.KWin.ScreenShot2 is not on the session bus; run this binary through "
+                        "tests/harness/nested-session.sh --authorize";
+    }
+    if (const QString reason = test::kwinScreenShotSkipReason(); !reason.isEmpty()) {
+        GTEST_SKIP() << reason.toStdString();
+    }
+
+    resetSettings();
+    // An opaque colour no desktop behind the card is drawn in, so a sample says card or not card.
+    const QColor cardColor{0xFF, 0x00, 0xFF};
+    settings::setThemePreset(ThemePreset::Custom);
+    PopSettings::setColorBackground(cardColor);
+    PopSettings::setBackgroundOpacity(255);
+    PopSettings::setPopupFadeMs(0);
+    PopupWindow window;
+    window.applyTheme();
+    window.setModel(samplePopupModel());
+
+    QScreen *screen = QGuiApplication::primaryScreen();
+    ASSERT_NE(screen, nullptr);
+    const QPoint first = screen->geometry().topLeft() + QPoint{100, 100};
+    window.showNear(first, screen);
+    const QRect shown = window.popupRect();
+
+    // Samples half the padding below the top edge of card, which is card background: under the
+    // border row and above the view.
+    QString error;
+    const auto cardDrawnAt = [&cardColor, &error](const QRect &card) {
+        const QImage image = test::grabIncludingOwnWindows(card, &error);
+        if (image.isNull()) {
+            return false;
+        }
+        const qreal scale = static_cast<qreal>(image.width()) / card.width();
+        return test::coloursMatch(image.pixelColor(qRound(card.width() * scale / 2.0), qRound(5 * scale)), cardColor);
+    };
+    // The first frame has to be on screen before the move, or the move rides on the commit that
+    // maps the card.
+    ASSERT_TRUE(test::waitFor(
+        [&] {
+            return cardDrawnAt(shown);
+        },
+        5000))
+        << "the card was never drawn at " << shown.x() << "," << shown.y() << ": " << error.toStdString();
+
+    // Far enough that the two rectangles are disjoint, and no model is set in between.
+    window.showNear(first + QPoint{2 * shown.width(), 0}, screen);
+    const QRect moved = window.popupRect();
+    ASSERT_FALSE(moved.intersects(shown)) << "the move did not clear the first rectangle";
+    EXPECT_TRUE(test::waitFor(
+        [&] {
+            return cardDrawnAt(moved);
+        },
+        2000))
+        << "the compositor does not draw the card at " << moved.x() << "," << moved.y();
+    EXPECT_FALSE(cardDrawnAt(shown)) << "the compositor still draws the card at " << shown.x() << "," << shown.y();
+
     window.hidePopup();
     resetSettings();
 }

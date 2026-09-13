@@ -8,10 +8,23 @@
 // nested session, runs the layer-shell and scripting suites, and cancels every grab.
 #pragma once
 
+#include <QColor>
+#include <QImage>
+#include <QRect>
 #include <QString>
 
 namespace maru::test
 {
+
+// Grabs rect, in logical coordinates, through capture::KWinGrabber with includeOwnWindows set,
+// which is the one way a suite sees its own surfaces: capture::KWinFrameSource sends
+// hide-caller-windows. Runs the event loop until the grab answers or 15 s pass. A failure returns
+// a null image and, where error is given, the message.
+[[nodiscard]] QImage grabIncludingOwnWindows(const QRect &rect, QString *error = nullptr);
+
+// True where every channel of the two colours differs by at most tolerance. The compositor can
+// round a colour when it composites a surface and reads it back.
+[[nodiscard]] bool coloursMatch(const QColor &left, const QColor &right, int tolerance = 4);
 
 // The compositingType property of org.kde.kwin.Compositing at /Compositor on the session bus:
 // "gl2" or "gles" for OpenGL, "qpainter" and "none" otherwise. Empty where org.kde.KWin does not

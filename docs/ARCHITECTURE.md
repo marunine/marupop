@@ -158,6 +158,10 @@ alone cannot rebind it. Rebuilding must preserve the model and pinned state. Cle
 `WA_TransparentForMouseEvents` before changing window flags when entering pinned mode, since
 Qt can otherwise restore pointer transparency during creation.
 
+A move within one output changes only the layer-surface margins, which take effect on the next
+surface commit. `PopupWindow::applyGeometry()` schedules that commit, so the card follows every
+pointer sample rather than every new result.
+
 The fade paints both the card and view with opacity because Wayland window opacity alone is
 insufficient. Apply scrollbar styles to the scrollbar object to keep the viewport transparent.
 Pitch anchors encode reading length because rich text attaches an anchor name only to the
