@@ -37,6 +37,8 @@ Set `MARUPOP_TEST_PRIVATE_BUS=1` only with `dbus-run-session`.
 ## Compositor tests
 
 KWin tests require `kwin_wayland`, `dbus-run-session` and working EGL rendering.
+Capture cases also need a DRM render node. Without one, KWin composites with QPainter,
+cancels every screenshot, and the capture cases skip.
 Hyprland tests also require `Hyprland`.
 
 ```sh

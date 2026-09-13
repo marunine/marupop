@@ -18,6 +18,7 @@
 #include "capture/framesource.h"
 #include "capture/kwingrabber.h"
 #include "eventloop.h"
+#include "kwinsession.h"
 #include "ocr/grouping.h"
 #include "ocr/hittest.h"
 #include "syntheticpage.h"
@@ -110,6 +111,11 @@ protected:
             << "the harness sets QT_QPA_PLATFORM=wayland, and the plugin in use is "
             << QGuiApplication::platformName().toStdString();
         ASSERT_TRUE(capture::KWinFrameSource::available()) << "org.kde.KWin does not own its bus name";
+        // Every case grabs through org.kde.KWin.ScreenShot2, which needs OpenGL compositing and so
+        // a render node on the host. The CI step reports this skip as a warning.
+        if (const QString reason = test::kwinScreenShotSkipReason(); !reason.isEmpty()) {
+            GTEST_SKIP() << reason.toStdString();
+        }
 
         page = std::make_unique<test::SyntheticPage>(pageOptions());
         panel = std::make_unique<Panel>(page->image());

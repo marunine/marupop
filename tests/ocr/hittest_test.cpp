@@ -13,6 +13,24 @@ using namespace maru::ocr;
 namespace
 {
 
+// The wall-clock budget of one hitTest() call, in milliseconds. The 1 ms budget is the GUI-thread
+// cost of the uninstrumented code. Under AddressSanitizer and UndefinedBehaviorSanitizer, every
+// QList::at() and QRect accessor in the per-character loop is instrumented, and a shared CI runner
+// measured a 1.31 ms miss median. The scaled budget still fails a search that grows faster than
+// the character count, which is the regression the case exists to catch.
+#if defined(__SANITIZE_ADDRESS__)
+constexpr bool kSanitized = true;
+#elif defined(__has_feature)
+#if __has_feature(address_sanitizer) || __has_feature(undefined_behavior_sanitizer)
+constexpr bool kSanitized = true;
+#else
+constexpr bool kSanitized = false;
+#endif
+#else
+constexpr bool kSanitized = false;
+#endif
+constexpr double kHitTestBudgetMs = kSanitized ? 8.0 : 1.0;
+
 // A paragraph whose character boxes are 10 px wide with a 10 px gap between them, so the
 // extension rule is what decides a point in a gap.
 Paragraph horizontalParagraph()
@@ -233,6 +251,6 @@ TEST(HitTest, costsUnderAMillisecondOverAFullPage)
                 misses.constLast());
     std::fflush(stdout);
 
-    EXPECT_LT(median(hits), 1.0);
-    EXPECT_LT(median(misses), 1.0);
+    EXPECT_LT(median(hits), kHitTestBudgetMs);
+    EXPECT_LT(median(misses), kHitTestBudgetMs);
 }

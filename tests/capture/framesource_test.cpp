@@ -8,6 +8,7 @@
 #include "capture/framesource.h"
 #include "capture/scanregion.h"
 #include "eventloop.h"
+#include "kwinsession.h"
 
 #include <QDebug>
 #include <QGuiApplication>
@@ -196,6 +197,11 @@ TEST(FrameSourceTest, grabsFourHundredByTwoHundredFromKWin)
     }
     if (!liveCaptureRequested()) {
         GTEST_SKIP() << "MARUPOP_LIVE_CAPTURE=1 is not set; the live grab renders the tester's screen";
+    }
+    // The one precondition the harness cannot supply: OpenGL compositing needs a render node on the
+    // host, and a container with no GPU has none. The CI step reports this skip as a warning.
+    if (const QString reason = maru::test::kwinScreenShotSkipReason(); !reason.isEmpty()) {
+        GTEST_SKIP() << reason.toStdString();
     }
     const QScreen *screen = QGuiApplication::primaryScreen();
     ASSERT_NE(screen, nullptr);

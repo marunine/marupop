@@ -12,6 +12,7 @@ add_library(marupop_testsupport STATIC
     fakehyprsocket.cpp
     fakekwin.cpp
     fakescreensaver.cpp
+    kwinsession.cpp
     syntheticpage.cpp
     yomitanfixture.cpp
 )

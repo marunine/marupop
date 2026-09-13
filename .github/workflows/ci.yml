@@ -45,9 +45,10 @@ defaults:
 # clang-tidy-diff.py, which reaches the image only as a transitive dependency of base-devel; dbus
 # carries dbus-run-session, since KGlobalAccel, KStatusNotifierItem and KNotification need a
 # session bus that a container has none of; kwin and mesa carry the kwin_wayland that
-# tests/harness/nested-session.sh starts with --virtual and the llvmpipe rasterizer it renders
-# through, which is what runs the nested registrations (ctest label "nested") — without the two
-# the harness exits 77 and every nested test reports as skipped rather than failing; wayland
+# tests/harness/nested-session.sh starts with --virtual, which is what runs the nested
+# registrations (ctest label "nested") — without the two the harness exits 77 and every nested
+# test reports as skipped rather than failing. The runner has no DRM render node, so KWin
+# composites with QPainter there and the ScreenShot2 capture cases skip; wayland
 # carries the wayland-scanner binary and the wayland-client pkg-config module, and
 # plasma-wayland-protocols carries fake-input.xml, which are the three tools/CMakeLists.txt tests
 # for before defining marupop-hoverprobe — without them the configure prints "marupop-hoverprobe:
@@ -86,6 +87,15 @@ jobs:
           fetch-depth: 0
       - name: Mark the checkout safe
         run: git config --global --add safe.directory "$GITHUB_WORKSPACE"
+      # The kwin package installs kwin_wayland with the file capability cap_sys_nice=ep, which
+      # it uses for a real-time compositor thread. The container's capability bounding set does not
+      # hold CAP_SYS_NICE, and the kernel refuses to exec a binary whose permitted file
+      # capabilities exceed that set, so dbus-run-session reported "failed to exec
+      # 'kwin_wayland': Operation not permitted" and every nested registration skipped. Without
+      # the capability, kwin_wayland only warns that it could not gain real-time priority, which
+      # a virtual output does not need.
+      - name: Let kwin_wayland run inside the container
+        run: setcap -r /usr/bin/kwin_wayland
       # clang++ is the compiler the project is written against, and its compile_commands.json is
       # the one clang-tidy reads. MARUPOP_BUILD_DEV_TOOLS puts the tools/ probes in the default
       # target, which is the build that proves they still compile against the library.
@@ -105,7 +115,7 @@ jobs:
       # nested registration ran twice per job, and each costs about 30 s: one kwin_wayland
       # --virtual per registration, on llvmpipe, as many concurrently as -j allows.
       - name: Test
-        run: dbus-run-session -- ctest --test-dir build --output-on-failure -j$(nproc) -LE nested
+        run: dbus-run-session -- ctest --test-dir build --output-on-failure -j"$(nproc)" -LE nested
       # The nested registrations skip rather than fail wherever kwin_wayland cannot start, which
       # is what keeps the suite green on a host with no compositor. That also means the whole
       # compositor coverage can disappear from this job without turning it red, so both the count
@@ -128,8 +138,18 @@ jobs:
           # no summary line to read instead.
           skipped=$(printf '%s' "$log" | grep -c '\*\*\*Skipped' || true)
           if [ "$skipped" -ne 0 ]; then
+            # --output-on-failure prints nothing for a skip, which is a CTest pass, so the
+            # compositor's own reason reaches this log only through LastTest.log.
+            grep -E 'nested-session\.sh:|kwin_wayland|EGL|egl|libEGL|MESA|drm|Could not|Failed' \
+              build/Testing/Temporary/LastTest.log | sort | uniq -c | sort -rn | head -40 || true
             echo "::error::$skipped nested test(s) skipped; kwin_wayland could not start a session in this container, so the compositor paths were not exercised"
             exit 1
+          fi
+          # The runner has no DRM render node, so kwin_wayland --virtual composites with QPainter
+          # and org.kde.KWin.ScreenShot2 cancels every grab. The capture cases skip inside a
+          # passing binary, which CTest reports as passed, so the skip is surfaced here.
+          if grep -q 'rather than OpenGL' build/Testing/Temporary/LastTest.log; then
+            echo "::warning::KWin composited without OpenGL in this container, so the ScreenShot2 capture cases in framesource_test_nested and pipeline_test_nested skipped"
           fi
       # Over the diff rather than the tree: src/ carries a backlog of warnings from the check list
       # .clang-tidy declares, so a whole-tree run fails on code a pull request never touched.
@@ -191,7 +211,7 @@ jobs:
           ASAN_OPTIONS: detect_leaks=0
           UBSAN_OPTIONS: print_stacktrace=1:halt_on_error=1
           QT_IM_MODULE: none
-        run: dbus-run-session -- ctest --test-dir build-asan --output-on-failure -j$(nproc)
+        run: dbus-run-session -- ctest --test-dir build-asan --output-on-failure -j"$(nproc)"
 
   checks:
     name: Format and translations
@@ -207,7 +227,7 @@ jobs:
         run: git config --global --add safe.directory "$GITHUB_WORKSPACE"
       # The same .clang-format the clang-format target and .githooks/pre-commit read.
       - name: Format
-        run: clang-format --dry-run --Werror $(git ls-files '*.cpp' '*.h')
+        run: git ls-files -z '*.cpp' '*.h' | xargs -0 -r clang-format --dry-run --Werror
       # Fails when po/marupop.pot no longer matches the i18n calls in src/.
       - name: Message template
         run: po/extract-messages.sh --check
