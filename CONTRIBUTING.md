@@ -31,7 +31,8 @@ Before submitting a pull request:
 - Explain skipped checks and platform limitations.
 - Include a regression test when the suite can reproduce the bug.
 
-To enable the supplied formatting hooks, configure with `-DMARUPOP_GIT_HOOKS=ON`.
+To enable the supplied pre-commit hook, configure with `-DMARUPOP_GIT_HOOKS=ON`. It checks the
+staged C++ formatting and the staged translation template, as the CI format job does.
 
 ## Packaging
 

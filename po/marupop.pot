@@ -10,7 +10,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-09-12 23:24-0400\n"
+"POT-Creation-Date: 2026-09-13 10:47-0400\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -2918,37 +2918,37 @@ msgctxt "@item kanji card grade, a character outside every list"
 msgid "Hyougai"
 msgstr ""
 
-#: src/scan/scancontroller.cpp:344
+#: src/scan/scancontroller.cpp:357
 #, kde-format
 msgctxt "@info"
 msgid "Text recognition failed."
 msgstr ""
 
-#: src/scan/scancontroller.cpp:768
+#: src/scan/scancontroller.cpp:825
 #, kde-format
 msgctxt "@info:status"
 msgid "Paused"
 msgstr ""
 
-#: src/scan/scancontroller.cpp:770
+#: src/scan/scancontroller.cpp:827
 #, kde-format
 msgctxt "@info:status"
 msgid "Paused (screen locked)"
 msgstr ""
 
-#: src/scan/scancontroller.cpp:772
+#: src/scan/scancontroller.cpp:829
 #, kde-format
 msgctxt "@info:status"
 msgid "Text recognition unavailable"
 msgstr ""
 
-#: src/scan/scancontroller.cpp:774
+#: src/scan/scancontroller.cpp:831
 #, kde-format
 msgctxt "@info:status"
 msgid "Pointer tracking unavailable"
 msgstr ""
 
-#: src/scan/scancontroller.cpp:777
+#: src/scan/scancontroller.cpp:834
 #, kde-format
 msgctxt "@info:status, %1 is the name of a text-recognition backend"
 msgid "Scanning · %1"

@@ -2,39 +2,65 @@
 # SPDX-FileCopyrightText: 2026 marunine
 # SPDX-License-Identifier: LGPL-3.0-only
 #
-# Rejects a commit whose staged C++ content differs from what clang-format produces.
+# Rejects a commit whose staged C++ content differs from what clang-format produces, or whose
+# staged po/marupop.pot differs from what po/extract-messages.sh extracts from the staged sources.
 #
 # The staged content is what is checked, rather than the file on disk: a partially staged file
 # commits only the hunks that were added, and the rest of the working tree is not part of this
-# commit.
+# commit. A regenerated template left unstaged would pass a working-tree check and fail CI.
 #
 # `git config core.hooksPath .githooks` enables this hook, which a configure of the build tree
-# does with MARUSNAP_GIT_HOOKS left at its ON default.
+# does with MARUPOP_GIT_HOOKS=ON.
 set -eu
 
+status=0
+
 if ! command -v clang-format >/dev/null 2>&1; then
-    echo "pre-commit: clang-format is absent, so this check is skipped." >&2
+    echo "pre-commit: clang-format is absent, so the format check is skipped." >&2
     echo "pre-commit: the CI format job runs the same check over a pushed branch." >&2
-    exit 0
-fi
-
-unformatted=""
-for file in $(git diff --cached --name-only --diff-filter=ACMR -- '*.cpp' '*.h'); do
-    staged=$(git show ":$file")
-    # --assume-filename gives clang-format the path it resolves .clang-format and the include
-    # categories from, since the content arrives on stdin. Command substitution drops trailing
-    # newlines from both sides, so the comparison covers every other byte.
-    formatted=$(printf '%s\n' "$staged" | clang-format --assume-filename="$file")
-    if [ "$staged" != "$formatted" ]; then
-        unformatted="$unformatted $file"
-    fi
-done
-
-if [ -n "$unformatted" ]; then
-    echo "pre-commit: the staged content of these files differs from clang-format output:" >&2
-    for file in $unformatted; do
-        echo "  $file" >&2
+else
+    unformatted=""
+    for file in $(git diff --cached --name-only --diff-filter=ACMR -- '*.cpp' '*.h'); do
+        staged=$(git show ":$file")
+        # --assume-filename gives clang-format the path it resolves .clang-format and the include
+        # categories from, since the content arrives on stdin. Command substitution drops trailing
+        # newlines from both sides, so the comparison covers every other byte.
+        formatted=$(printf '%s\n' "$staged" | clang-format --assume-filename="$file")
+        if [ "$staged" != "$formatted" ]; then
+            unformatted="$unformatted $file"
+        fi
     done
-    echo "pre-commit: \`clang-format -i$unformatted\` rewrites them, and the result needs staging." >&2
-    exit 1
+
+    if [ -n "$unformatted" ]; then
+        echo "pre-commit: the staged content of these files differs from clang-format output:" >&2
+        for file in $unformatted; do
+            echo "  $file" >&2
+        done
+        echo "pre-commit: \`clang-format -i$unformatted\` rewrites them, and the result needs staging." >&2
+        status=1
+    fi
 fi
+
+# The template records a source line for every message, so any staged change to src/ can move one.
+# data/ holds the other extracted templates, and CMakeLists.txt supplies the package version.
+if [ -n "$(git diff --cached --name-only -- src data po CMakeLists.txt)" ]; then
+    if ! command -v xgettext >/dev/null 2>&1; then
+        echo "pre-commit: xgettext is absent, so the translation template check is skipped." >&2
+        echo "pre-commit: the CI translations job runs the same check over a pushed branch." >&2
+    else
+        snapshot=$(mktemp -d)
+        trap 'rm -rf "$snapshot"' EXIT
+        # Only the extraction inputs are written out. GIT_WORK_TREE points the script's
+        # `git ls-files` at the snapshot, so it lists the index entries that were written there.
+        git ls-files -z -- src data po CMakeLists.txt \
+            | git checkout-index -z --stdin --prefix="$snapshot/"
+        if ! GIT_DIR=$(git rev-parse --absolute-git-dir) GIT_WORK_TREE=$snapshot \
+            "$snapshot/po/extract-messages.sh" --check >/dev/null; then
+            echo "pre-commit: the staged po/marupop.pot differs from the staged sources' messages." >&2
+            echo "pre-commit: \`po/extract-messages.sh\` rewrites it, and the result needs staging." >&2
+            status=1
+        fi
+    fi
+fi
+
+exit $status
