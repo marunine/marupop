@@ -1,0 +1,40 @@
+#!/bin/sh
+# SPDX-FileCopyrightText: 2026 marunine
+# SPDX-License-Identifier: LGPL-3.0-only
+#
+# Rejects a commit whose staged C++ content differs from what clang-format produces.
+#
+# The staged content is what is checked, rather than the file on disk: a partially staged file
+# commits only the hunks that were added, and the rest of the working tree is not part of this
+# commit.
+#
+# `git config core.hooksPath .githooks` enables this hook, which a configure of the build tree
+# does with MARUSNAP_GIT_HOOKS left at its ON default.
+set -eu
+
+if ! command -v clang-format >/dev/null 2>&1; then
+    echo "pre-commit: clang-format is absent, so this check is skipped." >&2
+    echo "pre-commit: the CI format job runs the same check over a pushed branch." >&2
+    exit 0
+fi
+
+unformatted=""
+for file in $(git diff --cached --name-only --diff-filter=ACMR -- '*.cpp' '*.h'); do
+    staged=$(git show ":$file")
+    # --assume-filename gives clang-format the path it resolves .clang-format and the include
+    # categories from, since the content arrives on stdin. Command substitution drops trailing
+    # newlines from both sides, so the comparison covers every other byte.
+    formatted=$(printf '%s\n' "$staged" | clang-format --assume-filename="$file")
+    if [ "$staged" != "$formatted" ]; then
+        unformatted="$unformatted $file"
+    fi
+done
+
+if [ -n "$unformatted" ]; then
+    echo "pre-commit: the staged content of these files differs from clang-format output:" >&2
+    for file in $unformatted; do
+        echo "  $file" >&2
+    done
+    echo "pre-commit: \`clang-format -i$unformatted\` rewrites them, and the result needs staging." >&2
+    exit 1
+fi

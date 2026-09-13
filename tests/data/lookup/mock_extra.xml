@@ -1,0 +1,143 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- SPDX-FileCopyrightText: 2026 marunine -->
+<!-- SPDX-License-Identifier: CC0-1.0 -->
+<!-- A supplementary mock JMdict for the lookup suite: the entries JL's own MockJMdict.xml does
+     not carry. 食べる drives the end-to-end deconjugation test, 帰る and 変える are the
+     homographic godan/ichidan pair the part-of-speech gate has to tell apart, and 拉麺 read
+     らあめん is the chōonpu case, where the input ラーメン normalizes to らーめん and only the
+     elongation variant reaches the entry. 日々 is keyed 日日 once the iteration mark is expanded
+     and 矢っ張り is reached from やっっぱり once the repeated small tsu is dropped, which is the
+     pair of cases where the highlight has to count the raw span rather than the key. The DTD
+     declares the entities these entries use and nothing else, which is all the importer needs to
+     recover the short names. -->
+<!DOCTYPE JMdict [
+  <!ELEMENT JMdict (entry*)>
+  <!ELEMENT entry (ent_seq, k_ele*, r_ele+, sense+)>
+  <!ELEMENT ent_seq (#PCDATA)>
+  <!ELEMENT k_ele (keb, ke_inf*, ke_pri*)>
+  <!ELEMENT keb (#PCDATA)>
+  <!ELEMENT ke_inf (#PCDATA)>
+  <!ELEMENT ke_pri (#PCDATA)>
+  <!ELEMENT r_ele (reb, re_nokanji?, re_restr*, re_inf*, re_pri*)>
+  <!ELEMENT reb (#PCDATA)>
+  <!ELEMENT re_nokanji (#PCDATA)>
+  <!ELEMENT re_restr (#PCDATA)>
+  <!ELEMENT re_inf (#PCDATA)>
+  <!ELEMENT re_pri (#PCDATA)>
+  <!ELEMENT sense (stagk*, stagr*, pos*, xref*, ant*, field*, misc*, s_inf*, lsource*, dial*, gloss*)>
+  <!ELEMENT stagk (#PCDATA)>
+  <!ELEMENT stagr (#PCDATA)>
+  <!ELEMENT pos (#PCDATA)>
+  <!ELEMENT xref (#PCDATA)>
+  <!ELEMENT ant (#PCDATA)>
+  <!ELEMENT field (#PCDATA)>
+  <!ELEMENT misc (#PCDATA)>
+  <!ELEMENT s_inf (#PCDATA)>
+  <!ELEMENT lsource (#PCDATA)>
+  <!ELEMENT dial (#PCDATA)>
+  <!ELEMENT gloss (#PCDATA)>
+  <!ENTITY n "noun (common) (futsuumeishi)">
+  <!ENTITY v1 "Ichidan verb">
+  <!ENTITY v5r "Godan verb with 'ru' ending">
+  <!ENTITY vi "intransitive verb">
+  <!ENTITY vt "transitive verb">
+  <!ENTITY uk "word usually written using kana alone">
+]>
+<JMdict>
+  <entry>
+    <ent_seq>1358280</ent_seq>
+    <k_ele>
+      <keb>食べる</keb>
+      <ke_pri>ichi1</ke_pri>
+      <ke_pri>news1</ke_pri>
+      <ke_pri>nf07</ke_pri>
+    </k_ele>
+    <r_ele>
+      <reb>たべる</reb>
+      <re_pri>ichi1</re_pri>
+      <re_pri>news1</re_pri>
+      <re_pri>nf07</re_pri>
+    </r_ele>
+    <sense>
+      <pos>&v1;</pos>
+      <pos>&vt;</pos>
+      <gloss>to eat</gloss>
+    </sense>
+    <sense>
+      <pos>&v1;</pos>
+      <pos>&vt;</pos>
+      <gloss>to live on (e.g. a salary)</gloss>
+      <gloss>to live off</gloss>
+    </sense>
+  </entry>
+  <entry>
+    <ent_seq>1224910</ent_seq>
+    <k_ele>
+      <keb>帰る</keb>
+    </k_ele>
+    <r_ele>
+      <reb>かえる</reb>
+    </r_ele>
+    <sense>
+      <pos>&v5r;</pos>
+      <pos>&vi;</pos>
+      <gloss>to return home</gloss>
+    </sense>
+  </entry>
+  <entry>
+    <ent_seq>1511110</ent_seq>
+    <k_ele>
+      <keb>変える</keb>
+    </k_ele>
+    <r_ele>
+      <reb>かえる</reb>
+    </r_ele>
+    <sense>
+      <pos>&v1;</pos>
+      <pos>&vt;</pos>
+      <gloss>to change</gloss>
+    </sense>
+  </entry>
+  <entry>
+    <ent_seq>1571800</ent_seq>
+    <k_ele>
+      <keb>拉麺</keb>
+    </k_ele>
+    <r_ele>
+      <reb>らあめん</reb>
+    </r_ele>
+    <sense>
+      <pos>&n;</pos>
+      <misc>&uk;</misc>
+      <gloss>ramen</gloss>
+    </sense>
+  </entry>
+  <entry>
+    <ent_seq>1461120</ent_seq>
+    <k_ele>
+      <keb>日々</keb>
+    </k_ele>
+    <r_ele>
+      <reb>ひび</reb>
+    </r_ele>
+    <sense>
+      <pos>&n;</pos>
+      <gloss>every day</gloss>
+      <gloss>day after day</gloss>
+    </sense>
+  </entry>
+  <entry>
+    <ent_seq>1538450</ent_seq>
+    <k_ele>
+      <keb>矢っ張り</keb>
+    </k_ele>
+    <r_ele>
+      <reb>やっぱり</reb>
+    </r_ele>
+    <sense>
+      <pos>&n;</pos>
+      <misc>&uk;</misc>
+      <gloss>as expected</gloss>
+    </sense>
+  </entry>
+</JMdict>

@@ -1,0 +1,18 @@
+{
+    "KPackageStructure": "KWin/Script",
+    "X-Plasma-API": "javascript",
+    "KPlugin": {
+        "Id": "marupopcursor",
+        "Name": "MaruPop cursor relay",
+        "Description": "Reports the global pointer position to MaruPop's pop-up dictionary",
+        "Icon": "input-mouse",
+        "License": "LGPL-3.0-only",
+        "EnabledByDefault": false,
+        "Authors": [
+            {
+                "Name": "marunine",
+                "Email": "97926137+marunine@users.noreply.github.com"
+            }
+        ]
+    }
+}

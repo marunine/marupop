@@ -1,0 +1,12 @@
+{
+ "title": "Marupop Test Dictionary",
+ "format": 3,
+ "revision": "test-1",
+ "sequenced": true,
+ "author": "marupop tests",
+ "url": "https://example.invalid/",
+ "description": "Hand-written Yomitan v3 fixture.",
+ "attribution": "none",
+ "isUpdatable": true,
+ "indexUrl": "https://example.invalid/index.json"
+}

@@ -1,0 +1,176 @@
+# SPDX-FileCopyrightText: 2026 marunine
+# SPDX-License-Identifier: LGPL-3.0-only
+
+MaruPop
+Copyright 2026 marunine
+
+MaruPop's own sources are LGPL-3.0-only. LICENSE.TXT holds the full text and LICENSES/ holds
+the standard license texts used by this repository. Component-specific copyright notices
+remain in third_party/ and the protocol XML files. This file records the third-party work MaruPop
+derives from, links against, or downloads at runtime, with the license each one carries.
+
+----------------------------------------------------------------------------------------------
+JL — https://github.com/rampaa/JL
+Apache License 2.0. Full text in third_party/JL/LICENSE.
+
+Ported from https://github.com/rampaa/JL/tree/85ae02eeb84f378387f48c12e7b468390a9f2007:
+
+  src/jp/            JL.Core/Japanese/JapaneseUtils.cs — the text normalization, the
+                     classification predicates and the chōonpu variants. src/jp/japanesetables.h
+                     is generated from the same file by tools/gen-jp-tables.py.
+  src/deconj/        JL.Core/Deconjugation/{Deconjugator,DeconjugatorUtils,Rule,VirtualRule,
+                     Form,ProcessNode}.cs and JL.Core/Lookup/{RuleBucket,LookupResultUtils}.cs.
+                     data/deconjugation_rules.json is a copy of
+                     JL.Core/Resources/deconjugation_rules.json.
+  src/dict/          the format loaders under JL.Core/Dicts/** (JMdict, JMnedict, KANJIDIC2,
+                     Yomichan term, kanji, pitch-accent and frequency banks, the custom word and
+                     name lists), JL.Core/WordClass/JmdictWordClassUtils.cs for the
+                     part-of-speech table, and JL.Core/Utilities/ResourceUpdater.cs for the
+                     conditional-GET update protocol.
+  src/lookup/        JL.Core/Lookup/LookupUtils.cs for the pipeline and the part-of-speech gate,
+                     JL.Core/Lookup/LookupResult.cs CompareTo for the fourteen-criterion result
+                     comparator, and the frequency and pitch-accent resolution order.
+
+Each ported file names the JL file it comes from in its own header comment.
+tests/deconj/deconjugation_cases.h is generated from JL.Core.Tests/Deconjugation.
+tests/data/dict/MockJMdict.xml is copied from JL.Core.Tests/Resources; its underlying
+JMdict dictionary material retains the EDRDG attribution and terms described below.
+
+----------------------------------------------------------------------------------------------
+Nazeka — https://github.com/wareya/nazeka
+Apache License 2.0. Nazeka ships no LICENSE file; its readme.md states the license. Full text
+and the readme statement in third_party/nazeka/LICENSE.
+
+JL's deconjugation rule set and algorithm derive from Nazeka's deconjugator, so the port in
+src/deconj/ and data/deconjugation_rules.json carry Nazeka's attribution as well as JL's. The
+popup layout and the default color scheme in src/popup/ follow Nazeka's presentation.
+
+----------------------------------------------------------------------------------------------
+marusnap — https://github.com/marunine/marusnap
+LGPL-3.0-only, by the same author as MaruPop.
+
+src/capture/kwingrabber.*, src/capture/authorization.*, src/capture/screenlayout.*,
+src/ocr/screenaibackend.*, src/ocr/screenaiproto.*, src/app/pathrequester.* and
+src/app/shortcutbutton.* are copied from marusnap and adapted to this project's namespaces and
+interfaces. The build, test and packaging scaffold is taken from marusnap as well.
+
+----------------------------------------------------------------------------------------------
+meikiocr — https://github.com/rtr46/meikiocr
+Apache License 2.0 for the library.
+
+src/ocr/meikiocrbackend.*, src/ocr/meikipreprocess.* and src/ocr/meikipostprocess.* implement
+the detection, recognition and post-processing pipeline of meikiocr/ocr.py: RGB input, bilinear
+resize, [N,2] orig_target_sizes, int32 character codes, interval non-maximum suppression, the
+swapped-pair fix, and vertical-segment assembly.
+
+The ONNX model weights are LGPL-3.0-only, by rtr46. MaruPop ships no weights.
+src/ocr/modelstore.* downloads them at runtime from the upstream Hugging Face repositories at a
+pinned commit, into $XDG_DATA_HOME/marupop/models, and verifies each file against a pinned
+SHA-256 digest and byte count.
+
+----------------------------------------------------------------------------------------------
+meikipop — https://github.com/rtr46/meikipop
+GPL-3.0. Behavioural reference only.
+
+MaruPop copies no meikipop code. The line-to-paragraph grouping thresholds in src/ocr/grouping.*,
+the character hit-test box-extension rule in src/ocr/hittest.* and the popup positioning modes in
+src/popup/placement.* are re-implemented from a description of the observed behaviour.
+
+----------------------------------------------------------------------------------------------
+wlroots — https://gitlab.freedesktop.org/wlroots/wlroots
+
+third_party/protocols/wlr-screencopy-unstable-v1.xml is a verbatim copy of
+protocol/wlr-screencopy-unstable-v1.xml from the revision linked in third_party/protocols/README.md. MIT license,
+Copyright © 2018 Simon Ser and Copyright © 2019 Andri Yngvason; the full text is in the file's
+own <copyright> element. src/CMakeLists.txt generates the client bindings from it with
+wayland-scanner, and src/capture/wlrframesource.cpp is what calls them.
+
+----------------------------------------------------------------------------------------------
+hyprland-protocols — https://github.com/hyprwm/hyprland-protocols
+
+third_party/protocols/hyprland-lock-notify-v1.xml and
+third_party/protocols/hyprland-global-shortcuts-v1.xml are verbatim copies of the files of the
+same names under protocols/ from the revision linked in third_party/protocols/README.md. BSD 3-Clause license,
+Copyright © 2025 Maximilian Seidler and Copyright © 2022 Vaxry respectively; the full text is in
+each file's own <copyright> element. src/cursor/wlrlockwatcher.cpp and src/app/wlrshortcuts.cpp
+are what call the generated bindings.
+
+----------------------------------------------------------------------------------------------
+Hyprland — https://github.com/hyprwm/Hyprland
+BSD 3-Clause. Behavioural reference only.
+
+MaruPop copies no Hyprland code. src/platform/, src/capture/wlrframesource.*,
+src/cursor/hyprcursortracker.*, src/cursor/hyprsocket.* and src/app/wlrshortcuts.* implement
+clients for its public Wayland protocols and IPC. docs/ARCHITECTURE.md describes the
+backend contracts; third_party/protocols/README.md identifies the vendored protocol sources.
+
+----------------------------------------------------------------------------------------------
+Chromium — https://source.chromium.org/chromium/chromium/src
+BSD 3-Clause.
+
+src/ocr/screenaiproto.* is a protobuf wire-format reader for chrome_screen_ai.VisualAnnotation.
+The field numbers it reads are those declared in Chromium's
+services/screen_ai/proto/chrome_screen_ai.proto. No Chromium code is reproduced.
+
+The Chrome Screen AI component itself (libchromescreenai.so) is a proprietary Google component
+with no redistribution grant. MaruPop ships no copy of it and loads the one the user installed,
+from the directory the ScreenAiResourcesDir setting names.
+
+----------------------------------------------------------------------------------------------
+JMdict, JMnedict and KANJIDIC2 — https://www.edrdg.org/
+Property of the Electronic Dictionary Research and Development Group, licensed under
+Creative Commons Attribution-ShareAlike 4.0 International (CC BY-SA 4.0):
+https://creativecommons.org/licenses/by-sa/4.0/
+
+MaruPop uses these dictionary files for Japanese definitions, names and kanji information.
+The complete dictionaries are downloaded at runtime from EDRDG distribution URLs into
+$XDG_DATA_HOME/marupop/dictionaries. The source test fixture MockJMdict.xml contains a small
+JMdict extract obtained through JL; this does not change EDRDG's rights in that material.
+Copyright in the dictionary material is held by James William BREEN and EDRDG. The CC BY-SA
+4.0 license text is in LICENSES/CC-BY-SA-4.0.txt; the governing source statement and dictionary
+documentation are available at:
+https://www.edrdg.org/edrdg/licence.html
+https://www.edrdg.org/wiki/index.php/JMdict-EDICT_Dictionary_Project
+https://www.edrdg.org/wiki/index.php/KANJIDIC_Project
+Other-language contributions and some kanji fields have additional attribution described there.
+The dictionary manager does not currently preserve imported attribution; the source and
+license information above describes the dictionary material independently of its UI display.
+
+----------------------------------------------------------------------------------------------
+cjkvi-ids — https://github.com/cjkvi/cjkvi-ids
+The upstream README distinguishes ids.txt, derived from CHISE (http://www.chise.org/),
+whose license follows that project's terms, from other data. Refer to the upstream notice
+and the applicable CHISE terms for ids.txt; do not infer its license from other repository files.
+Its header credits the CJKVI Database and the CHISE IDS Database.
+
+MaruPop ships no copy of ids.txt. src/dict/importers/idsimporter.* imports the file the user
+downloads through the dictionary manager, which offers the repository's raw URL as a built-in
+entry, into $XDG_DATA_HOME/marupop/dictionaries. The imported data fills the components row of
+the popup's kanji card.
+
+----------------------------------------------------------------------------------------------
+similar-kanji — https://github.com/siikamiika/similar-kanji
+MIT License, Copyright (c) 2017 siikamiika. Full text and copyright notice in
+third_party/similar-kanji/LICENSE.
+
+src/lookup/similarkanjitable.h is generated from kanji.tgz_similars.ut8 at:
+https://github.com/siikamiika/similar-kanji/tree/0edcfebd5204676dec72b6b12fa26c148489bb1c
+The generator closes the neighbor relation under symmetry and emits sorted lookup arrays.
+
+----------------------------------------------------------------------------------------------
+MaruPop fixtures and correction rules
+
+The correction rule source and generated table carry the existing MaruPop LGPL-3.0-only
+attribution. The repository provides a standalone generator and an independently implemented
+reference for synthetic regression cases; no external evaluation corpus is distributed.
+See tests/data/README.md for fixture attribution and scope. The rules are heuristics, not a
+claim of measured accuracy over an undistributed corpus.
+
+----------------------------------------------------------------------------------------------
+Build/runtime libraries
+
+MaruPop links Qt, KDE Frameworks, LayerShellQt, Wayland, ONNX Runtime, OpenCV, SQLite and xxHash
+from the build environment. They are not vendored here. Distributors must retain the notices
+and license choices of the versions they ship; this source license does not replace those
+libraries' terms. The source and notice inventory above describes the code and data carried
+by this repository, not a redistribution grant for an externally installed Chrome component.

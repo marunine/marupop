@@ -1,0 +1,83 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE kanjidic2 [
+]>
+<!-- Hand-written KANJIDIC2 fixture, three characters, in the element order and with the
+     attribute set of the real kanjidic2.xml (2025-01-19). -->
+<kanjidic2>
+<header>
+<file_version>4</file_version>
+<database_version>2025-101</database_version>
+<date_of_creation>2025-01-19</date_of_creation>
+</header>
+<character>
+<literal>日</literal>
+<codepoint><cp_value cp_type="ucs">65e5</cp_value></codepoint>
+<radical><rad_value rad_type="classical">72</rad_value></radical>
+<misc>
+<grade>1</grade>
+<stroke_count>4</stroke_count>
+<freq>1</freq>
+<jlpt>4</jlpt>
+</misc>
+<reading_meaning>
+<rmgroup>
+<reading r_type="pinyin">ri4</reading>
+<reading r_type="ja_on">ニチ</reading>
+<reading r_type="ja_on">ジツ</reading>
+<reading r_type="ja_kun">ひ</reading>
+<reading r_type="ja_kun">-び</reading>
+<reading r_type="ja_kun">-か</reading>
+<meaning>day</meaning>
+<meaning>sun</meaning>
+<meaning>Japan</meaning>
+<meaning m_lang="fr">jour</meaning>
+</rmgroup>
+<nanori>あ</nanori>
+<nanori>あき</nanori>
+</reading_meaning>
+</character>
+<character>
+<literal>語</literal>
+<codepoint><cp_value cp_type="ucs">8a9e</cp_value></codepoint>
+<radical><rad_value rad_type="classical">149</rad_value></radical>
+<misc>
+<grade>2</grade>
+<stroke_count>14</stroke_count>
+<freq>301</freq>
+</misc>
+<reading_meaning>
+<rmgroup>
+<reading r_type="ja_on">ゴ</reading>
+<reading r_type="ja_kun">かた.る</reading>
+<reading r_type="ja_kun">かた.らう</reading>
+<meaning>word</meaning>
+<meaning>speech</meaning>
+<meaning>language</meaning>
+</rmgroup>
+</reading_meaning>
+</character>
+<character>
+<literal>一</literal>
+<codepoint><cp_value cp_type="ucs">4e00</cp_value></codepoint>
+<radical><rad_value rad_type="classical">1</rad_value></radical>
+<misc>
+<grade>1</grade>
+<stroke_count>1</stroke_count>
+<freq>2</freq>
+</misc>
+<reading_meaning>
+<rmgroup>
+<reading r_type="ja_on">イチ</reading>
+<reading r_type="ja_on">イツ</reading>
+<reading r_type="ja_kun">ひと-</reading>
+<reading r_type="ja_kun">ひと.つ</reading>
+<meaning>one</meaning>
+<meaning>one radical (no.1)</meaning>
+</rmgroup>
+<rmgroup>
+<rad_name>いち</rad_name>
+</rmgroup>
+<nanori>かず</nanori>
+</reading_meaning>
+</character>
+</kanjidic2>

@@ -1,0 +1,7 @@
+{
+  "title": "Mock Pitch Accent",
+  "format": 3,
+  "revision": "lookup-fixture-1",
+  "author": "marupop tests",
+  "description": "Hand-written Yomitan pitch-accent fixture: one row per reading the lookup suite asserts on."
+}

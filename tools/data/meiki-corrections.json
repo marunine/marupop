@@ -1,0 +1,740 @@
+{
+  "SPDX-FileCopyrightText": "2026 marunine",
+  "SPDX-License-Identifier": "LGPL-3.0-only",
+  "format": "meikiocr-corrections",
+  "version": 1,
+  "origin": "Operational rules transcribed from the existing MaruPop correction table; no evaluation records or source text are included.",
+  "rules": [
+    {
+      "find": "…",
+      "replace": "",
+      "before": [],
+      "after": [
+        "…",
+        "…"
+      ],
+      "mode": "any",
+      "max_conf": 0.1
+    },
+    {
+      "find": "一",
+      "replace": "「",
+      "before": [],
+      "after": [],
+      "mode": "v",
+      "max_conf": 0.7
+    },
+    {
+      "find": "�",
+      "replace": ".",
+      "before": [],
+      "after": [],
+      "mode": "any",
+      "max_conf": null
+    },
+    {
+      "find": "、",
+      "replace": "",
+      "before": [
+        "kanji"
+      ],
+      "after": [],
+      "mode": "any",
+      "max_conf": 0.1
+    },
+    {
+      "find": "ー",
+      "replace": "",
+      "before": [],
+      "after": [],
+      "mode": "any",
+      "max_conf": 0.4
+    },
+    {
+      "find": "一",
+      "replace": "",
+      "before": [],
+      "after": [],
+      "mode": "any",
+      "max_conf": 0.3
+    },
+    {
+      "find": "っ",
+      "replace": "。",
+      "before": [],
+      "after": [],
+      "mode": "any",
+      "max_conf": 0.2
+    },
+    {
+      "find": "、",
+      "replace": "",
+      "before": [
+        "other"
+      ],
+      "after": [],
+      "mode": "any",
+      "max_conf": 0.1
+    },
+    {
+      "find": "し",
+      "replace": "",
+      "before": [
+        "kanji"
+      ],
+      "after": [],
+      "mode": "h",
+      "max_conf": 0.3
+    },
+    {
+      "find": "っ",
+      "replace": "。",
+      "before": [
+        "た"
+      ],
+      "after": [],
+      "mode": "any",
+      "max_conf": 0.6
+    },
+    {
+      "find": "ゃ",
+      "replace": "。",
+      "before": [],
+      "after": [],
+      "mode": "v",
+      "max_conf": 0.5
+    },
+    {
+      "find": "し",
+      "replace": "",
+      "before": [
+        "kanji"
+      ],
+      "after": [
+        "EOS"
+      ],
+      "mode": "h",
+      "max_conf": 0.4
+    },
+    {
+      "find": "っ",
+      "replace": "。",
+      "before": [],
+      "after": [
+        "kanji"
+      ],
+      "mode": "any",
+      "max_conf": 0.4
+    },
+    {
+      "find": "。",
+      "replace": "",
+      "before": [
+        "kanji"
+      ],
+      "after": [
+        "EOS"
+      ],
+      "mode": "any",
+      "max_conf": 0.1
+    },
+    {
+      "find": "....",
+      "replace": "……",
+      "before": [
+        "hiragana"
+      ],
+      "after": [
+        "hiragana"
+      ],
+      "mode": "any",
+      "max_conf": 0.5
+    },
+    {
+      "find": "、",
+      "replace": "",
+      "before": [],
+      "after": [
+        "other"
+      ],
+      "mode": "v",
+      "max_conf": 0.1
+    },
+    {
+      "find": "|",
+      "replace": "「",
+      "before": [],
+      "after": [],
+      "mode": "any",
+      "max_conf": null
+    },
+    {
+      "find": "I",
+      "replace": "",
+      "before": [
+        "latin"
+      ],
+      "after": [
+        "latin"
+      ],
+      "mode": "any",
+      "max_conf": 0.6
+    },
+    {
+      "find": "に",
+      "replace": "",
+      "before": [
+        "kanji"
+      ],
+      "after": [],
+      "mode": "h",
+      "max_conf": 0.2
+    },
+    {
+      "find": "に",
+      "replace": "",
+      "before": [],
+      "after": [
+        "EOS"
+      ],
+      "mode": "h",
+      "max_conf": 0.4
+    },
+    {
+      "find": "x",
+      "replace": "×",
+      "before": [
+        "other"
+      ],
+      "after": [],
+      "mode": "any",
+      "max_conf": null
+    },
+    {
+      "find": "を",
+      "replace": "",
+      "before": [],
+      "after": [
+        "EOS"
+      ],
+      "mode": "h",
+      "max_conf": 0.3
+    },
+    {
+      "find": "・",
+      "replace": "",
+      "before": [
+        "other"
+      ],
+      "after": [],
+      "mode": "any",
+      "max_conf": 0.1
+    },
+    {
+      "find": "と",
+      "replace": "",
+      "before": [],
+      "after": [
+        "EOS"
+      ],
+      "mode": "h",
+      "max_conf": 0.5
+    },
+    {
+      "find": "バ",
+      "replace": "パ",
+      "before": [
+        "ア"
+      ],
+      "after": [
+        "katakana"
+      ],
+      "mode": "any",
+      "max_conf": 0.8
+    },
+    {
+      "find": "〔",
+      "replace": "(",
+      "before": [
+        "kanji"
+      ],
+      "after": [],
+      "mode": "any",
+      "max_conf": null
+    },
+    {
+      "find": "つ",
+      "replace": "っ",
+      "before": [],
+      "after": [
+        "other"
+      ],
+      "mode": "any",
+      "max_conf": 0.7
+    },
+    {
+      "find": "ノ",
+      "replace": "/",
+      "before": [
+        "kanji"
+      ],
+      "after": [],
+      "mode": "any",
+      "max_conf": 0.5
+    },
+    {
+      "find": "へ",
+      "replace": "、",
+      "before": [
+        "hiragana"
+      ],
+      "after": [],
+      "mode": "any",
+      "max_conf": 0.4
+    },
+    {
+      "find": "コ",
+      "replace": "「",
+      "before": [],
+      "after": [],
+      "mode": "v",
+      "max_conf": 0.4
+    },
+    {
+      "find": "牛",
+      "replace": "生",
+      "before": [],
+      "after": [],
+      "mode": "h",
+      "max_conf": 0.8
+    },
+    {
+      "find": "ノ",
+      "replace": "/",
+      "before": [],
+      "after": [
+        "kanji"
+      ],
+      "mode": "h",
+      "max_conf": 0.5
+    },
+    {
+      "find": "二",
+      "replace": "「",
+      "before": [],
+      "after": [
+        "hiragana"
+      ],
+      "mode": "any",
+      "max_conf": 0.6
+    },
+    {
+      "find": "の",
+      "replace": "",
+      "before": [],
+      "after": [
+        "EOS"
+      ],
+      "mode": "any",
+      "max_conf": 0.2
+    },
+    {
+      "find": "・",
+      "replace": "",
+      "before": [
+        "hiragana"
+      ],
+      "after": [],
+      "mode": "any",
+      "max_conf": 0.1
+    },
+    {
+      "find": "つ",
+      "replace": "っ",
+      "before": [],
+      "after": [
+        "た"
+      ],
+      "mode": "any",
+      "max_conf": 0.7
+    },
+    {
+      "find": "2",
+      "replace": "?",
+      "before": [
+        "hiragana"
+      ],
+      "after": [],
+      "mode": "any",
+      "max_conf": 0.4
+    },
+    {
+      "find": "く",
+      "replace": "",
+      "before": [],
+      "after": [],
+      "mode": "h",
+      "max_conf": 0.2
+    },
+    {
+      "find": "ト",
+      "replace": "",
+      "before": [],
+      "after": [],
+      "mode": "h",
+      "max_conf": 0.4
+    },
+    {
+      "find": "ュ",
+      "replace": "・",
+      "before": [],
+      "after": [],
+      "mode": "v",
+      "max_conf": 0.2
+    },
+    {
+      "find": "―",
+      "replace": "",
+      "before": [
+        "kanji"
+      ],
+      "after": [],
+      "mode": "any",
+      "max_conf": 0.1
+    },
+    {
+      "find": "T",
+      "replace": "「",
+      "before": [],
+      "after": [],
+      "mode": "h",
+      "max_conf": 0.3
+    },
+    {
+      "find": "ン",
+      "replace": "】",
+      "before": [
+        "kanji"
+      ],
+      "after": [],
+      "mode": "any",
+      "max_conf": 0.6
+    },
+    {
+      "find": "一",
+      "replace": "ー",
+      "before": [
+        "hiragana"
+      ],
+      "after": [
+        "EOS"
+      ],
+      "mode": "h",
+      "max_conf": 0.7
+    },
+    {
+      "find": "で",
+      "replace": "",
+      "before": [],
+      "after": [],
+      "mode": "h",
+      "max_conf": 0.2
+    },
+    {
+      "find": "こ",
+      "replace": "、",
+      "before": [],
+      "after": [
+        "EOS"
+      ],
+      "mode": "h",
+      "max_conf": 0.3
+    },
+    {
+      "find": "イ",
+      "replace": "(",
+      "before": [],
+      "after": [],
+      "mode": "h",
+      "max_conf": 0.3
+    },
+    {
+      "find": "二",
+      "replace": "",
+      "before": [],
+      "after": [],
+      "mode": "any",
+      "max_conf": 0.3
+    },
+    {
+      "find": "て",
+      "replace": "",
+      "before": [],
+      "after": [
+        "EOS"
+      ],
+      "mode": "h",
+      "max_conf": 0.3
+    },
+    {
+      "find": "で",
+      "replace": "・",
+      "before": [],
+      "after": [
+        "EOS"
+      ],
+      "mode": "h",
+      "max_conf": 0.3
+    },
+    {
+      "find": "、",
+      "replace": "",
+      "before": [
+        "る"
+      ],
+      "after": [],
+      "mode": "any",
+      "max_conf": 0.1
+    },
+    {
+      "find": "」",
+      "replace": "",
+      "before": [
+        "kanji"
+      ],
+      "after": [
+        "EOS"
+      ],
+      "mode": "any",
+      "max_conf": 0.1
+    },
+    {
+      "find": "い",
+      "replace": "、",
+      "before": [],
+      "after": [
+        "EOS"
+      ],
+      "mode": "h",
+      "max_conf": 0.2
+    },
+    {
+      "find": "大",
+      "replace": "太",
+      "before": [],
+      "after": [
+        "郎"
+      ],
+      "mode": "any",
+      "max_conf": null
+    },
+    {
+      "find": ":",
+      "replace": "",
+      "before": [
+        "latin"
+      ],
+      "after": [
+        "digit"
+      ],
+      "mode": "any",
+      "max_conf": null
+    },
+    {
+      "find": ".",
+      "replace": "",
+      "before": [
+        "…",
+        "…"
+      ],
+      "after": [],
+      "mode": "any",
+      "max_conf": null
+    },
+    {
+      "find": "ア",
+      "replace": "ァ",
+      "before": [
+        "フ"
+      ],
+      "after": [],
+      "mode": "any",
+      "max_conf": 0.9
+    },
+    {
+      "find": "・",
+      "replace": "",
+      "before": [
+        "katakana"
+      ],
+      "after": [
+        "kanji"
+      ],
+      "mode": "h",
+      "max_conf": 0.1
+    },
+    {
+      "find": "プ",
+      "replace": "ブ",
+      "before": [
+        "タ"
+      ],
+      "after": [],
+      "mode": "any",
+      "max_conf": 0.9
+    },
+    {
+      "find": ".",
+      "replace": "",
+      "before": [
+        "P"
+      ],
+      "after": [
+        "digit"
+      ],
+      "mode": "any",
+      "max_conf": null
+    },
+    {
+      "find": "ン",
+      "replace": "シ",
+      "before": [
+        "hiragana"
+      ],
+      "after": [
+        "katakana"
+      ],
+      "mode": "v",
+      "max_conf": null
+    },
+    {
+      "find": "、",
+      "replace": "",
+      "before": [
+        "katakana"
+      ],
+      "after": [
+        "kanji"
+      ],
+      "mode": "h",
+      "max_conf": 0.1
+    },
+    {
+      "find": "ビ",
+      "replace": "ピ",
+      "before": [
+        "コ"
+      ],
+      "after": [
+        "ー"
+      ],
+      "mode": "any",
+      "max_conf": null
+    },
+    {
+      "find": "I",
+      "replace": "「",
+      "before": [],
+      "after": [],
+      "mode": "any",
+      "max_conf": 0.2
+    },
+    {
+      "find": "べ",
+      "replace": "、",
+      "before": [],
+      "after": [],
+      "mode": "v",
+      "max_conf": 0.3
+    },
+    {
+      "find": "た",
+      "replace": "",
+      "before": [],
+      "after": [
+        "EOS"
+      ],
+      "mode": "h",
+      "max_conf": 0.2
+    },
+    {
+      "find": "つ",
+      "replace": "っ",
+      "before": [],
+      "after": [
+        "と"
+      ],
+      "mode": "any",
+      "max_conf": 0.7
+    },
+    {
+      "find": "ボ",
+      "replace": "ポ",
+      "before": [],
+      "after": [
+        "ケ"
+      ],
+      "mode": "any",
+      "max_conf": 0.9
+    },
+    {
+      "find": "ニ",
+      "replace": "二",
+      "before": [
+        "kanji"
+      ],
+      "after": [],
+      "mode": "h",
+      "max_conf": 0.8
+    },
+    {
+      "find": "て",
+      "replace": "で",
+      "before": [
+        "な",
+        "い"
+      ],
+      "after": [],
+      "mode": "h",
+      "max_conf": 0.9
+    },
+    {
+      "find": "某",
+      "replace": "基",
+      "before": [],
+      "after": [],
+      "mode": "any",
+      "max_conf": 0.9
+    },
+    {
+      "find": "ば",
+      "replace": "ぱ",
+      "before": [
+        "っ"
+      ],
+      "after": [],
+      "mode": "v",
+      "max_conf": null
+    },
+    {
+      "find": "て",
+      "replace": "で",
+      "before": [
+        "ま"
+      ],
+      "after": [],
+      "mode": "any",
+      "max_conf": null
+    },
+    {
+      "find": "た",
+      "replace": "だ",
+      "before": [
+        "ん"
+      ],
+      "after": [],
+      "mode": "any",
+      "max_conf": 0.7
+    }
+  ]
+}

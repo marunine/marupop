@@ -1,0 +1,213 @@
+# SPDX-FileCopyrightText: 2026 marunine
+# SPDX-License-Identifier: LGPL-3.0-only
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+# Nothing here writes a comment, a release or a branch, so the token stays read-only. A job that
+# ever needs more raises it itself.
+permissions:
+  contents: read
+
+# A pull request groups by ref, so a second push cancels the first one's container builds.
+#
+# A push to main groups by commit instead. A concurrency group cancels the pending run whenever a
+# newer one queues, whatever cancel-in-progress says, so a shared group would leave a commit pushed
+# between two others never built — which is the commit a later bisect blames. One group per SHA
+# cannot queue against itself.
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event_name == 'pull_request' && github.ref || github.sha }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+# Every job runs in a container, where an unspecified shell is `sh`, not bash; `shell: bash` runs
+# `bash --noprofile --norc -eo pipefail {0}`. The `-o pipefail` is the part that matters: without it
+# the clang-tidy pipeline below carries the exit status of clang-tidy over an empty diff when the
+# `git diff` feeding it fails — a gate that passes by reporting nothing.
+defaults:
+  run:
+    shell: bash
+
+# Arch carries current KDE Frameworks 6, LayerShellQt, ONNX Runtime and OpenCV 5, so the whole
+# dependency set is one pacman line rather than a hand-built KDE stack. The archlinux:base-devel
+# image supplies gcc, make and pkgconf.
+#
+# What the less obvious ones are for: appstream and desktop-file-utils carry the validators the
+# metainfo_validate and desktop_file_validate tests run; onnxruntime-cpu (the CPU build of the
+# onnxruntime virtual package, named explicitly because pacman --noconfirm picks an arbitrary
+# provider of a virtual package), opencv, sqlite and xxhash
+# are the four non-KDE libraries the OCR and dictionary modules link; compiler-rt carries the
+# sanitizer runtimes and llvm the llvm-symbolizer they shell out to, which clang does not pull
+# in — it depends on llvm-libs, not llvm, so without it a sanitizer report is raw addresses;
+# gettext carries the msgfmt that data/CMakeLists.txt merges translations with; python runs
+# clang-tidy-diff.py, which reaches the image only as a transitive dependency of base-devel; dbus
+# carries dbus-run-session, since KGlobalAccel, KStatusNotifierItem and KNotification need a
+# session bus that a container has none of; kwin and mesa carry the kwin_wayland that
+# tests/harness/nested-session.sh starts with --virtual and the llvmpipe rasterizer it renders
+# through, which is what runs the nested registrations (ctest label "nested") — without the two
+# the harness exits 77 and every nested test reports as skipped rather than failing; wayland
+# carries the wayland-scanner binary and the wayland-client pkg-config module, and
+# plasma-wayland-protocols carries fake-input.xml, which are the three tools/CMakeLists.txt tests
+# for before defining marupop-hoverprobe — without them the configure prints "marupop-hoverprobe:
+# ... skipped" and MARUPOP_BUILD_DEV_TOOLS stops proving that probe compiles.
+#
+# Both sets live here, so a dependency a job acquires is added in one place.
+env:
+  BUILD_PACKAGES: >-
+    appstream clang cmake compiler-rt dbus desktop-file-utils extra-cmake-modules gettext git
+    gtest karchive kcolorscheme kconfig kconfigwidgets kcoreaddons kcrash kdbusaddons kglobalaccel
+    kguiaddons ki18n kio kjobwidgets knotifications kservice kstatusnotifieritem kwidgetsaddons
+    kwin kxmlgui layer-shell-qt llvm mesa ninja noto-fonts-cjk onnxruntime-cpu opencv
+    plasma-wayland-protocols python qt6-base sqlite wayland xxhash
+  # Neither check compiles anything: clang for clang-format, gettext for xgettext, and appstream
+  # for its ITS rules rather than its validator. The metainfo pass in po/extract-messages.sh runs
+  # `xgettext --language=appdata`, which resolves to appstream's
+  # /usr/share/gettext/its/metainfo.its. Without it gettext falls back to a copy of its own, warns
+  # that the copy may be out of sync, and drops the <release><description> string, so --check fails
+  # on a difference no source change explains.
+  CHECK_PACKAGES: appstream clang gettext git
+
+jobs:
+  build:
+    name: Build and test
+    runs-on: ubuntu-latest
+    container: archlinux:base-devel
+    # The default is six hours, which is what a test binary blocking on a D-Bus call that never
+    # returns would spend before anything noticed.
+    timeout-minutes: 45
+    steps:
+      - name: Install dependencies
+        run: pacman -Syu --noconfirm --needed ${{ env.BUILD_PACKAGES }}
+      - uses: actions/checkout@v6
+        with:
+          # clang-tidy-diff below needs the merge base of the pull request.
+          fetch-depth: 0
+      - name: Mark the checkout safe
+        run: git config --global --add safe.directory "$GITHUB_WORKSPACE"
+      # clang++ is the compiler the project is written against, and its compile_commands.json is
+      # the one clang-tidy reads. MARUPOP_BUILD_DEV_TOOLS puts the tools/ probes in the default
+      # target, which is the build that proves they still compile against the library.
+      - name: Configure
+        run: >-
+          cmake -B build -G Ninja
+          -DCMAKE_BUILD_TYPE=Debug
+          -DCMAKE_C_COMPILER=clang
+          -DCMAKE_CXX_COMPILER=clang++
+          -DMARUPOP_BUILD_DEV_TOOLS=ON
+          -DMARUPOP_GIT_HOOKS=OFF
+      - name: Build
+        run: cmake --build build
+      # -j$(nproc) is the configuration the per-binary HOME in tests/CMakeLists.txt exists for.
+      #
+      # -LE nested excludes the second registrations, which the next step runs. Without it every
+      # nested registration ran twice per job, and each costs about 30 s: one kwin_wayland
+      # --virtual per registration, on llvmpipe, as many concurrently as -j allows.
+      - name: Test
+        run: dbus-run-session -- ctest --test-dir build --output-on-failure -j$(nproc) -LE nested
+      # The nested registrations skip rather than fail wherever kwin_wayland cannot start, which
+      # is what keeps the suite green on a host with no compositor. That also means the whole
+      # compositor coverage can disappear from this job without turning it red, so both the count
+      # and the outcome are asserted here. `ctest -L <label>` exits 0 when the label matches
+      # nothing, which is why NESTED_TESTS is compared rather than trusted: a renamed label or a
+      # dropped maru_add_nested_test() call would otherwise pass this step green.
+      - name: Assert the nested-session tests ran
+        env:
+          NESTED_TESTS: 7
+        run: |
+          found=$(ctest --test-dir build -N -L nested | sed -n 's/^Total Tests: //p')
+          if [ "$found" -ne "$NESTED_TESTS" ]; then
+            echo "::error::$found tests carry the nested label, expected $NESTED_TESTS; update NESTED_TESTS in this workflow if a registration was added or removed on purpose"
+            exit 1
+          fi
+          log=$(dbus-run-session -- ctest --test-dir build -L nested --no-tests=error --output-on-failure 2>&1 | tee /dev/stderr)
+          # The per-test marker, which appears exactly once per skipped test. Counting 'Skipped'
+          # reported twice the truth, because ctest also lists each one again under "The following
+          # tests did not run"; and its percentage summary carries no skip count at all, so there is
+          # no summary line to read instead.
+          skipped=$(printf '%s' "$log" | grep -c '\*\*\*Skipped' || true)
+          if [ "$skipped" -ne 0 ]; then
+            echo "::error::$skipped nested test(s) skipped; kwin_wayland could not start a session in this container, so the compositor paths were not exercised"
+            exit 1
+          fi
+      # Over the diff rather than the tree: src/ carries a backlog of warnings from the check list
+      # .clang-tidy declares, so a whole-tree run fails on code a pull request never touched.
+      # -warnings-as-errors holds the new lines to the full list. The three directories are the
+      # ones the run-clang-tidy line in CLAUDE.md covers; tools/ is in the compilation database
+      # because MARUPOP_BUILD_DEV_TOOLS is on.
+      #
+      # The base branch reaches the script through the environment rather than `${{ }}`, which is
+      # the form GitHub's guidance asks for wherever the value comes from the event rather than
+      # from this file: an expression is pasted into the script text before bash sees it, so a
+      # branch name carrying shell syntax would be run rather than read. The package lines above
+      # are literals from this file, so they are not that case.
+      - name: clang-tidy over the diff
+        if: github.event_name == 'pull_request'
+        env:
+          BASE_REF: ${{ github.base_ref }}
+        run: |
+          base=$BASE_REF
+          git fetch --no-tags origin "+refs/heads/$base:refs/remotes/origin/$base"
+          git diff -U0 "origin/$base...HEAD" -- {src,tests,tools}/'*.cpp' {src,tests,tools}/'*.h' \
+            | python3 /usr/share/clang/clang-tidy-diff.py -p1 -path build -quiet -j "$(nproc)" \
+                -clang-tidy-binary clang-tidy -warnings-as-errors='*'
+
+  sanitizers:
+    name: Sanitizers
+    runs-on: ubuntu-latest
+    container: archlinux:base-devel
+    # An instrumented build and test run costs a multiple of the plain one.
+    timeout-minutes: 90
+    steps:
+      - name: Install dependencies
+        run: pacman -Syu --noconfirm --needed ${{ env.BUILD_PACKAGES }}
+      - uses: actions/checkout@v6
+      - name: Mark the checkout safe
+        run: git config --global --add safe.directory "$GITHUB_WORKSPACE"
+      # KDECompilerSettings includes ECMEnableSanitizers, so ECM_ENABLE_SANITIZERS is the entry
+      # point. The OCR service, the frame source and the dictionary import all run work off the
+      # UI thread, which is the class of defect this job is here for. The value is quoted because
+      # the shell would otherwise read the semicolon as a command separator.
+      - name: Configure
+        run: >-
+          cmake -B build-asan -G Ninja
+          -DCMAKE_BUILD_TYPE=Debug
+          -DCMAKE_C_COMPILER=clang
+          -DCMAKE_CXX_COMPILER=clang++
+          -DECM_ENABLE_SANITIZERS='address;undefined'
+          -DMARUPOP_GIT_HOOKS=OFF
+      - name: Build
+        run: cmake --build build-asan
+      # detect_leaks=0 because Qt and KDE Frameworks hold allocations alive to process exit by
+      # design — a QApplication run under LeakSanitizer reports them whatever this tree does — so
+      # the job gates on the ASan and UBSan error classes instead. A suspected leak in maru code
+      # is confirmed by rerunning one suite with detect_leaks=1 and a suppressions file, for which
+      # Spectacle's sanitizers.supp is the model. QT_IM_MODULE=none keeps Qt from loading an input
+      # method plugin into the instrumented process, which is uninstrumented code in every report
+      # it appears in.
+      - name: Test
+        env:
+          ASAN_OPTIONS: detect_leaks=0
+          UBSAN_OPTIONS: print_stacktrace=1:halt_on_error=1
+          QT_IM_MODULE: none
+        run: dbus-run-session -- ctest --test-dir build-asan --output-on-failure -j$(nproc)
+
+  checks:
+    name: Format and translations
+    runs-on: ubuntu-latest
+    container: archlinux:base-devel
+    # Both checks run in seconds; the pacman line is the whole cost of this job.
+    timeout-minutes: 30
+    steps:
+      - name: Install dependencies
+        run: pacman -Syu --noconfirm --needed ${{ env.CHECK_PACKAGES }}
+      - uses: actions/checkout@v6
+      - name: Mark the checkout safe
+        run: git config --global --add safe.directory "$GITHUB_WORKSPACE"
+      # The same .clang-format the clang-format target and .githooks/pre-commit read.
+      - name: Format
+        run: clang-format --dry-run --Werror $(git ls-files '*.cpp' '*.h')
+      # Fails when po/marupop.pot no longer matches the i18n calls in src/.
+      - name: Message template
+        run: po/extract-messages.sh --check

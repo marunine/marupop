@@ -1,0 +1,47 @@
+# SPDX-FileCopyrightText: 2026 marunine
+# SPDX-License-Identifier: LGPL-3.0-only
+---
+Checks: >
+  bugprone-*,
+  -bugprone-easily-swappable-parameters,
+  -bugprone-narrowing-conversions,
+  clang-analyzer-*,
+  concurrency-*,
+  cppcoreguidelines-init-variables,
+  cppcoreguidelines-pro-type-cstyle-cast,
+  cppcoreguidelines-pro-type-static-cast-downcast,
+  cppcoreguidelines-slicing,
+  misc-*,
+  -misc-non-private-member-variables-in-classes,
+  -misc-include-cleaner,
+  -misc-const-correctness,
+  modernize-*,
+  -modernize-use-trailing-return-type,
+  -modernize-avoid-c-arrays,
+  performance-*,
+  -performance-enum-size,
+  readability-*,
+  -readability-braces-around-statements,
+  -readability-identifier-length,
+  -readability-magic-numbers,
+  -readability-math-missing-parentheses,
+  -readability-function-cognitive-complexity,
+  -readability-redundant-access-specifiers,
+  -readability-convert-member-functions-to-static
+# Whole-tree runs include generated translation units with warnings outside this source tree.
+# CI passes -warnings-as-errors over changed lines to enforce the policy on contributions.
+WarningsAsErrors: ''
+HeaderFilterRegex: '/marupop/(src|tests)/.*\.h$'
+# tests/.clang-tidy drops bugprone-unchecked-optional-access for tests/ alone, because that
+# check does not model GoogleTest's ASSERT_TRUE macro.
+FormatStyle: file
+CheckOptions:
+  readability-identifier-naming.ClassCase: CamelCase
+  readability-identifier-naming.EnumCase: CamelCase
+  readability-identifier-naming.EnumConstantCase: CamelCase
+  readability-identifier-naming.FunctionCase: camelBack
+  readability-identifier-naming.MemberCase: camelBack
+  readability-identifier-naming.PrivateMemberPrefix: 'm_'
+  readability-identifier-naming.NamespaceCase: lower_case
+  readability-identifier-naming.VariableCase: camelBack
+  performance-unnecessary-value-param.AllowedTypes: 'QString;QUrl;QFileInfo;QImage;QPixmap'

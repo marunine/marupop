@@ -1,0 +1,5 @@
+# hand-written cjkvi-ids fixture
+U+65E5	日	日
+U+6E05	清	⿰氵青
+U+4E38	丸	⿻九丶[GJ]	⿵九丶[TKV]
+U+8A9E	語	⿰言吾

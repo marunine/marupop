@@ -1,0 +1,129 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- SPDX-FileCopyrightText: 2026 marunine -->
+<!-- SPDX-License-Identifier: CC0-1.0 -->
+<!-- The mock JMdict of lookup_ocrvariants_test. パーティー and バー are the pair where a voiced
+     misread keeps a shorter exact match, so the variant has to be longer to win. 基本 is reached
+     from 某本 through similar-kanji alone. 読む is reached from 読んて through the variant 読んで and
+     the deconjugator. 母 and 婆 read はは and ばば are the pair of equal length, where the
+     exact read has to stay the only answer. 手紙 read てがみ is the all-hiragana case: てかみ has to
+     find nothing through the variant pass. -->
+<!DOCTYPE JMdict [
+  <!ELEMENT JMdict (entry*)>
+  <!ELEMENT entry (ent_seq, k_ele*, r_ele+, sense+)>
+  <!ELEMENT ent_seq (#PCDATA)>
+  <!ELEMENT k_ele (keb, ke_inf*, ke_pri*)>
+  <!ELEMENT keb (#PCDATA)>
+  <!ELEMENT ke_inf (#PCDATA)>
+  <!ELEMENT ke_pri (#PCDATA)>
+  <!ELEMENT r_ele (reb, re_nokanji?, re_restr*, re_inf*, re_pri*)>
+  <!ELEMENT reb (#PCDATA)>
+  <!ELEMENT re_nokanji (#PCDATA)>
+  <!ELEMENT re_restr (#PCDATA)>
+  <!ELEMENT re_inf (#PCDATA)>
+  <!ELEMENT re_pri (#PCDATA)>
+  <!ELEMENT sense (stagk*, stagr*, pos*, xref*, ant*, field*, misc*, s_inf*, lsource*, dial*, gloss*)>
+  <!ELEMENT stagk (#PCDATA)>
+  <!ELEMENT stagr (#PCDATA)>
+  <!ELEMENT pos (#PCDATA)>
+  <!ELEMENT xref (#PCDATA)>
+  <!ELEMENT ant (#PCDATA)>
+  <!ELEMENT field (#PCDATA)>
+  <!ELEMENT misc (#PCDATA)>
+  <!ELEMENT s_inf (#PCDATA)>
+  <!ELEMENT lsource (#PCDATA)>
+  <!ELEMENT dial (#PCDATA)>
+  <!ELEMENT gloss (#PCDATA)>
+  <!ENTITY n "noun (common) (futsuumeishi)">
+  <!ENTITY v5m "Godan verb with 'mu' ending">
+  <!ENTITY vt "transitive verb">
+]>
+<JMdict>
+  <entry>
+    <ent_seq>1103000</ent_seq>
+    <r_ele>
+      <reb>パーティー</reb>
+    </r_ele>
+    <sense>
+      <pos>&n;</pos>
+      <gloss>party</gloss>
+    </sense>
+  </entry>
+  <entry>
+    <ent_seq>1094580</ent_seq>
+    <r_ele>
+      <reb>バー</reb>
+    </r_ele>
+    <sense>
+      <pos>&n;</pos>
+      <gloss>bar</gloss>
+    </sense>
+  </entry>
+  <entry>
+    <ent_seq>1218690</ent_seq>
+    <k_ele>
+      <keb>基本</keb>
+      <ke_pri>ichi1</ke_pri>
+    </k_ele>
+    <r_ele>
+      <reb>きほん</reb>
+    </r_ele>
+    <sense>
+      <pos>&n;</pos>
+      <gloss>basis</gloss>
+    </sense>
+  </entry>
+  <entry>
+    <ent_seq>1552190</ent_seq>
+    <k_ele>
+      <keb>読む</keb>
+      <ke_pri>ichi1</ke_pri>
+    </k_ele>
+    <r_ele>
+      <reb>よむ</reb>
+    </r_ele>
+    <sense>
+      <pos>&v5m;</pos>
+      <pos>&vt;</pos>
+      <gloss>to read</gloss>
+    </sense>
+  </entry>
+  <entry>
+    <ent_seq>1514990</ent_seq>
+    <k_ele>
+      <keb>母</keb>
+    </k_ele>
+    <r_ele>
+      <reb>はは</reb>
+    </r_ele>
+    <sense>
+      <pos>&n;</pos>
+      <gloss>mother</gloss>
+    </sense>
+  </entry>
+  <entry>
+    <ent_seq>1459590</ent_seq>
+    <k_ele>
+      <keb>婆</keb>
+    </k_ele>
+    <r_ele>
+      <reb>ばば</reb>
+    </r_ele>
+    <sense>
+      <pos>&n;</pos>
+      <gloss>old woman</gloss>
+    </sense>
+  </entry>
+  <entry>
+    <ent_seq>1313490</ent_seq>
+    <k_ele>
+      <keb>手紙</keb>
+    </k_ele>
+    <r_ele>
+      <reb>てがみ</reb>
+    </r_ele>
+    <sense>
+      <pos>&n;</pos>
+      <gloss>letter</gloss>
+    </sense>
+  </entry>
+</JMdict>

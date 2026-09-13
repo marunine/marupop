@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE JMnedict [
+<!ELEMENT JMnedict (entry*)>
+<!ELEMENT entry (ent_seq, k_ele*, r_ele+, trans+)>
+<!ELEMENT ent_seq (#PCDATA)>
+<!ELEMENT k_ele (keb)>
+<!ELEMENT keb (#PCDATA)>
+<!ELEMENT r_ele (reb)>
+<!ELEMENT reb (#PCDATA)>
+<!ELEMENT trans (name_type*, trans_det*)>
+<!ELEMENT name_type (#PCDATA)>
+<!ELEMENT trans_det (#PCDATA)>
+<!ENTITY surname "family or surname">
+<!ENTITY place "place name">
+<!ENTITY fem "female given name or forename">
+<!ENTITY unclass "unclassified name">
+]>
+<JMnedict>
+<entry>
+<ent_seq>5000001</ent_seq>
+<k_ele><keb>田中</keb></k_ele>
+<k_ele><keb>多中</keb></k_ele>
+<r_ele><reb>たなか</reb></r_ele>
+<trans>
+<name_type>&surname;</name_type>
+<trans_det>Tanaka</trans_det>
+</trans>
+</entry>
+<entry>
+<ent_seq>5000002</ent_seq>
+<r_ele><reb>さくら</reb></r_ele>
+<trans>
+<name_type>&fem;</name_type>
+<trans_det>Sakura</trans_det>
+</trans>
+<trans>
+<name_type>&place;</name_type>
+<trans_det>Sakura (city)</trans_det>
+</trans>
+</entry>
+<entry>
+<ent_seq>5000003</ent_seq>
+<k_ele><keb>東京</keb></k_ele>
+<r_ele><reb>とうきょう</reb></r_ele>
+<trans>
+<name_type>&place;</name_type>
+<trans_det>Tokyo</trans_det>
+</trans>
+</entry>
+</JMnedict>

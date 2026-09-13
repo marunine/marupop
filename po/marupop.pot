@@ -1,0 +1,3065 @@
+# SPDX-FileCopyrightText: 2026 marunine
+# SPDX-License-Identifier: LGPL-3.0-only
+# SOME DESCRIPTIVE TITLE.
+# Copyright (C) YEAR THE PACKAGE'S COPYRIGHT HOLDER
+# This file is distributed under the same license as the PACKAGE package.
+# FIRST AUTHOR <EMAIL@ADDRESS>, YEAR.
+#
+#, fuzzy
+msgid ""
+msgstr ""
+"Project-Id-Version: PACKAGE VERSION\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2026-09-12 22:15-0400\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language-Team: LANGUAGE <LL@li.org>\n"
+"Language: \n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=INTEGER; plural=EXPRESSION;\n"
+
+#: src/app/application.cpp:282
+#, kde-format
+msgctxt "@title:window"
+msgid "Scanning Failed"
+msgstr ""
+
+#: src/app/application.cpp:336
+#, kde-format
+msgctxt "@title:window"
+msgid "Pointer Tracking Unavailable"
+msgstr ""
+
+#: src/app/application.cpp:344
+#, kde-format
+msgctxt "@title:window"
+msgid "Compositor Configuration Missing"
+msgstr ""
+
+#: src/app/application.cpp:376
+#, kde-format
+msgid "Toggle scanning"
+msgstr ""
+
+#: src/app/application.cpp:377
+#, kde-format
+msgid "Open the settings window"
+msgstr ""
+
+#: src/app/application.cpp:378
+#, kde-format
+msgid "Open the lookup window"
+msgstr ""
+
+#: src/app/application.cpp:443 src/app/application.cpp:472
+#, kde-format
+msgctxt "@info:tooltip after the copy shortcut"
+msgid "Copied %1"
+msgstr ""
+
+#: src/app/application.cpp:580
+#, kde-format
+msgctxt "@title:window"
+msgid "Screen Capture Unavailable"
+msgstr ""
+
+#: src/app/application.cpp:628
+#, kde-format
+msgctxt "@title:window"
+msgid "Dictionary Download Failed"
+msgstr ""
+
+#: src/app/application.cpp:648 src/app/application.cpp:652
+#, kde-format
+msgctxt "@title:window"
+msgid "Dictionary Import Failed"
+msgstr ""
+
+#: src/app/application.cpp:653
+#, kde-format
+msgctxt "@info"
+msgid "The imported dictionary could not be opened."
+msgstr ""
+
+#: src/app/application.cpp:779 src/app/application.cpp:795
+#: src/app/application.cpp:812 src/app/application.cpp:823
+#, kde-format
+msgctxt "@title:window"
+msgid "Autostart Failed"
+msgstr ""
+
+#: src/app/application.cpp:780
+#, kde-format
+msgid "The autostart entry %1 could not be removed."
+msgstr ""
+
+#: src/app/application.cpp:796
+#, kde-format
+msgid ""
+"Could not read the desktop entry %1. Install MaruPop to enable autostart."
+msgstr ""
+
+#: src/app/application.cpp:813 src/app/application.cpp:824
+#, kde-format
+msgid "The autostart entry %1 could not be written."
+msgstr ""
+
+#: src/app/hotkeyregistry.cpp:34 src/app/trayicon.cpp:34
+#: src/app/trayicon.cpp:135 src/main.cpp:122
+#: data/io.github.marunine.marupop.desktop.cmake:4
+#: data/marupop.notifyrc.cmake:5
+#: data/io.github.marunine.marupop.metainfo.xml.cmake:14
+#, kde-format
+msgid "MaruPop"
+msgstr ""
+
+#: src/app/lookupwindow.cpp:109
+#, kde-format
+msgctxt "@title:window"
+msgid "Lookup"
+msgstr ""
+
+#: src/app/lookupwindow.cpp:119
+#, kde-format
+msgctxt "@action:button"
+msgid "Copy Sentence"
+msgstr ""
+
+#: src/app/lookupwindow.cpp:132
+#, kde-format
+msgctxt "@info:placeholder"
+msgid "Enable scanning and point to Japanese text."
+msgstr ""
+
+#: src/app/lookupwindow.cpp:140
+#, kde-format
+msgctxt "@info"
+msgid "No results"
+msgstr ""
+
+#: src/app/lookupwindow.cpp:233
+#, kde-format
+msgctxt "@label"
+msgid "No term"
+msgstr ""
+
+#: src/app/lookupwindow.cpp:234
+#, kde-format
+msgctxt "@label the text a lookup matched"
+msgid "Term: %1"
+msgstr ""
+
+#: src/app/modeldownloaddialog.cpp:25
+#, kde-format
+msgctxt "@title:window"
+msgid "Set Up Text Recognition"
+msgstr ""
+
+#: src/app/modeldownloaddialog.cpp:30
+#, kde-format
+msgctxt "@info"
+msgid ""
+"Download the meikiocr models to recognize Japanese text offline, or use an "
+"installed Chrome Screen AI component."
+msgstr ""
+
+#: src/app/modeldownloaddialog.cpp:43
+#, kde-format
+msgctxt "@info"
+msgid "Chrome Screen AI installed in %1."
+msgstr ""
+
+#: src/app/modeldownloaddialog.cpp:45
+#, kde-format
+msgctxt "@info"
+msgid ""
+"Chrome Screen AI not found in %1. This proprietary component requires a "
+"separate installation."
+msgstr ""
+
+#: src/app/modeldownloaddialog.cpp:52 src/app/modeldownloaddialog.cpp:109
+#: src/app/modelstatuswidget.cpp:234 src/dictui/dictionarymanagerdialog.cpp:771
+#, kde-format
+msgctxt "@action:button"
+msgid "Download"
+msgstr ""
+
+#: src/app/modeldownloaddialog.cpp:56
+#, kde-format
+msgctxt "@action:button"
+msgid "Use Chrome Screen AI"
+msgstr ""
+
+#: src/app/modeldownloaddialog.cpp:59
+#, kde-format
+msgctxt "@action:button"
+msgid "Not Now"
+msgstr ""
+
+#: src/app/modeldownloaddialog.cpp:108 src/app/modelstatuswidget.cpp:233
+#, kde-format
+msgctxt "@action:button with the download size"
+msgid "Download (%1)"
+msgstr ""
+
+#: src/app/modelstatuswidget.cpp:37
+#, kde-format
+msgctxt "@item:intable a text-recognition model"
+msgid "Text detection"
+msgstr ""
+
+#: src/app/modelstatuswidget.cpp:39
+#, kde-format
+msgctxt "@item:intable a text-recognition model"
+msgid "Text detection (small)"
+msgstr ""
+
+#: src/app/modelstatuswidget.cpp:41
+#, kde-format
+msgctxt "@item:intable a text-recognition model"
+msgid "Horizontal recognition"
+msgstr ""
+
+#: src/app/modelstatuswidget.cpp:43
+#, kde-format
+msgctxt "@item:intable a text-recognition model"
+msgid "Vertical recognition"
+msgstr ""
+
+#: src/app/modelstatuswidget.cpp:52
+#, kde-format
+msgctxt "@item:intable model file state"
+msgid "Missing"
+msgstr ""
+
+#: src/app/modelstatuswidget.cpp:53
+#, kde-format
+msgctxt "@item:intable model file state"
+msgid "Not installed (optional)"
+msgstr ""
+
+#: src/app/modelstatuswidget.cpp:55
+#, kde-format
+msgctxt "@item:intable model file state"
+msgid "Incomplete"
+msgstr ""
+
+#: src/app/modelstatuswidget.cpp:57
+#, kde-format
+msgctxt "@item:intable model file state"
+msgid "Installed"
+msgstr ""
+
+#: src/app/modelstatuswidget.cpp:59
+#, kde-format
+msgctxt "@item:intable model file state"
+msgid "Verified"
+msgstr ""
+
+#: src/app/modelstatuswidget.cpp:61
+#, kde-format
+msgctxt "@item:intable model file state"
+msgid "Damaged"
+msgstr ""
+
+#: src/app/modelstatuswidget.cpp:86
+#, kde-format
+msgctxt "@title:column"
+msgid "Model"
+msgstr ""
+
+#: src/app/modelstatuswidget.cpp:86
+#, kde-format
+msgctxt "@title:column"
+msgid "Size"
+msgstr ""
+
+#: src/app/modelstatuswidget.cpp:86
+#, kde-format
+msgctxt "@title:column"
+msgid "Status"
+msgstr ""
+
+#: src/app/modelstatuswidget.cpp:103
+#, kde-format
+msgctxt "@action:button"
+msgid "Cancel"
+msgstr ""
+
+#: src/app/modelstatuswidget.cpp:118
+#, kde-format
+msgctxt "@action:button"
+msgid "Download Again"
+msgstr ""
+
+#: src/app/modelstatuswidget.cpp:125
+#, kde-format
+msgctxt "@action:button"
+msgid "Check for Updates"
+msgstr ""
+
+#: src/app/modelstatuswidget.cpp:132
+#, kde-format
+msgctxt "@action:button"
+msgid "Verify"
+msgstr ""
+
+#: src/app/modelstatuswidget.cpp:139
+#, kde-format
+msgctxt "@label:textbox"
+msgid "Model folder:"
+msgstr ""
+
+#: src/app/modelstatuswidget.cpp:147
+#, kde-format
+msgctxt "@action:button"
+msgid "Show in File Manager"
+msgstr ""
+
+#: src/app/modelstatuswidget.cpp:154
+#, kde-format
+msgctxt "@info"
+msgid "An update for %1 is available."
+msgstr ""
+
+#: src/app/modelstatuswidget.cpp:160
+#, kde-format
+msgctxt "@info"
+msgid "Update check failed: %1"
+msgstr ""
+
+#: src/app/notifier.cpp:58
+#, kde-format
+msgctxt "@info:notification title"
+msgid "Dictionary Imported"
+msgstr ""
+
+#: src/app/notifier.cpp:59
+#, kde-format
+msgctxt "@info:notification"
+msgid "%2: %1 entry"
+msgid_plural "%2: %1 entries"
+msgstr[0] ""
+msgstr[1] ""
+
+#: src/app/notifier.cpp:66
+#, kde-format
+msgctxt "@info:notification title"
+msgid "Dictionary Update Available"
+msgstr ""
+
+#: src/app/notifier.cpp:67
+#, kde-format
+msgctxt "@info:notification"
+msgid "An update for %1 is available."
+msgstr ""
+
+#: src/app/notifier.cpp:74
+#, kde-format
+msgctxt "@info:notification title"
+msgid "Recognition Models Downloaded"
+msgstr ""
+
+#: src/app/notifier.cpp:75
+#, kde-format
+msgctxt "@info:notification"
+msgid "Text recognition models downloaded and verified."
+msgstr ""
+
+#: src/app/pathrequester.cpp:29
+#, kde-format
+msgctxt "@info:tooltip"
+msgid "Select a folder"
+msgstr ""
+
+#: src/app/pathrequester.cpp:30
+#, kde-format
+msgctxt "@info:tooltip"
+msgid "Select a file"
+msgstr ""
+
+#: src/app/pathrequester.cpp:62
+#, kde-format
+msgctxt "@title:window"
+msgid "Select Folder"
+msgstr ""
+
+#: src/app/pathrequester.cpp:64
+#, kde-format
+msgctxt "@title:window"
+msgid "Select File"
+msgstr ""
+
+#: src/app/settingsdialog.cpp:147
+#, kde-format
+msgctxt "@title:window"
+msgid "Configure MaruPop"
+msgstr ""
+
+#: src/app/settingsdialog.cpp:157
+#, kde-format
+msgctxt "@title settings page"
+msgid "General"
+msgstr ""
+
+#: src/app/settingsdialog.cpp:158
+#, kde-format
+msgctxt "@title settings page"
+msgid "Scanning"
+msgstr ""
+
+#: src/app/settingsdialog.cpp:159
+#, kde-format
+msgctxt "@title settings page"
+msgid "Text Recognition"
+msgstr ""
+
+#: src/app/settingsdialog.cpp:160
+#, kde-format
+msgctxt "@title settings page"
+msgid "Lookup"
+msgstr ""
+
+#: src/app/settingsdialog.cpp:161
+#, kde-format
+msgctxt "@title settings page"
+msgid "Popup Content"
+msgstr ""
+
+#: src/app/settingsdialog.cpp:163
+#, kde-format
+msgctxt "@title settings page"
+msgid "Popup Appearance"
+msgstr ""
+
+#: src/app/settingsdialog.cpp:165
+#, kde-format
+msgctxt "@title settings page"
+msgid "Shortcuts"
+msgstr ""
+
+#: src/app/settingsdialog.cpp:180
+#, kde-format
+msgctxt "@title:group"
+msgid "Session"
+msgstr ""
+
+#: src/app/settingsdialog.cpp:184
+#, kde-format
+msgctxt "@option:check"
+msgid "Show icon in system tray"
+msgstr ""
+
+#: src/app/settingsdialog.cpp:186
+#, kde-format
+msgctxt "@option:check"
+msgid "Start at login"
+msgstr ""
+
+#: src/app/settingsdialog.cpp:188
+#, kde-format
+msgctxt "@option:check"
+msgid "Pause scanning when screen is locked"
+msgstr ""
+
+#: src/app/settingsdialog.cpp:190
+#, kde-format
+msgctxt "@info:tooltip"
+msgid "Scanning resumes when the screen is unlocked."
+msgstr ""
+
+#: src/app/settingsdialog.cpp:194
+#, kde-format
+msgctxt "@title:group"
+msgid "Notifications"
+msgstr ""
+
+#: src/app/settingsdialog.cpp:197
+#, kde-format
+msgctxt "@option:check"
+msgid "Show error notifications"
+msgstr ""
+
+#: src/app/settingsdialog.cpp:200
+#, kde-format
+msgctxt "@info:tooltip"
+msgid ""
+"Report capture, recognition, download, and import errors. Errors also appear "
+"in the system tray tooltip."
+msgstr ""
+
+#: src/app/settingsdialog.cpp:213
+#, kde-format
+msgctxt "@title:group"
+msgid "Triggers"
+msgstr ""
+
+#: src/app/settingsdialog.cpp:216
+#, kde-format
+msgctxt "@option:check"
+msgid "Scan on mouse movement"
+msgstr ""
+
+#: src/app/settingsdialog.cpp:222 src/app/settingsdialog.cpp:231
+#: src/app/settingsdialog.cpp:701
+#, kde-format
+msgctxt "@item:valuesuffix milliseconds"
+msgid " ms"
+msgstr ""
+
+#: src/app/settingsdialog.cpp:223
+#, kde-format
+msgctxt "@label:spinbox"
+msgid "Minimum scan interval:"
+msgstr ""
+
+#: src/app/settingsdialog.cpp:225
+#, kde-format
+msgctxt "@option:check"
+msgid "Scan periodically"
+msgstr ""
+
+#: src/app/settingsdialog.cpp:233
+#, kde-format
+msgctxt "@info:tooltip"
+msgid ""
+"Scan the area around the mouse pointer at regular intervals. Unchanged areas "
+"reuse the previous recognition result."
+msgstr ""
+
+#: src/app/settingsdialog.cpp:235
+#, kde-format
+msgctxt "@label:spinbox"
+msgid "Scan interval:"
+msgstr ""
+
+#: src/app/settingsdialog.cpp:245
+#, kde-format
+msgctxt "@title:group"
+msgid "Scan Area"
+msgstr ""
+
+#: src/app/settingsdialog.cpp:248
+#, kde-format
+msgctxt "@option:check"
+msgid "Expand scan area automatically"
+msgstr ""
+
+#: src/app/settingsdialog.cpp:250
+#, kde-format
+msgctxt "@info:tooltip"
+msgid "Expand the scan area when text reaches its edge or no text is found."
+msgstr ""
+
+#: src/app/settingsdialog.cpp:253 src/app/settingsdialog.cpp:255
+#: src/app/settingsdialog.cpp:264 src/app/settingsdialog.cpp:266
+#: src/app/settingsdialog.cpp:671 src/app/settingsdialog.cpp:686
+#: src/app/settingsdialog.cpp:690 src/app/settingsdialog.cpp:694
+#: src/app/settingsdialog.cpp:698
+#, kde-format
+msgctxt "@item:valuesuffix logical pixels"
+msgid " px"
+msgstr ""
+
+#: src/app/settingsdialog.cpp:258 src/app/settingsdialog.cpp:269
+#, kde-format
+msgctxt "@label between a width and a height"
+msgid "×"
+msgstr ""
+
+#: src/app/settingsdialog.cpp:261
+#, kde-format
+msgctxt "@label:spinbox"
+msgid "Initial size:"
+msgstr ""
+
+#: src/app/settingsdialog.cpp:272
+#, kde-format
+msgctxt "@label:spinbox"
+msgid "Maximum size:"
+msgstr ""
+
+#: src/app/settingsdialog.cpp:291
+#, kde-format
+msgctxt "@title:group"
+msgid "Engine"
+msgstr ""
+
+#: src/app/settingsdialog.cpp:294
+#, kde-format
+msgctxt "@item:inlistbox text-recognition engine"
+msgid "Automatic"
+msgstr ""
+
+#: src/app/settingsdialog.cpp:295
+#, kde-format
+msgctxt "@item:inlistbox text-recognition engine"
+msgid "meikiocr"
+msgstr ""
+
+#: src/app/settingsdialog.cpp:296
+#, kde-format
+msgctxt "@item:inlistbox text-recognition engine"
+msgid "Chrome Screen AI"
+msgstr ""
+
+#: src/app/settingsdialog.cpp:298
+#, kde-format
+msgctxt "@label:listbox"
+msgid "Engine:"
+msgstr ""
+
+#: src/app/settingsdialog.cpp:306
+#, kde-format
+msgctxt "@info model files"
+msgid "models installed"
+msgstr ""
+
+#: src/app/settingsdialog.cpp:307
+#, kde-format
+msgctxt "@info model files"
+msgid "models missing"
+msgstr ""
+
+#: src/app/settingsdialog.cpp:308
+#, kde-format
+msgctxt "@info a component install"
+msgid "installed"
+msgstr ""
+
+#: src/app/settingsdialog.cpp:309
+#, kde-format
+msgctxt "@info a component install"
+msgid "not found"
+msgstr ""
+
+#: src/app/settingsdialog.cpp:305
+#, kde-format
+msgctxt "@info the state of the two recognition engines"
+msgid "meikiocr: %1 · Chrome Screen AI: %2"
+msgstr ""
+
+#: src/app/settingsdialog.cpp:315
+#, kde-format
+msgctxt "@title:group"
+msgid "meikiocr"
+msgstr ""
+
+#: src/app/settingsdialog.cpp:317
+#, kde-format
+msgctxt "@label:spinbox"
+msgid "Inference threads:"
+msgstr ""
+
+#: src/app/settingsdialog.cpp:319
+#, kde-format
+msgctxt "@label:spinbox"
+msgid "Detection threshold:"
+msgstr ""
+
+#: src/app/settingsdialog.cpp:321
+#, kde-format
+msgctxt "@label:spinbox"
+msgid "Recognition threshold:"
+msgstr ""
+
+#: src/app/settingsdialog.cpp:323
+#, kde-format
+msgctxt "@label:spinbox"
+msgid "Punctuation confidence factor:"
+msgstr ""
+
+#: src/app/settingsdialog.cpp:327
+#, kde-format
+msgctxt "@option:check"
+msgid "Use small detection model"
+msgstr ""
+
+#: src/app/settingsdialog.cpp:330
+#, kde-format
+msgctxt "@option:check"
+msgid "Correct recognition errors"
+msgstr ""
+
+#: src/app/settingsdialog.cpp:332
+#, kde-format
+msgctxt "@info:tooltip"
+msgid ""
+"Correct punctuation and similar characters after recognition. Correction "
+"rules assume a punctuation confidence factor of 0.2."
+msgstr ""
+
+#: src/app/settingsdialog.cpp:335
+#, kde-format
+msgctxt "@option:check"
+msgid "Use GPU acceleration"
+msgstr ""
+
+#: src/app/settingsdialog.cpp:338
+#, kde-format
+msgctxt "@info:tooltip"
+msgid ""
+"GPU acceleration is tested when the engine starts. Recognition uses the CPU "
+"if the test fails."
+msgstr ""
+
+#: src/app/settingsdialog.cpp:342
+#, kde-format
+msgctxt "@title:group"
+msgid "Models"
+msgstr ""
+
+#: src/app/settingsdialog.cpp:353
+#, kde-format
+msgctxt "@title:group"
+msgid "Chrome Screen AI"
+msgstr ""
+
+#: src/app/settingsdialog.cpp:358
+#, kde-format
+msgctxt "@label:textbox"
+msgid "Component folder:"
+msgstr ""
+
+#: src/app/settingsdialog.cpp:360
+#, kde-format
+msgctxt "@info"
+msgid ""
+"Chrome Screen AI requires a separate installation. Select the folder "
+"containing libchromescreenai.so and its model files."
+msgstr ""
+
+#: src/app/settingsdialog.cpp:376
+#, kde-format
+msgctxt "@title:group"
+msgid "Search"
+msgstr ""
+
+#: src/app/settingsdialog.cpp:379 src/app/settingsdialog.cpp:430
+#, kde-format
+msgctxt "@item:valuesuffix characters"
+msgid " characters"
+msgstr ""
+
+#: src/app/settingsdialog.cpp:381
+#, kde-format
+msgctxt "@info:tooltip"
+msgid "Maximum number of characters to search, starting at the mouse pointer."
+msgstr ""
+
+#: src/app/settingsdialog.cpp:382
+#, kde-format
+msgctxt "@label:spinbox"
+msgid "Text scan length:"
+msgstr ""
+
+#: src/app/settingsdialog.cpp:383
+#, kde-format
+msgctxt "@label:spinbox"
+msgid "Maximum popup results:"
+msgstr ""
+
+#: src/app/settingsdialog.cpp:385
+#, kde-format
+msgctxt "@label:listbox"
+msgid "Dictionary types:"
+msgstr ""
+
+#: src/app/settingsdialog.cpp:387
+#, kde-format
+msgctxt "@item:inlistbox dictionary types"
+msgid "All"
+msgstr ""
+
+#: src/app/settingsdialog.cpp:388
+#, kde-format
+msgctxt "@item:inlistbox dictionary types"
+msgid "Words"
+msgstr ""
+
+#: src/app/settingsdialog.cpp:389
+#, kde-format
+msgctxt "@item:inlistbox dictionary types"
+msgid "Names"
+msgstr ""
+
+#: src/app/settingsdialog.cpp:390
+#, kde-format
+msgctxt "@item:inlistbox dictionary types"
+msgid "Kanji"
+msgstr ""
+
+#: src/app/settingsdialog.cpp:392
+#, kde-format
+msgctxt "@label:listbox"
+msgid "Copy mode:"
+msgstr ""
+
+#: src/app/settingsdialog.cpp:394
+#, kde-format
+msgctxt "@item:inlistbox what to copy"
+msgid "Matched text"
+msgstr ""
+
+#: src/app/settingsdialog.cpp:395
+#, kde-format
+msgctxt "@item:inlistbox what to copy"
+msgid "Headword"
+msgstr ""
+
+#: src/app/settingsdialog.cpp:396
+#, kde-format
+msgctxt "@item:inlistbox what to copy"
+msgid "Reading"
+msgstr ""
+
+#: src/app/settingsdialog.cpp:402
+#, kde-format
+msgctxt "@title:group"
+msgid "Character Variants"
+msgstr ""
+
+#: src/app/settingsdialog.cpp:405
+#, kde-format
+msgctxt "@option:check"
+msgid "Search character variants"
+msgstr ""
+
+#: src/app/settingsdialog.cpp:407
+#, kde-format
+msgctxt "@info:tooltip"
+msgid ""
+"Substitute one character with a kana variant (は, ば, ぱ; つ, っ) or a "
+"similar character (カ, 力). Show variants that match more text than the "
+"original."
+msgstr ""
+
+#: src/app/settingsdialog.cpp:413
+#, kde-format
+msgctxt "@info:tooltip"
+msgid ""
+"Substitute characters with recognition confidence at or below the threshold. "
+"A value of 1 allows substitutions for all characters."
+msgstr ""
+
+#: src/app/settingsdialog.cpp:415
+#, kde-format
+msgctxt "@label:spinbox"
+msgid "Maximum confidence:"
+msgstr ""
+
+#: src/app/settingsdialog.cpp:418
+#, kde-format
+msgctxt "@option:check"
+msgid "Use with Chrome Screen AI"
+msgstr ""
+
+#: src/app/settingsdialog.cpp:422
+#, kde-format
+msgctxt "@info:tooltip"
+msgid ""
+"Chrome Screen AI provides no character confidence scores. All characters are "
+"eligible for substitution, which can produce incorrect matches and increase "
+"lookup time."
+msgstr ""
+
+#: src/app/settingsdialog.cpp:431 src/app/settingsdialog.cpp:437
+#, kde-format
+msgctxt "@item:inrange no limit"
+msgid "Unlimited"
+msgstr ""
+
+#: src/app/settingsdialog.cpp:433
+#, kde-format
+msgctxt "@info:tooltip"
+msgid ""
+"Maximum text length for character substitutions. Longer text is searched as "
+"recognized."
+msgstr ""
+
+#: src/app/settingsdialog.cpp:434
+#, kde-format
+msgctxt "@label:spinbox"
+msgid "Maximum variant length:"
+msgstr ""
+
+#: src/app/settingsdialog.cpp:439
+#, kde-format
+msgctxt "@info:tooltip"
+msgid ""
+"Maximum number of variant spellings to search per lookup. Shorter text is "
+"searched first. A lower limit can omit longer matches."
+msgstr ""
+
+#: src/app/settingsdialog.cpp:441
+#, kde-format
+msgctxt "@label:spinbox"
+msgid "Maximum variants:"
+msgstr ""
+
+#: src/app/settingsdialog.cpp:444
+#, kde-format
+msgctxt "@option:check"
+msgid "Limit to common or katakana words"
+msgstr ""
+
+#: src/app/settingsdialog.cpp:448
+#, kde-format
+msgctxt "@info:tooltip"
+msgid ""
+"Common words have a JMdict priority tag or a frequency rank of 20,000 or "
+"less in an enabled frequency dictionary. Katakana matches require both the "
+"matched text and headword to be katakana."
+msgstr ""
+
+#: src/app/settingsdialog.cpp:453
+#, kde-format
+msgctxt "@option:check"
+msgid "Include short and hiragana matches"
+msgstr ""
+
+#: src/app/settingsdialog.cpp:456
+#, kde-format
+msgctxt "@info:tooltip"
+msgid ""
+"Include hiragana-only variants and two-character variants other than two "
+"kanji. These substitutions can produce incorrect matches."
+msgstr ""
+
+#: src/app/settingsdialog.cpp:461
+#, kde-format
+msgctxt "@option:check"
+msgid "Search name dictionaries"
+msgstr ""
+
+#: src/app/settingsdialog.cpp:466
+#, kde-format
+msgctxt "@option:check"
+msgid "Prioritize longer variants"
+msgstr ""
+
+#: src/app/settingsdialog.cpp:468
+#, kde-format
+msgctxt "@info:tooltip"
+msgid ""
+"Show longer variant matches before shorter matches of the original text. "
+"Otherwise, show variants after all original matches."
+msgstr ""
+
+#: src/app/settingsdialog.cpp:482
+#, kde-format
+msgctxt "@title:group"
+msgid "Lookup Window"
+msgstr ""
+
+#: src/app/settingsdialog.cpp:486
+#, kde-format
+msgctxt "@info:tooltip"
+msgid ""
+"Maximum number of results in the lookup window. Open the window from the "
+"system tray menu or by middle-clicking the tray icon."
+msgstr ""
+
+#: src/app/settingsdialog.cpp:488
+#, kde-format
+msgctxt "@label:spinbox"
+msgid "Maximum results:"
+msgstr ""
+
+#: src/app/settingsdialog.cpp:491
+#, kde-format
+msgctxt "@option:check"
+msgid "Hide popup when lookup window is open"
+msgstr ""
+
+#: src/app/settingsdialog.cpp:495
+#, kde-format
+msgctxt "@title:group"
+msgid "Dictionaries"
+msgstr ""
+
+#: src/app/settingsdialog.cpp:498
+#, kde-format
+msgctxt "@action:button"
+msgid "Manage Dictionaries…"
+msgstr ""
+
+#: src/app/settingsdialog.cpp:516
+#, kde-format
+msgctxt "@title:group"
+msgid "Word Entries"
+msgstr ""
+
+#: src/app/settingsdialog.cpp:519
+#, kde-format
+msgctxt "@option:check"
+msgid "Show definitions on one line"
+msgstr ""
+
+#: src/app/settingsdialog.cpp:521
+#, kde-format
+msgctxt "@option:check"
+msgid "Show all glosses"
+msgstr ""
+
+#: src/app/settingsdialog.cpp:523
+#, kde-format
+msgctxt "@option:check"
+msgid "Show deconjugation"
+msgstr ""
+
+#: src/app/settingsdialog.cpp:525 src/dictui/configuredictionarydialog.cpp:117
+#, kde-format
+msgctxt "@option:check"
+msgid "Show part-of-speech tags"
+msgstr ""
+
+#: src/app/settingsdialog.cpp:527
+#, kde-format
+msgctxt "@option:check"
+msgid "Show field, dialect, and miscellaneous tags"
+msgstr ""
+
+#: src/app/settingsdialog.cpp:529
+#, kde-format
+msgctxt "@option:check"
+msgid "Show frequency rank"
+msgstr ""
+
+#: src/app/settingsdialog.cpp:531
+#, kde-format
+msgctxt "@option:check"
+msgid "Show alternative spellings"
+msgstr ""
+
+#: src/app/settingsdialog.cpp:533
+#, kde-format
+msgctxt "@option:check"
+msgid "Show pitch accent"
+msgstr ""
+
+#: src/app/settingsdialog.cpp:535
+#, kde-format
+msgctxt "@option:check"
+msgid "Show orthography tags"
+msgstr ""
+
+#: src/app/settingsdialog.cpp:537
+#, kde-format
+msgctxt "@option:check"
+msgid "Show dictionary names"
+msgstr ""
+
+#: src/app/settingsdialog.cpp:540
+#, kde-format
+msgctxt "@title:group"
+msgid "Kanji Entries"
+msgstr ""
+
+#: src/app/settingsdialog.cpp:542
+#, kde-format
+msgctxt "@option:check"
+msgid "Show kanji entries"
+msgstr ""
+
+#: src/app/settingsdialog.cpp:543
+#, kde-format
+msgctxt "@info:tooltip"
+msgid "Show kanji details for single-character lookups."
+msgstr ""
+
+#: src/app/settingsdialog.cpp:546
+#, kde-format
+msgctxt "@option:check"
+msgid "Show example words"
+msgstr ""
+
+#: src/app/settingsdialog.cpp:547
+#, kde-format
+msgctxt "@option:check"
+msgid "Show kanji components"
+msgstr ""
+
+#: src/app/settingsdialog.cpp:549
+#, kde-format
+msgctxt "@option:check"
+msgid "Show stroke count and grade"
+msgstr ""
+
+#: src/app/settingsdialog.cpp:582
+#, kde-format
+msgctxt "@title:group"
+msgid "Colors"
+msgstr ""
+
+#: src/app/settingsdialog.cpp:585
+#, kde-format
+msgctxt "@item:inlistbox popup color preset"
+msgid "Nazeka"
+msgstr ""
+
+#: src/app/settingsdialog.cpp:586
+#, kde-format
+msgctxt "@item:inlistbox popup color preset"
+msgid "Indigo"
+msgstr ""
+
+#: src/app/settingsdialog.cpp:587
+#, kde-format
+msgctxt "@item:inlistbox popup color preset"
+msgid "Slate"
+msgstr ""
+
+#: src/app/settingsdialog.cpp:588
+#, kde-format
+msgctxt "@item:inlistbox popup color preset"
+msgid "Light"
+msgstr ""
+
+#: src/app/settingsdialog.cpp:589
+#, kde-format
+msgctxt "@item:inlistbox popup color preset"
+msgid "Custom"
+msgstr ""
+
+#: src/app/settingsdialog.cpp:591
+#, kde-format
+msgctxt "@label:listbox"
+msgid "Preset:"
+msgstr ""
+
+#: src/app/settingsdialog.cpp:600
+#, kde-format
+msgctxt "@label:chooser"
+msgid "Background:"
+msgstr ""
+
+#: src/app/settingsdialog.cpp:601
+#, kde-format
+msgctxt "@label:chooser"
+msgid "Text:"
+msgstr ""
+
+#: src/app/settingsdialog.cpp:602
+#, kde-format
+msgctxt "@label:chooser"
+msgid "Headword:"
+msgstr ""
+
+#: src/app/settingsdialog.cpp:603
+#, kde-format
+msgctxt "@label:chooser"
+msgid "Reading:"
+msgstr ""
+
+#: src/app/settingsdialog.cpp:615
+#, kde-format
+msgctxt "@label:slider"
+msgid "Opacity:"
+msgstr ""
+
+#: src/app/settingsdialog.cpp:650
+#, kde-format
+msgctxt "@title:group"
+msgid "Text"
+msgstr ""
+
+#: src/app/settingsdialog.cpp:658
+#, kde-format
+msgctxt "@label:listbox"
+msgid "Font:"
+msgstr ""
+
+#: src/app/settingsdialog.cpp:660
+#, kde-format
+msgctxt "@label:spinbox"
+msgid "Headword size:"
+msgstr ""
+
+#: src/app/settingsdialog.cpp:661 src/app/settingsdialog.cpp:664
+#, kde-format
+msgctxt "@item:valuesuffix points"
+msgid " pt"
+msgstr ""
+
+#: src/app/settingsdialog.cpp:663
+#, kde-format
+msgctxt "@label:spinbox"
+msgid "Definition size:"
+msgstr ""
+
+#: src/app/settingsdialog.cpp:666
+#, kde-format
+msgctxt "@item:valuesuffix percent"
+msgid " %"
+msgstr ""
+
+#: src/app/settingsdialog.cpp:668
+#, kde-format
+msgctxt "@label:spinbox"
+msgid "Line height:"
+msgstr ""
+
+#: src/app/settingsdialog.cpp:670
+#, kde-format
+msgctxt "@label:spinbox"
+msgid "Entry spacing:"
+msgstr ""
+
+#: src/app/settingsdialog.cpp:674
+#, kde-format
+msgctxt "@title:group"
+msgid "Size & Position"
+msgstr ""
+
+#: src/app/settingsdialog.cpp:676
+#, kde-format
+msgctxt "@label:listbox"
+msgid "Position:"
+msgstr ""
+
+#: src/app/settingsdialog.cpp:678
+#, kde-format
+msgctxt "@item:inlistbox popup placement"
+msgid "Flip horizontally and vertically"
+msgstr ""
+
+#: src/app/settingsdialog.cpp:679
+#, kde-format
+msgctxt "@item:inlistbox popup placement"
+msgid "Flip vertically"
+msgstr ""
+
+#: src/app/settingsdialog.cpp:680
+#, kde-format
+msgctxt "@item:inlistbox popup placement"
+msgid "Flip horizontally"
+msgstr ""
+
+#: src/app/settingsdialog.cpp:681
+#, kde-format
+msgctxt "@item:inlistbox popup placement"
+msgid "Visual novel"
+msgstr ""
+
+#: src/app/settingsdialog.cpp:684
+#, kde-format
+msgctxt "@label:spinbox"
+msgid "Maximum width:"
+msgstr ""
+
+#: src/app/settingsdialog.cpp:688
+#, kde-format
+msgctxt "@label:spinbox"
+msgid "Maximum height:"
+msgstr ""
+
+#: src/app/settingsdialog.cpp:692
+#, kde-format
+msgctxt "@label:spinbox"
+msgid "Pointer offset:"
+msgstr ""
+
+#: src/app/settingsdialog.cpp:696
+#, kde-format
+msgctxt "@label:spinbox"
+msgid "Corner radius:"
+msgstr ""
+
+#: src/app/settingsdialog.cpp:700
+#, kde-format
+msgctxt "@label:spinbox"
+msgid "Fade duration:"
+msgstr ""
+
+#: src/app/settingsdialog.cpp:707
+#, kde-format
+msgctxt "@label"
+msgid "Preview:"
+msgstr ""
+
+#: src/app/settingsdialog.cpp:731
+#, kde-format
+msgctxt "@info"
+msgid ""
+"Global shortcuts work in any application. Configure them here or in System "
+"Settings under MaruPop."
+msgstr ""
+
+#: src/app/settingsdialog.cpp:790
+#, kde-format
+msgctxt "@action:button"
+msgid "Copy to Clipboard"
+msgstr ""
+
+#: src/app/settingsdialog.cpp:812
+#, kde-format
+msgctxt "@info"
+msgid "%1 global shortcut registered."
+msgid_plural "%1 global shortcuts registered."
+msgstr[0] ""
+msgstr[1] ""
+
+#: src/app/settingsdialog.cpp:814
+#, kde-format
+msgctxt "@info"
+msgid "Global shortcut registration failed."
+msgstr ""
+
+#: src/app/settingsdialog.cpp:817
+#, kde-format
+msgctxt "@info, %1 and %2 are counts of shortcuts"
+msgid "%1 of %2 global shortcuts registered."
+msgstr ""
+
+#: src/app/shortcutbutton.cpp:33
+#, kde-format
+msgctxt "@info:placeholder while recording a shortcut"
+msgid "Press a shortcut"
+msgstr ""
+
+#: src/app/shortcutbutton.cpp:77
+#, kde-format
+msgctxt "@action:button no shortcut is bound"
+msgid "None"
+msgstr ""
+
+#: src/app/shortcutregistry.cpp:46
+#, kde-format
+msgctxt "@action global shortcut"
+msgid "Toggle Scanning"
+msgstr ""
+
+#: src/app/shortcutregistry.cpp:49
+#, kde-format
+msgctxt "@action global shortcut"
+msgid "Copy Word"
+msgstr ""
+
+#: src/app/shortcutregistry.cpp:52
+#, kde-format
+msgctxt "@action global shortcut"
+msgid "Pin Popup"
+msgstr ""
+
+#: src/app/trayicon.cpp:40
+#, kde-format
+msgctxt "@action:inmenu"
+msgid "Enable Scanning"
+msgstr ""
+
+#: src/app/trayicon.cpp:45
+#, kde-format
+msgctxt "@action:inmenu"
+msgid "Lookup Window"
+msgstr ""
+
+#: src/app/trayicon.cpp:51
+#, kde-format
+msgctxt "@action:inmenu"
+msgid "Manage Dictionaries…"
+msgstr ""
+
+#: src/app/trayicon.cpp:54
+#, kde-format
+msgctxt "@action:inmenu"
+msgid "Configure MaruPop…"
+msgstr ""
+
+#: src/app/trayicon.cpp:57
+#, kde-format
+msgctxt "@action:inmenu"
+msgid "About MaruPop"
+msgstr ""
+
+#: src/app/trayicon.cpp:62
+#, kde-format
+msgctxt "@action:inmenu"
+msgid "Quit"
+msgstr ""
+
+#: src/app/trayicon.cpp:131
+#, kde-format
+msgctxt "@info:tooltip scanning state"
+msgid "Scanning"
+msgstr ""
+
+#: src/app/trayicon.cpp:132
+#, kde-format
+msgctxt "@info:tooltip scanning state"
+msgid "Paused"
+msgstr ""
+
+#: src/app/wlrshortcuts.cpp:87 src/capture/wlrframesource.cpp:140
+#, kde-format
+msgid "The application is not connected to a Wayland compositor."
+msgstr ""
+
+#: src/app/wlrshortcuts.cpp:94
+#, kde-format
+msgid ""
+"Global shortcuts unavailable: the compositor does not support "
+"hyprland_global_shortcuts_manager_v1."
+msgstr ""
+
+#: src/app/wlrshortcuts.cpp:192
+#, kde-format
+msgid ""
+"To configure global shortcuts, add these lines to %1 and reload the "
+"configuration:"
+msgstr ""
+
+#: src/capture/authorization.cpp:97
+#, kde-format
+msgctxt "@info authorization report"
+msgid "  Executable not found."
+msgstr ""
+
+#: src/capture/authorization.cpp:103
+#, kde-format
+msgctxt "@info authorization report"
+msgid ""
+"  Screen capture denied: no installed desktop entry has an Exec matching the "
+"executable path."
+msgstr ""
+
+#: src/capture/authorization.cpp:104
+#, kde-format
+msgctxt "@info authorization report"
+msgid "  Install the desktop entry and run kbuildsycoca6."
+msgstr ""
+
+#: src/capture/authorization.cpp:108
+#, kde-format
+msgctxt "@info authorization report, an empty list of interfaces"
+msgid "(none)"
+msgstr ""
+
+#: src/capture/authorization.cpp:109
+#, kde-format
+msgctxt "@info authorization report"
+msgid "  Desktop entry: %1"
+msgstr ""
+
+#: src/capture/authorization.cpp:111
+#, kde-format
+msgctxt "@info authorization report"
+msgid "  X-KDE-Wayland-Interfaces: %1"
+msgstr ""
+
+#: src/capture/authorization.cpp:114
+#, kde-format
+msgctxt "@info authorization report"
+msgid "  X-KDE-DBUS-Restricted-Interfaces: %1"
+msgstr ""
+
+#: src/capture/authorization.cpp:118
+#, kde-format
+msgctxt "@info authorization report"
+msgid "  Screenshots: authorized."
+msgstr ""
+
+#: src/capture/authorization.cpp:120
+#, kde-format
+msgctxt "@info authorization report"
+msgid "  Authorization missing: %1."
+msgstr ""
+
+#: src/capture/wlrframesource.cpp:146 src/platform/backend.cpp:215
+#, kde-format
+msgid ""
+"Screen capture unavailable: the compositor does not support "
+"zwlr_screencopy_manager_v1."
+msgstr ""
+
+#: src/capture/wlrframesource.cpp:208
+#, kde-format
+msgid "No screen found at %1, %2."
+msgstr ""
+
+#: src/capture/wlrframesource.cpp:219
+#, kde-format
+msgid "Capture area at %1, %2 is outside all screens."
+msgstr ""
+
+#: src/capture/wlrframesource.cpp:289
+#, kde-format
+msgid "The compositor provides no supported image format."
+msgstr ""
+
+#: src/capture/wlrframesource.cpp:295
+#, kde-format
+msgid "Could not allocate a shared-memory buffer of %1 × %2 pixels."
+msgstr ""
+
+#: src/capture/wlrframesource.cpp:319
+#, kde-format
+msgid "Screen capture was denied. If %1 is enabled, add this line to %2: %3"
+msgstr ""
+
+#: src/capture/wlrframesource.cpp:396
+#, kde-format
+msgid ""
+"Screen capture timed out after %1 ms. If %2 is enabled, accept the screen "
+"capture prompt or add this line to %3: %4"
+msgstr ""
+
+#: src/cursor/hyprcursortracker.cpp:74
+#, kde-format
+msgid "Pointer tracking unavailable: HYPRLAND_INSTANCE_SIGNATURE is unset."
+msgstr ""
+
+#: src/cursor/hyprcursortracker.cpp:234
+#, kde-format
+msgid "Hyprland socket not found: %1."
+msgstr ""
+
+#: src/cursor/hyprcursortracker.cpp:237
+#, kde-format
+msgid "Could not read the pointer position from %1."
+msgstr ""
+
+#: src/cursor/kwinscriptrelay.cpp:260
+#, kde-format
+msgctxt "@info cursor relay status"
+msgid "The pointer relay could not be exported on the session bus."
+msgstr ""
+
+#: src/cursor/kwinscriptrelay.cpp:268
+#, kde-format
+msgctxt "@info cursor relay status"
+msgid "The KWin script package could not be written to %1."
+msgstr ""
+
+#: src/cursor/kwinscriptrelay.cpp:275 src/cursor/kwinscriptrelay.cpp:406
+#: src/cursor/kwinscriptrelay.cpp:449
+#, kde-format
+msgctxt "@info cursor relay status"
+msgid "Pointer tracking unavailable: KWin is not running."
+msgstr ""
+
+#: src/cursor/kwinscriptrelay.cpp:295
+#, kde-format
+msgctxt "@info cursor relay status"
+msgid "Pointer tracking stopped."
+msgstr ""
+
+#: src/cursor/kwinscriptrelay.cpp:355
+#, kde-format
+msgctxt "@info cursor relay status"
+msgid "Could not load the pointer tracking script in KWin: %1"
+msgstr ""
+
+#: src/cursor/kwinscriptrelay.cpp:364
+#, kde-format
+msgctxt "@info cursor relay status"
+msgid "The pointer tracking script is registered with KWin but is not running."
+msgstr ""
+
+#: src/cursor/kwinscriptrelay.cpp:381
+#, kde-format
+msgctxt "@info cursor relay status"
+msgid "KWin could not run the pointer relay script: %1"
+msgstr ""
+
+#: src/cursor/kwinscriptrelay.cpp:388
+#, kde-format
+msgctxt "@info cursor relay status"
+msgid "Could not start the pointer tracking script in KWin."
+msgstr ""
+
+#: src/cursor/kwinscriptrelay.cpp:410
+#, kde-format
+msgctxt "@info cursor relay status"
+msgid "The pointer tracking script is not running in KWin."
+msgstr ""
+
+#: src/cursor/kwinscriptrelay.cpp:412
+#, kde-format
+msgctxt "@info cursor relay status"
+msgid ""
+"Enable the MaruPop cursor relay in System Settings > Window Management > "
+"KWin Scripts."
+msgstr ""
+
+#: src/dict/dictionarydownloadjob.cpp:60 src/dict/dictionarydownloadjob.cpp:94
+#: src/dict/dictionarydownloadjob.cpp:119
+#: src/dict/dictionarydownloadjob.cpp:143
+#, kde-format
+msgid "Cannot write to %1: %2"
+msgstr ""
+
+#: src/dict/dictionarydownloadjob.cpp:106
+#, kde-format
+msgid "Cannot read the downloaded file %1"
+msgstr ""
+
+#: src/dict/dictionarydownloadjob.cpp:126
+#: src/dict/dictionarydownloadjob.cpp:136
+#, kde-format
+msgid "Cannot decompress %1"
+msgstr ""
+
+#: src/dict/dictionarydownloadjob.cpp:153
+#: src/dict/dictionarydownloadjob.cpp:161
+#, kde-format
+msgid "Cannot move %1 into place"
+msgstr ""
+
+#: src/dict/dictionarydownloadjob.cpp:200
+#, kde-format
+msgid "Cannot download %1: %2"
+msgstr ""
+
+#: src/dict/dictionaryimportjob.cpp:145
+#, kde-format
+msgid "Cannot import the dictionary"
+msgstr ""
+
+#: src/dictui/addcustomentrydialog.cpp:50
+#, kde-format
+msgctxt "@title:window"
+msgid "Add Word"
+msgstr ""
+
+#: src/dictui/addcustomentrydialog.cpp:50
+#, kde-format
+msgctxt "@title:window"
+msgid "Add Name"
+msgstr ""
+
+#: src/dictui/addcustomentrydialog.cpp:69
+#, kde-format
+msgctxt "@label:listbox"
+msgid "Add to:"
+msgstr ""
+
+#: src/dictui/addcustomentrydialog.cpp:111
+#, kde-format
+msgctxt "@info:placeholder"
+msgid "Separate spellings with semicolons"
+msgstr ""
+
+#: src/dictui/addcustomentrydialog.cpp:112
+#, kde-format
+msgctxt "@label:textbox"
+msgid "Spellings:"
+msgstr ""
+
+#: src/dictui/addcustomentrydialog.cpp:116
+#, kde-format
+msgctxt "@info:placeholder"
+msgid "Separate readings with semicolons"
+msgstr ""
+
+#: src/dictui/addcustomentrydialog.cpp:117
+#, kde-format
+msgctxt "@label:textbox"
+msgid "Readings:"
+msgstr ""
+
+#: src/dictui/addcustomentrydialog.cpp:125
+#, kde-format
+msgctxt "@info:placeholder"
+msgid "Separate definitions with semicolons. Line breaks are preserved."
+msgstr ""
+
+#: src/dictui/addcustomentrydialog.cpp:129
+#, kde-format
+msgctxt "@label:textbox"
+msgid "Definitions:"
+msgstr ""
+
+#: src/dictui/addcustomentrydialog.cpp:141
+#, kde-format
+msgctxt "@option:radio part of speech"
+msgid "Verb"
+msgstr ""
+
+#: src/dictui/addcustomentrydialog.cpp:142
+#, kde-format
+msgctxt "@option:radio part of speech"
+msgid "Adjective"
+msgstr ""
+
+#: src/dictui/addcustomentrydialog.cpp:143
+#, kde-format
+msgctxt "@option:radio part of speech"
+msgid "Noun"
+msgstr ""
+
+#: src/dictui/addcustomentrydialog.cpp:144
+#, kde-format
+msgctxt "@option:radio part of speech"
+msgid "Other"
+msgstr ""
+
+#: src/dictui/addcustomentrydialog.cpp:147
+#, kde-format
+msgctxt "@label"
+msgid "Part of speech:"
+msgstr ""
+
+#: src/dictui/addcustomentrydialog.cpp:151
+#, kde-format
+msgctxt "@info:placeholder"
+msgid "For example: v5r;vt"
+msgstr ""
+
+#: src/dictui/addcustomentrydialog.cpp:154
+#, kde-format
+msgctxt "@info:tooltip"
+msgid ""
+"JMdict part-of-speech tags used for deconjugation. Leave empty to use the "
+"selected part of speech."
+msgstr ""
+
+#: src/dictui/addcustomentrydialog.cpp:155
+#, kde-format
+msgctxt "@label:textbox"
+msgid "Part-of-speech tags:"
+msgstr ""
+
+#: src/dictui/addcustomentrydialog.cpp:162
+#, kde-format
+msgctxt "@label:textbox"
+msgid "Spelling:"
+msgstr ""
+
+#: src/dictui/addcustomentrydialog.cpp:166
+#, kde-format
+msgctxt "@label:textbox"
+msgid "Reading:"
+msgstr ""
+
+#: src/dictui/addcustomentrydialog.cpp:172
+#, kde-format
+msgctxt "@item:inlistbox name type"
+msgid "Surname"
+msgstr ""
+
+#: src/dictui/addcustomentrydialog.cpp:173
+#, kde-format
+msgctxt "@item:inlistbox name type"
+msgid "Female"
+msgstr ""
+
+#: src/dictui/addcustomentrydialog.cpp:174
+#, kde-format
+msgctxt "@item:inlistbox name type"
+msgid "Male"
+msgstr ""
+
+#: src/dictui/addcustomentrydialog.cpp:175
+#, kde-format
+msgctxt "@item:inlistbox name type"
+msgid "Given"
+msgstr ""
+
+#: src/dictui/addcustomentrydialog.cpp:176
+#, kde-format
+msgctxt "@item:inlistbox name type"
+msgid "Place"
+msgstr ""
+
+#: src/dictui/addcustomentrydialog.cpp:177
+#, kde-format
+msgctxt "@item:inlistbox name type"
+msgid "Organization"
+msgstr ""
+
+#: src/dictui/addcustomentrydialog.cpp:178
+#, kde-format
+msgctxt "@item:inlistbox name type"
+msgid "Other"
+msgstr ""
+
+#: src/dictui/addcustomentrydialog.cpp:179
+#, kde-format
+msgctxt "@label:listbox"
+msgid "Name type:"
+msgstr ""
+
+#: src/dictui/addcustomentrydialog.cpp:184
+#, kde-format
+msgctxt "@label:textbox"
+msgid "Notes:"
+msgstr ""
+
+#: src/dictui/addcustomentrydialog.cpp:210
+#, kde-format
+msgctxt "@info"
+msgid "Select a word or name list."
+msgstr ""
+
+#: src/dictui/addcustomentrydialog.cpp:217
+#, kde-format
+msgctxt "@info"
+msgid "Enter at least one spelling."
+msgstr ""
+
+#: src/dictui/addcustomentrydialog.cpp:222
+#, kde-format
+msgctxt "@info"
+msgid "Enter at least one definition."
+msgstr ""
+
+#: src/dictui/addcustomentrydialog.cpp:232
+#: src/dictui/addcustomentrydialog.cpp:251
+#, kde-kuit-format
+msgctxt "@info"
+msgid "<filename>%1</filename> could not be written."
+msgstr ""
+
+#: src/dictui/addcustomentrydialog.cpp:238
+#, kde-format
+msgctxt "@info"
+msgid "Enter the spelling of the name."
+msgstr ""
+
+#: src/dictui/addcustomentrydialog.cpp:243
+#, kde-format
+msgctxt "@info"
+msgid "Choose or type a name type."
+msgstr ""
+
+#: src/dictui/adddictionarydialog.cpp:64
+#, kde-format
+msgctxt "@title:window"
+msgid "Add Dictionary"
+msgstr ""
+
+#: src/dictui/adddictionarydialog.cpp:91
+#, kde-format
+msgctxt "@label:listbox"
+msgid "Format:"
+msgstr ""
+
+#: src/dictui/adddictionarydialog.cpp:95
+#, kde-format
+msgctxt "@label:textbox"
+msgid "Location:"
+msgstr ""
+
+#: src/dictui/adddictionarydialog.cpp:100
+#: src/dictui/configuredictionarydialog.cpp:248
+#, kde-format
+msgctxt "@label:textbox"
+msgid "Name:"
+msgstr ""
+
+#: src/dictui/adddictionarydialog.cpp:107
+#, kde-format
+msgctxt "@label:listbox what kind of dictionary the source holds"
+msgid "Dictionary type:"
+msgstr ""
+
+#: src/dictui/adddictionarydialog.cpp:128
+#, kde-format
+msgctxt "@item:inlistbox dictionary format"
+msgid "Yomitan / Yomichan (folder or .zip)"
+msgstr ""
+
+#: src/dictui/adddictionarydialog.cpp:130
+#, kde-format
+msgctxt "@item:inlistbox dictionary format"
+msgid "Custom word list (.txt)"
+msgstr ""
+
+#: src/dictui/adddictionarydialog.cpp:132
+#, kde-format
+msgctxt "@item:inlistbox dictionary format"
+msgid "Custom name list (.txt)"
+msgstr ""
+
+#: src/dictui/adddictionarydialog.cpp:142
+#, kde-format
+msgctxt "@item:inlistbox a built-in dictionary offered for download"
+msgid "Download %1"
+msgstr ""
+
+#: src/dictui/adddictionarydialog.cpp:206
+#: src/dictui/configuredictionarydialog.cpp:358
+#, kde-format
+msgctxt "@item:inlistbox file filter"
+msgid "Yomitan dictionary archive (*.zip)"
+msgstr ""
+
+#: src/dictui/adddictionarydialog.cpp:207
+#: src/dictui/adddictionarydialog.cpp:211
+#, kde-format
+msgctxt "@item:inlistbox file filter"
+msgid "All files (*)"
+msgstr ""
+
+#: src/dictui/adddictionarydialog.cpp:210
+#, kde-format
+msgctxt "@item:inlistbox file filter"
+msgid "Text file (*.txt)"
+msgstr ""
+
+#: src/dictui/adddictionarydialog.cpp:279
+#, kde-format
+msgctxt "@info"
+msgid "Enter a name for the dictionary."
+msgstr ""
+
+#: src/dictui/adddictionarydialog.cpp:283
+#, kde-kuit-format
+msgctxt "@info"
+msgid ""
+"A dictionary named <resource>%1</resource> already exists. Choose another "
+"name."
+msgstr ""
+
+#: src/dictui/adddictionarydialog.cpp:290
+#, kde-format
+msgctxt "@info"
+msgid "Select a dictionary file or folder."
+msgstr ""
+
+#: src/dictui/adddictionarydialog.cpp:295
+#, kde-kuit-format
+msgctxt "@info"
+msgid "<filename>%1</filename> does not exist."
+msgstr ""
+
+#: src/dictui/adddictionarydialog.cpp:299
+#, kde-kuit-format
+msgctxt "@info"
+msgid "The folder of <filename>%1</filename> does not exist."
+msgstr ""
+
+#: src/dictui/adddictionarydialog.cpp:306
+#, kde-kuit-format
+msgctxt "@info"
+msgid "<resource>%1</resource> already uses <filename>%2</filename>."
+msgstr ""
+
+#: src/dictui/adddictionarydialog.cpp:312
+#, kde-kuit-format
+msgctxt "@info"
+msgid ""
+"No Yomitan bank files found in <filename>%1</filename>. Select the folder "
+"containing <filename>index.json</filename> or the downloaded .zip file."
+msgstr ""
+
+#: src/dictui/adddictionarydialog.cpp:325
+#, kde-kuit-format
+msgctxt "@info"
+msgid ""
+"Could not read dictionary metadata from <filename>index.json</filename>. "
+"Import can continue."
+msgstr ""
+
+#: src/dictui/adddictionarydialog.cpp:376
+#, kde-kuit-format
+msgctxt "@info"
+msgid "<filename>%1</filename> could not be created: %2"
+msgstr ""
+
+#: src/dictui/configuredictionarydialog.cpp:111
+#, kde-format
+msgctxt "@option:check"
+msgid "Show definitions on separate lines"
+msgstr ""
+
+#: src/dictui/configuredictionarydialog.cpp:118
+#, kde-format
+msgctxt "@info:tooltip"
+msgid "JMdict tags, such as n (noun) or v5s (godan verb ending in su)."
+msgstr ""
+
+#: src/dictui/configuredictionarydialog.cpp:123
+#, kde-format
+msgctxt "@option:check"
+msgid "Show dialect tags"
+msgstr ""
+
+#: src/dictui/configuredictionarydialog.cpp:129
+#, kde-format
+msgctxt "@option:check"
+msgid "Show headword orthography tags"
+msgstr ""
+
+#: src/dictui/configuredictionarydialog.cpp:135
+#, kde-format
+msgctxt "@option:check"
+msgid "Show alternative spelling tags"
+msgstr ""
+
+#: src/dictui/configuredictionarydialog.cpp:141
+#, kde-format
+msgctxt "@option:check"
+msgid "Show reading orthography tags"
+msgstr ""
+
+#: src/dictui/configuredictionarydialog.cpp:147
+#, kde-format
+msgctxt "@option:check"
+msgid "Show field tags"
+msgstr ""
+
+#: src/dictui/configuredictionarydialog.cpp:148
+#, kde-format
+msgctxt "@info:tooltip"
+msgid "Subject tags, such as comp (computing) or sports."
+msgstr ""
+
+#: src/dictui/configuredictionarydialog.cpp:153
+#, kde-format
+msgctxt "@option:check"
+msgid "Show spelling restrictions"
+msgstr ""
+
+#: src/dictui/configuredictionarydialog.cpp:154
+#, kde-format
+msgctxt "@info:tooltip"
+msgid "For example “only applies to 或る”."
+msgstr ""
+
+#: src/dictui/configuredictionarydialog.cpp:159
+#, kde-format
+msgctxt "@option:check"
+msgid "Show definition notes"
+msgstr ""
+
+#: src/dictui/configuredictionarydialog.cpp:160
+#, kde-format
+msgctxt "@info:tooltip"
+msgid "For example “often derogatory”."
+msgstr ""
+
+#: src/dictui/configuredictionarydialog.cpp:165
+#, kde-format
+msgctxt "@option:check"
+msgid "Show miscellaneous tags"
+msgstr ""
+
+#: src/dictui/configuredictionarydialog.cpp:167
+#, kde-format
+msgctxt "@info:tooltip"
+msgid ""
+"Usage tags, such as uk (usually kana), col (colloquial), or euph "
+"(euphemistic)."
+msgstr ""
+
+#: src/dictui/configuredictionarydialog.cpp:172
+#, kde-format
+msgctxt "@option:check"
+msgid "Show loanword etymology"
+msgstr ""
+
+#: src/dictui/configuredictionarydialog.cpp:178
+#, kde-format
+msgctxt "@option:check"
+msgid "Show cross-references"
+msgstr ""
+
+#: src/dictui/configuredictionarydialog.cpp:184
+#, kde-format
+msgctxt "@option:check"
+msgid "Show images"
+msgstr ""
+
+#: src/dictui/configuredictionarydialog.cpp:190
+#, kde-format
+msgctxt "@option:check"
+msgid "Use occurrence counts"
+msgstr ""
+
+#: src/dictui/configuredictionarydialog.cpp:192
+#, kde-format
+msgctxt "@info:tooltip"
+msgid ""
+"Higher counts indicate more frequent words. With this option disabled, "
+"values are ranks: lower ranks indicate more frequent words."
+msgstr ""
+
+#: src/dictui/configuredictionarydialog.cpp:198
+#, kde-format
+msgctxt "@option:check"
+msgid "Import proper name entries"
+msgstr ""
+
+#: src/dictui/configuredictionarydialog.cpp:199
+#, kde-format
+msgctxt "@info:tooltip"
+msgid "JMdict proper names can duplicate entries in JMnedict."
+msgstr ""
+
+#: src/dictui/configuredictionarydialog.cpp:217
+#, kde-format
+msgctxt "@title:window"
+msgid "Configure Dictionary"
+msgstr ""
+
+#: src/dictui/configuredictionarydialog.cpp:222
+#, kde-format
+msgctxt "@title:window"
+msgid "Configure Dictionary — %1"
+msgstr ""
+
+#: src/dictui/configuredictionarydialog.cpp:239
+#, kde-format
+msgctxt "@info"
+msgid "Applying these changes will reimport the dictionary."
+msgstr ""
+
+#: src/dictui/configuredictionarydialog.cpp:243
+#, kde-format
+msgctxt "@title:group"
+msgid "General"
+msgstr ""
+
+#: src/dictui/configuredictionarydialog.cpp:250
+#, kde-format
+msgctxt "@option:check"
+msgid "Enable dictionary"
+msgstr ""
+
+#: src/dictui/configuredictionarydialog.cpp:256
+#, kde-format
+msgctxt "@option:check"
+msgid "Exclude from combined results"
+msgstr ""
+
+#: src/dictui/configuredictionarydialog.cpp:259
+#, kde-format
+msgctxt "@info:tooltip"
+msgid "Search this dictionary only when its category is selected."
+msgstr ""
+
+#: src/dictui/configuredictionarydialog.cpp:270
+#, kde-format
+msgctxt "@info:placeholder"
+msgid "Not downloaded"
+msgstr ""
+
+#: src/dictui/configuredictionarydialog.cpp:275
+#, kde-format
+msgctxt "@action:button"
+msgid "Change…"
+msgstr ""
+
+#: src/dictui/configuredictionarydialog.cpp:281
+#, kde-format
+msgctxt "@label:textbox"
+msgid "Source:"
+msgstr ""
+
+#: src/dictui/configuredictionarydialog.cpp:288
+#, kde-format
+msgctxt "@title:group"
+msgid "Display"
+msgstr ""
+
+#: src/dictui/configuredictionarydialog.cpp:290
+#, kde-format
+msgctxt "@title:group"
+msgid "Import"
+msgstr ""
+
+#: src/dictui/configuredictionarydialog.cpp:315
+#, kde-format
+msgctxt "@title:group"
+msgid "Updates"
+msgstr ""
+
+#: src/dictui/configuredictionarydialog.cpp:321
+#, kde-format
+msgctxt "@item:valuesuffix zero disables the check"
+msgid "Never"
+msgstr ""
+
+#: src/dictui/configuredictionarydialog.cpp:323
+#: src/dictui/configuredictionarydialog.cpp:325
+#, kde-format
+msgctxt "@item:valuesuffix"
+msgid " day"
+msgid_plural " days"
+msgstr[0] ""
+msgstr[1] ""
+
+#: src/dictui/configuredictionarydialog.cpp:327
+#, kde-format
+msgctxt "@label:spinbox"
+msgid "Check for updates every:"
+msgstr ""
+
+#: src/dictui/configuredictionarydialog.cpp:344
+#, kde-format
+msgctxt "@action:inmenu"
+msgid "Choose Folder…"
+msgstr ""
+
+#: src/dictui/configuredictionarydialog.cpp:345
+#, kde-format
+msgctxt "@action:inmenu"
+msgid "Choose Archive File…"
+msgstr ""
+
+#: src/dictui/configuredictionarydialog.cpp:353
+#, kde-format
+msgctxt "@title:window"
+msgid "Choose Dictionary Folder"
+msgstr ""
+
+#: src/dictui/configuredictionarydialog.cpp:356
+#, kde-format
+msgctxt "@title:window"
+msgid "Choose Dictionary Archive"
+msgstr ""
+
+#: src/dictui/dictionarymanagerdialog.cpp:90
+#, kde-format
+msgctxt "@title:window"
+msgid "Manage Dictionaries"
+msgstr ""
+
+#: src/dictui/dictionarymanagerdialog.cpp:96
+#, kde-kuit-format
+msgctxt "@info"
+msgid ""
+"Delete imported data and extracted files for <resource>%1</resource>? The "
+"dictionary remains in the list for download."
+msgstr ""
+
+#: src/dictui/dictionarymanagerdialog.cpp:102
+#, kde-kuit-format
+msgctxt "@info"
+msgid ""
+"Remove <resource>%1</resource> from the list and delete its imported data "
+"and extracted files?"
+msgstr ""
+
+#: src/dictui/dictionarymanagerdialog.cpp:107
+#, kde-format
+msgctxt "@title:window"
+msgid "Delete Dictionary"
+msgstr ""
+
+#: src/dictui/dictionarymanagerdialog.cpp:108
+#, kde-format
+msgctxt "@action:button"
+msgid "Delete"
+msgstr ""
+
+#: src/dictui/dictionarymanagerdialog.cpp:152
+#, kde-format
+msgctxt "@action"
+msgid "Add Dictionary…"
+msgstr ""
+
+#: src/dictui/dictionarymanagerdialog.cpp:156
+#, kde-format
+msgctxt "@action"
+msgid "Auto-Sort Dictionaries"
+msgstr ""
+
+#: src/dictui/dictionarymanagerdialog.cpp:160
+#, kde-format
+msgctxt "@info:tooltip"
+msgid ""
+"Sort dictionaries by the predefined name order and enable matching "
+"dictionaries."
+msgstr ""
+
+#: src/dictui/dictionarymanagerdialog.cpp:163
+#, kde-format
+msgctxt "@action"
+msgid "Configure Dictionary…"
+msgstr ""
+
+#: src/dictui/dictionarymanagerdialog.cpp:167
+#, kde-format
+msgctxt "@action"
+msgid "Delete Dictionary"
+msgstr ""
+
+#: src/dictui/dictionarymanagerdialog.cpp:171
+#: src/dictui/dictionarymanagerdialog.cpp:380
+#, kde-format
+msgctxt "@action"
+msgid "Check for Updates"
+msgstr ""
+
+#: src/dictui/dictionarymanagerdialog.cpp:175
+#, kde-format
+msgctxt "@action"
+msgid "Move Up"
+msgstr ""
+
+#: src/dictui/dictionarymanagerdialog.cpp:181
+#, kde-format
+msgctxt "@action"
+msgid "Move Down"
+msgstr ""
+
+#: src/dictui/dictionarymanagerdialog.cpp:187
+#, kde-format
+msgctxt "@action"
+msgid "Move to Top"
+msgstr ""
+
+#: src/dictui/dictionarymanagerdialog.cpp:192
+#, kde-format
+msgctxt "@action"
+msgid "Move to Bottom"
+msgstr ""
+
+#: src/dictui/dictionarymanagerdialog.cpp:197
+#, kde-format
+msgctxt "@action"
+msgid "Open Containing Folder"
+msgstr ""
+
+#: src/dictui/dictionarymanagerdialog.cpp:201
+#, kde-format
+msgctxt "@action"
+msgid "Add Word…"
+msgstr ""
+
+#: src/dictui/dictionarymanagerdialog.cpp:205
+#, kde-format
+msgctxt "@action"
+msgid "Add Name…"
+msgstr ""
+
+#: src/dictui/dictionarymanagerdialog.cpp:215
+#, kde-format
+msgctxt "@info:tooltip"
+msgid "Move the dictionary up. Ctrl+Shift+Up moves it to the top."
+msgstr ""
+
+#: src/dictui/dictionarymanagerdialog.cpp:217
+#, kde-format
+msgctxt "@info:tooltip"
+msgid "Move the dictionary down. Ctrl+Shift+Down moves it to the bottom."
+msgstr ""
+
+#: src/dictui/dictionarymanagerdialog.cpp:226
+#, kde-format
+msgctxt "@action:inmenu"
+msgid "Import Yomitan Dictionary…"
+msgstr ""
+
+#: src/dictui/dictionarymanagerdialog.cpp:230
+#, kde-format
+msgctxt "@action:inmenu"
+msgid "Download Dictionary"
+msgstr ""
+
+#: src/dictui/dictionarymanagerdialog.cpp:242
+#, kde-format
+msgctxt "@action:inmenu"
+msgid "Custom Word List…"
+msgstr ""
+
+#: src/dictui/dictionarymanagerdialog.cpp:245
+#, kde-format
+msgctxt "@action:inmenu"
+msgid "Custom Name List…"
+msgstr ""
+
+#: src/dictui/dictionarymanagerdialog.cpp:380
+#, kde-format
+msgctxt "@action"
+msgid "Download"
+msgstr ""
+
+#: src/dictui/dictionarymanagerdialog.cpp:498
+#, kde-kuit-format
+msgctxt "@info"
+msgid "Imported data for <resource>%1</resource> deleted."
+msgstr ""
+
+#: src/dictui/dictionarymanagerdialog.cpp:503
+#, kde-format
+msgctxt "@action:button"
+msgid "Undo"
+msgstr ""
+
+#: src/dictui/dictionarymanagerdialog.cpp:505
+#, kde-kuit-format
+msgctxt "@info"
+msgid "<resource>%1</resource> was removed."
+msgstr ""
+
+#: src/dictui/dictionarymanagerdialog.cpp:555
+#, kde-format
+msgctxt "@info"
+msgid "Add a custom word list first: Add Dictionary, then Custom Word List."
+msgstr ""
+
+#: src/dictui/dictionarymanagerdialog.cpp:556
+#, kde-format
+msgctxt "@info"
+msgid "Add a custom name list first: Add Dictionary, then Custom Name List."
+msgstr ""
+
+#: src/dictui/dictionarymanagerdialog.cpp:609
+#, kde-format
+msgctxt "@info:progress"
+msgid "Downloading %1…"
+msgstr ""
+
+#: src/dictui/dictionarymanagerdialog.cpp:613
+#, kde-format
+msgctxt "@info:progress"
+msgid "Importing %1…"
+msgstr ""
+
+#: src/dictui/dictionarymanagerdialog.cpp:617
+#, kde-format
+msgctxt "@info:progress"
+msgid "Checking %1 for updates…"
+msgstr ""
+
+#: src/dictui/dictionarymanagerdialog.cpp:623
+#, kde-kuit-format
+msgctxt "@info"
+msgid "Select a source for <resource>%1</resource> in Configure Dictionary."
+msgstr ""
+
+#: src/dictui/dictionarymanagerdialog.cpp:670
+#: src/dictui/dictionarymanagerdialog.cpp:721
+#, kde-format
+msgctxt "@action:button"
+msgid "Retry"
+msgstr ""
+
+#: src/dictui/dictionarymanagerdialog.cpp:677
+#, kde-kuit-format
+msgctxt "@info"
+msgid "<resource>%1</resource> could not be downloaded: %2"
+msgstr ""
+
+#: src/dictui/dictionarymanagerdialog.cpp:692
+#, kde-kuit-format
+msgctxt "@info"
+msgid "<resource>%1</resource> is already up to date."
+msgstr ""
+
+#: src/dictui/dictionarymanagerdialog.cpp:711
+#, kde-format
+msgctxt "@action:button"
+msgid "Configure Dictionary…"
+msgstr ""
+
+#: src/dictui/dictionarymanagerdialog.cpp:729
+#, kde-kuit-format
+msgctxt "@info"
+msgid "<resource>%1</resource> could not be imported: %2"
+msgstr ""
+
+#: src/dictui/dictionarymanagerdialog.cpp:737
+#, kde-kuit-format
+msgctxt "@info"
+msgid "<resource>%1</resource> was imported but could not be opened."
+msgstr ""
+
+#: src/dictui/dictionarymanagerdialog.cpp:744
+#, kde-kuit-format
+msgctxt "@info"
+msgid "<resource>%1</resource> was imported: %2 entries."
+msgstr ""
+
+#: src/dictui/dictionarymanagerdialog.cpp:760
+#, kde-kuit-format
+msgctxt "@info"
+msgid "<resource>%1</resource> could not be checked for updates: %2"
+msgstr ""
+
+#: src/dictui/dictionarymanagerdialog.cpp:767
+#, kde-kuit-format
+msgctxt "@info"
+msgid "<resource>%1</resource> is up to date."
+msgstr ""
+
+#: src/dictui/dictionarymanagerdialog.cpp:777
+#, kde-kuit-format
+msgctxt "@info"
+msgid "An update for <resource>%1</resource> is available."
+msgstr ""
+
+#: src/dictui/dictionarymodel.cpp:42
+#, kde-format
+msgctxt "@item dictionary type"
+msgid "JMdict"
+msgstr ""
+
+#: src/dictui/dictionarymodel.cpp:44
+#, kde-format
+msgctxt "@item dictionary type"
+msgid "JMnedict"
+msgstr ""
+
+#: src/dictui/dictionarymodel.cpp:46
+#, kde-format
+msgctxt "@item dictionary type"
+msgid "KANJIDIC2"
+msgstr ""
+
+#: src/dictui/dictionarymodel.cpp:48
+#, kde-format
+msgctxt "@item dictionary type"
+msgid "Word dictionary (Yomitan)"
+msgstr ""
+
+#: src/dictui/dictionarymodel.cpp:50
+#, kde-format
+msgctxt "@item dictionary type"
+msgid "Kanji dictionary (Yomitan)"
+msgstr ""
+
+#: src/dictui/dictionarymodel.cpp:52
+#, kde-format
+msgctxt "@item dictionary type"
+msgid "Kanji dictionary in term-bank format (Yomitan)"
+msgstr ""
+
+#: src/dictui/dictionarymodel.cpp:54
+#, kde-format
+msgctxt "@item dictionary type"
+msgid "Name dictionary (Yomitan)"
+msgstr ""
+
+#: src/dictui/dictionarymodel.cpp:56
+#, kde-format
+msgctxt "@item dictionary type"
+msgid "Pitch accent (Yomitan)"
+msgstr ""
+
+#: src/dictui/dictionarymodel.cpp:58
+#, kde-format
+msgctxt "@item dictionary type"
+msgid "Other (Yomitan)"
+msgstr ""
+
+#: src/dictui/dictionarymodel.cpp:60
+#, kde-format
+msgctxt "@item dictionary type"
+msgid "Frequency dictionary (Yomitan)"
+msgstr ""
+
+#: src/dictui/dictionarymodel.cpp:62
+#, kde-format
+msgctxt "@item dictionary type"
+msgid "Kanji frequency dictionary (Yomitan)"
+msgstr ""
+
+#: src/dictui/dictionarymodel.cpp:64
+#, kde-format
+msgctxt "@item dictionary type"
+msgid "Custom word list"
+msgstr ""
+
+#: src/dictui/dictionarymodel.cpp:66
+#, kde-format
+msgctxt "@item dictionary type"
+msgid "Custom name list"
+msgstr ""
+
+#: src/dictui/dictionarymodel.cpp:68
+#, kde-format
+msgctxt "@item dictionary type"
+msgid "Kanji components"
+msgstr ""
+
+#: src/dictui/dictionarymodel.cpp:171
+#, kde-format
+msgctxt "@info:tooltip"
+msgid ""
+"Dictionary source missing: %1. Use Configure Dictionary to select the "
+"source, or Download to download it again."
+msgstr ""
+
+#: src/dictui/dictionarymodel.cpp:176
+#, kde-format
+msgctxt "@info:tooltip"
+msgid "Reimport this dictionary to use it with this version of MaruPop."
+msgstr ""
+
+#: src/dictui/dictionarymodel.cpp:195
+#, kde-format
+msgctxt "@info:status a dictionary import in progress"
+msgid "Importing… %1%"
+msgstr ""
+
+#: src/dictui/dictionarymodel.cpp:197
+#, kde-format
+msgctxt "@info:status a built-in dictionary that was never fetched"
+msgid "Not downloaded"
+msgstr ""
+
+#: src/dictui/dictionarymodel.cpp:249
+#, kde-format
+msgctxt "@title:column dictionary name"
+msgid "Name"
+msgstr ""
+
+#: src/dictui/dictionarymodel.cpp:251
+#, kde-format
+msgctxt "@title:column dictionary format"
+msgid "Type"
+msgstr ""
+
+#: src/dictui/dictionarymodel.cpp:253
+#, kde-format
+msgctxt "@title:column number of records"
+msgid "Entries"
+msgstr ""
+
+#: src/dictui/dictionarymodel.cpp:255
+#, kde-format
+msgctxt "@title:column when the dictionary was last imported"
+msgid "Updated"
+msgstr ""
+
+#: src/dict/updatecheckjob.cpp:47
+#, kde-format
+msgid "This dictionary has no update source"
+msgstr ""
+
+#: src/dict/updatecheckjob.cpp:93
+#, kde-format
+msgid "Cannot check %1 for updates: %2"
+msgstr ""
+
+#: src/main.cpp:124 data/io.github.marunine.marupop.desktop.cmake:5
+#: data/marupop.notifyrc.cmake:6
+#, kde-format
+msgid "Japanese Popup Dictionary"
+msgstr ""
+
+#: src/main.cpp:126
+#, kde-format
+msgctxt "@info:credit"
+msgid "© 2026 marunine"
+msgstr ""
+
+#: src/main.cpp:128
+#, kde-format
+msgctxt "@info:credit"
+msgid "Author and maintainer"
+msgstr ""
+
+#: src/main.cpp:161
+#, kde-format
+msgid "Check screen capture permissions and exit"
+msgstr ""
+
+#: src/ocr/meikiocrbackend.cpp:246
+#, kde-format
+msgctxt "@info"
+msgid "The meikiocr models are not loaded."
+msgstr ""
+
+#: src/ocr/meikiocrbackend.cpp:250 src/ocr/screenaibackend.cpp:284
+#, kde-format
+msgctxt "@info"
+msgid "The captured image is empty."
+msgstr ""
+
+#: src/ocr/meikiocrbackend.cpp:271
+#, kde-format
+msgctxt "@info"
+msgid "Could not resize the captured image for text recognition."
+msgstr ""
+
+#: src/ocr/modelstore.cpp:108
+#, kde-format
+msgctxt "@info:tooltip"
+msgid ""
+"Text recognition models by rtr46 are downloaded from Hugging Face. License: "
+"GNU Lesser General Public License, version 3."
+msgstr ""
+
+#: src/ocr/modelstore.cpp:289
+#, kde-format
+msgctxt "@info"
+msgid "Could not create the model folder %1."
+msgstr ""
+
+#: src/ocr/modelstore.cpp:296
+#, kde-format
+msgctxt "@info"
+msgid "The file %1 could not be opened for writing."
+msgstr ""
+
+#: src/ocr/modelstore.cpp:307
+#, kde-format
+msgctxt "@title:window"
+msgid "Download Text Recognition Models"
+msgstr ""
+
+#: src/ocr/modelstore.cpp:307
+#, kde-format
+msgctxt "@label"
+msgid "File"
+msgstr ""
+
+#: src/ocr/modelstore.cpp:340
+#, kde-format
+msgctxt "@info"
+msgid "%1 could not be downloaded: %2"
+msgstr ""
+
+#: src/ocr/modelstore.cpp:353
+#, kde-format
+msgctxt "@info"
+msgid "Incorrect file size for %1: %2 bytes (expected %3 bytes)."
+msgstr ""
+
+#: src/ocr/modelstore.cpp:360
+#, kde-format
+msgctxt "@info"
+msgid "The checksum of %1 does not match the expected value."
+msgstr ""
+
+#: src/ocr/modelstore.cpp:366
+#, kde-format
+msgctxt "@info"
+msgid "%1 could not be renamed to %2."
+msgstr ""
+
+#: src/ocr/ocrservice.cpp:84
+#, kde-format
+msgctxt "@info"
+msgid ""
+"Text recognition unavailable. Configure a recognition engine in Settings."
+msgstr ""
+
+#: src/ocr/screenaibackend.cpp:280
+#, kde-format
+msgctxt "@info"
+msgid "Could not load the Chrome Screen AI component."
+msgstr ""
+
+#: src/platform/backend.cpp:31
+#, kde-format
+msgid "Add this line to %1 and reload the configuration:"
+msgstr ""
+
+#: src/platform/backend.cpp:99
+#, kde-format
+msgid "Pointer tracking unavailable. MaruPop requires KDE Plasma or Hyprland."
+msgstr ""
+
+#: src/platform/backend.cpp:133 src/platform/backend.cpp:222
+#, kde-format
+msgid "Unsupported desktop session. MaruPop requires KDE Plasma or Hyprland."
+msgstr ""
+
+#: src/platform/backend.cpp:135
+#, kde-format
+msgid "Screen capture unavailable. MaruPop requires KDE Plasma or Hyprland."
+msgstr ""
+
+#: src/platform/backend.cpp:174
+#, kde-format
+msgid ""
+"Screen capture requires a desktop entry matching the MaruPop executable. "
+"Install MaruPop or run tools/install-dev-desktop.sh for a development build."
+msgstr ""
+
+#: src/platform/backend.cpp:182 src/platform/backend.cpp:220
+#, kde-format
+msgid "Session: %1"
+msgstr ""
+
+#: src/platform/backend.cpp:183
+#, kde-format
+msgid "Executable: %1"
+msgstr ""
+
+#: src/platform/backend.cpp:185
+#, kde-format
+msgid "bound"
+msgstr ""
+
+#: src/platform/backend.cpp:185
+#, kde-format
+msgid "not bound"
+msgstr ""
+
+#: src/platform/backend.cpp:185
+#, kde-format
+msgid "zwlr_screencopy_manager_v1: %1"
+msgstr ""
+
+#: src/platform/backend.cpp:198
+#, kde-format
+msgid "Required %1 line: %2"
+msgstr ""
+
+#: src/platform/backend.cpp:203
+#, kde-format
+msgid "Required %1 line if %2 is enabled: %3"
+msgstr ""
+
+#: src/platform/backend.cpp:208
+#, kde-format
+msgid ""
+"Captured regions may include MaruPop's popup. Excluding the popup on this "
+"compositor is unsupported."
+msgstr ""
+
+#: src/platform/backend.cpp:211
+#, kde-format
+msgid "Screen capture: available."
+msgstr ""
+
+#: src/platform/backend.cpp:212 src/platform/backend.cpp:221
+#, kde-format
+msgid "Screen capture: unavailable."
+msgstr ""
+
+#: src/platform/session.cpp:140
+#, kde-format
+msgid "KDE Plasma"
+msgstr ""
+
+#: src/platform/session.cpp:142
+#, kde-format
+msgid "Hyprland"
+msgstr ""
+
+#: src/platform/session.cpp:144
+#, kde-format
+msgid "wlroots"
+msgstr ""
+
+#: src/platform/session.cpp:148
+#, kde-format
+msgid "unrecognized"
+msgstr ""
+
+#: src/popup/renderer.cpp:44
+#, kde-format
+msgctxt "@label kanji card, the Chinese-derived readings"
+msgid "On"
+msgstr ""
+
+#: src/popup/renderer.cpp:49
+#, kde-format
+msgctxt "@label kanji card, the native Japanese readings"
+msgid "Kun"
+msgstr ""
+
+#: src/popup/renderer.cpp:54
+#, kde-format
+msgctxt "@label kanji card, the readings used in personal names"
+msgid "Nanori"
+msgstr ""
+
+#: src/popup/renderer.cpp:59
+#, kde-format
+msgctxt "@label kanji card, the English meanings"
+msgid "Meanings"
+msgstr ""
+
+#: src/popup/renderer.cpp:64
+#, kde-format
+msgctxt "@label kanji card, the stroke count, the grade and the frequency rank"
+msgid "Stats"
+msgstr ""
+
+#: src/popup/renderer.cpp:69
+#, kde-format
+msgctxt "@label kanji card, the radicals of the character"
+msgid "Radicals"
+msgstr ""
+
+#: src/popup/renderer.cpp:74
+#, kde-format
+msgctxt "@label kanji card, example words holding the character"
+msgid "Examples"
+msgstr ""
+
+#: src/popup/renderer.cpp:79
+#, kde-format
+msgctxt "@label kanji card, the characters the kanji is built from"
+msgid "Components"
+msgstr ""
+
+#: src/popup/renderer.cpp:85
+#, kde-format
+msgctxt "@item kanji card, %1 is the stroke count"
+msgid "%1 stroke"
+msgid_plural "%1 strokes"
+msgstr[0] ""
+msgstr[1] ""
+
+#: src/popup/renderer.cpp:398
+#, kde-format
+msgctxt "@item kanji card grade, %1 is a school year from 1 to 6"
+msgid "%1 (Kyouiku)"
+msgstr ""
+
+#: src/popup/renderer.cpp:401
+#, kde-format
+msgctxt "@item kanji card grade, the 2136 characters of the Jouyou list"
+msgid "8 (Jouyou)"
+msgstr ""
+
+#: src/popup/renderer.cpp:404
+#, kde-format
+msgctxt "@item kanji card grade, %1 is 9 or 10"
+msgid "%1 (Jinmeiyou)"
+msgstr ""
+
+#: src/popup/renderer.cpp:406
+#, kde-format
+msgctxt "@item kanji card grade, a character outside every list"
+msgid "Hyougai"
+msgstr ""
+
+#: src/scan/scancontroller.cpp:344
+#, kde-format
+msgctxt "@info"
+msgid "Text recognition failed."
+msgstr ""
+
+#: src/scan/scancontroller.cpp:768
+#, kde-format
+msgctxt "@info:status"
+msgid "Paused"
+msgstr ""
+
+#: src/scan/scancontroller.cpp:770
+#, kde-format
+msgctxt "@info:status"
+msgid "Paused (screen locked)"
+msgstr ""
+
+#: src/scan/scancontroller.cpp:772
+#, kde-format
+msgctxt "@info:status"
+msgid "Text recognition unavailable"
+msgstr ""
+
+#: src/scan/scancontroller.cpp:774
+#, kde-format
+msgctxt "@info:status"
+msgid "Pointer tracking unavailable"
+msgstr ""
+
+#: src/scan/scancontroller.cpp:777
+#, kde-format
+msgctxt "@info:status, %1 is the name of a text-recognition backend"
+msgid "Scanning · %1"
+msgstr ""
+
+#: data/io.github.marunine.marupop.desktop.cmake:6
+#: data/io.github.marunine.marupop.metainfo.xml.cmake:15
+msgid "Look up Japanese words under the mouse pointer"
+msgstr ""
+
+#: data/io.github.marunine.marupop.desktop.cmake:15
+msgid "japanese;dictionary;ocr;popup;yomitan;jmdict;"
+msgstr ""
+
+#: data/io.github.marunine.marupop.desktop.cmake:32
+msgid "Toggle Scanning"
+msgstr ""
+
+#: data/marupop.notifyrc.cmake:17
+msgid "Dictionary Imported"
+msgstr ""
+
+#: data/marupop.notifyrc.cmake:18
+msgid "A dictionary was imported"
+msgstr ""
+
+#: data/marupop.notifyrc.cmake:22
+msgid "Dictionary Update Available"
+msgstr ""
+
+#: data/marupop.notifyrc.cmake:23
+msgid "A dictionary update is available"
+msgstr ""
+
+#: data/marupop.notifyrc.cmake:27
+msgid "Recognition Models Downloaded"
+msgstr ""
+
+#: data/marupop.notifyrc.cmake:28
+msgid "Text recognition models were downloaded and verified"
+msgstr ""
+
+#: data/marupop.notifyrc.cmake:32
+msgid "Operation Failed"
+msgstr ""
+
+#: data/marupop.notifyrc.cmake:33
+msgid "A capture, recognition, download, or import failed"
+msgstr ""
+
+#: data/io.github.marunine.marupop.metainfo.xml.cmake:18
+msgid ""
+"MaruPop recognizes Japanese text on screen and displays dictionary entries "
+"in a popup. Supported sources include games, videos, PDFs, and images."
+msgstr ""
+
+#: data/io.github.marunine.marupop.metainfo.xml.cmake:22
+msgid ""
+"Control scanning from the system tray. Global shortcuts toggle scanning, "
+"copy words, and pin the popup. A pinned popup supports scrolling and "
+"clicking."
+msgstr ""
+
+#: data/io.github.marunine.marupop.metainfo.xml.cmake:26
+msgid "Recognition:"
+msgstr ""
+
+#: data/io.github.marunine.marupop.metainfo.xml.cmake:28
+msgid "Horizontal and vertical Japanese text"
+msgstr ""
+
+#: data/io.github.marunine.marupop.metainfo.xml.cmake:29
+msgid "Offline text recognition with meikiocr models"
+msgstr ""
+
+#: data/io.github.marunine.marupop.metainfo.xml.cmake:30
+msgid "Support for separately installed Chrome Screen AI"
+msgstr ""
+
+#: data/io.github.marunine.marupop.metainfo.xml.cmake:32
+msgid "Lookup:"
+msgstr ""
+
+#: data/io.github.marunine.marupop.metainfo.xml.cmake:34
+msgid "Verb and adjective deconjugation"
+msgstr ""
+
+#: data/io.github.marunine.marupop.metainfo.xml.cmake:35
+msgid "Downloads and updates for JMdict, JMnedict, and KANJIDIC2"
+msgstr ""
+
+#: data/io.github.marunine.marupop.metainfo.xml.cmake:36
+msgid "Yomitan word, kanji, frequency, and pitch accent dictionaries"
+msgstr ""
+
+#: data/io.github.marunine.marupop.metainfo.xml.cmake:37
+msgid "Custom word and name lists"
+msgstr ""
+
+#: data/io.github.marunine.marupop.metainfo.xml.cmake:39
+msgid "Popup:"
+msgstr ""
+
+#: data/io.github.marunine.marupop.metainfo.xml.cmake:41
+msgid "Automatic positioning near the mouse pointer"
+msgstr ""
+
+#: data/io.github.marunine.marupop.metainfo.xml.cmake:42
+msgid "Configurable colors, fonts, and content"
+msgstr ""
+
+#: data/io.github.marunine.marupop.metainfo.xml.cmake:43
+msgid "Pitch accent graphs above readings"
+msgstr ""

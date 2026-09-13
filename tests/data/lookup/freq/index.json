@@ -1,0 +1,8 @@
+{
+  "title": "Mock Frequency",
+  "format": 3,
+  "revision": "lookup-fixture-1",
+  "author": "marupop tests",
+  "description": "Hand-written Yomitan frequency fixture holding the ranks JL's LookupTests assert on.",
+  "frequencyMode": "rank-based"
+}

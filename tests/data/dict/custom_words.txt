@@ -1,0 +1,3 @@
+走る;奔る	はしる	to run;to dash	Verb
+テスト単語	てすとたんご	a test word\nsecond line	Noun
+凄い	すごい	amazing	Adjective	adj-i

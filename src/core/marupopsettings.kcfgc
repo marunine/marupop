@@ -1,0 +1,9 @@
+# SPDX-FileCopyrightText: 2026 marunine
+# SPDX-License-Identifier: LGPL-3.0-only
+File=marupopsettings.kcfg
+ClassName=PopSettings
+Singleton=true
+Mutators=true
+DefaultValueGetters=true
+UseEnumTypes=true
+GenerateProperties=false

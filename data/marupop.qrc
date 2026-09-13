@@ -1,0 +1,18 @@
+<!-- SPDX-FileCopyrightText: 2026 marunine -->
+<!-- SPDX-License-Identifier: LGPL-3.0-only -->
+<!-- Compiled into marupop_lib through CMAKE_AUTORCC, which KDECMakeSettings turns on. The
+     three files are read from the binary rather than from an install prefix: a build-tree run
+     has no installed ${KDE_INSTALL_DATADIR}/marupop/ to read them from, and the deconjugation
+     rule set is needed before any dictionary is imported.
+
+     The two kwin-script aliases flatten the package layout, because the resource is the source
+     the relay writes the package from rather than a package itself:
+     cursor::KWinScriptRelay recreates the contents/code/ path under
+     ~/.local/share/kwin/scripts/marupopcursor/. -->
+<RCC>
+  <qresource prefix="/marupop">
+    <file>deconjugation_rules.json</file>
+    <file alias="kwin-script/metadata.json">kwin-script/marupopcursor/metadata.json</file>
+    <file alias="kwin-script/main.js">kwin-script/marupopcursor/contents/code/main.js</file>
+  </qresource>
+</RCC>

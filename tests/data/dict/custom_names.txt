@@ -1,0 +1,2 @@
+田中太郎	たなかたろう	Person	A test person
+架空市	かくうし	Place

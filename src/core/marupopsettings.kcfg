@@ -1,0 +1,435 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- SPDX-FileCopyrightText: 2026 marunine -->
+<!-- SPDX-License-Identifier: LGPL-3.0-only -->
+<kcfg xmlns="http://www.kde.org/standards/kcfg/1.0"
+      xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+      xsi:schemaLocation="http://www.kde.org/standards/kcfg/1.0
+      http://www.kde.org/standards/kcfg/1.0/kcfg.xsd">
+  <kcfgfile name="marupoprc"/>
+
+  <!-- Scalars and enums only. The dictionary list is a JSON file, dictionaries.json in
+       paths::dictionariesDir(), because a dictionary carries a per-entry option group and an
+       ordering that kcfg has no shape for. The three hotkeys are KGlobalAccel actions rather
+       than entries here, so System Settings edits the same bindings the application registers:
+       toggle-scanning (Meta+Alt+J), copy-word (Meta+Alt+C), pin-popup (Meta+Alt+P). -->
+
+  <!-- Every <label> below is read by developers. marupopsettings.kcfgc leaves SetUserTexts at
+       its false default, so kconfig_compiler emits each one as a doc comment on the generated
+       accessor and no label reaches a widget: app/SettingsDialog builds its widgets by hand and
+       passes its own i18nc() strings. po/extract-messages.sh runs no extractrc over this file
+       for that reason, which is what keeps strings no user can see out of the translation
+       template. A label that has to be shown belongs in the dialog, in an i18nc() call. -->
+
+  <group name="General">
+    <entry name="ShowTrayIcon" type="Bool">
+      <label>Keep a tray icon while the application is resident</label>
+      <default>true</default>
+    </entry>
+    <entry name="Autostart" type="Bool">
+      <label>Start with the desktop session</label>
+      <default>false</default>
+    </entry>
+    <!-- Written on every scanning toggle, so a restart resumes the state the user left. -->
+    <entry name="ScanningEnabled" type="Bool">
+      <label>Watch the pointer and look up the text under it</label>
+      <default>true</default>
+    </entry>
+    <entry name="NotifyOnError" type="Bool">
+      <label>Show a notification when a capture, a recognition or an import fails</label>
+      <default>true</default>
+    </entry>
+    <!-- Gates the first-run model and dictionary download prompt. -->
+    <entry name="FirstRunCompleted" type="Bool">
+      <label>The first-run dialog has been answered</label>
+      <default>false</default>
+    </entry>
+  </group>
+
+  <group name="Scanning">
+    <entry name="TriggerOnCursorMove" type="Bool">
+      <label>Scan after the pointer moves</label>
+      <default>true</default>
+    </entry>
+    <entry name="CursorMoveThrottleMs" type="Int">
+      <label>Shortest interval between two pointer-driven scans, in milliseconds</label>
+      <default>200</default>
+      <min>50</min>
+      <max>5000</max>
+    </entry>
+    <entry name="PeriodicPollEnabled" type="Bool">
+      <label>Re-grab the region around the pointer on a timer</label>
+      <default>true</default>
+    </entry>
+    <entry name="PeriodicPollIntervalMs" type="Int">
+      <label>Interval between two periodic re-grabs, in milliseconds</label>
+      <default>2000</default>
+      <min>200</min>
+      <max>60000</max>
+    </entry>
+    <!-- A grab that finds nothing, or whose hit line touches the rect edge, is repeated over
+         the next size in the ladder up to MaxScanWidth by MaxScanHeight. -->
+    <entry name="ProgressiveScanArea" type="Bool">
+      <label>Grow the scanned rectangle when the text runs past its edge</label>
+      <default>true</default>
+    </entry>
+    <entry name="InitialScanWidth" type="Int">
+      <label>Width of the first scanned rectangle, in logical pixels</label>
+      <default>480</default>
+      <min>64</min>
+      <max>7680</max>
+    </entry>
+    <entry name="InitialScanHeight" type="Int">
+      <label>Height of the first scanned rectangle, in logical pixels</label>
+      <default>270</default>
+      <min>64</min>
+      <max>4320</max>
+    </entry>
+    <entry name="MaxScanWidth" type="Int">
+      <label>Width the scanned rectangle stops growing at, in logical pixels</label>
+      <default>1600</default>
+      <min>64</min>
+      <max>7680</max>
+    </entry>
+    <entry name="MaxScanHeight" type="Int">
+      <label>Height the scanned rectangle stops growing at, in logical pixels</label>
+      <default>900</default>
+      <min>64</min>
+      <max>4320</max>
+    </entry>
+    <!-- KWin keeps reporting pointer positions over a locked screen, so the pause is the
+         application's own: cursor/LockWatcher reads org.freedesktop.ScreenSaver ActiveChanged. -->
+    <entry name="PauseWhileLocked" type="Bool">
+      <label>Stop scanning while the session is locked</label>
+      <default>true</default>
+    </entry>
+  </group>
+
+  <group name="Ocr">
+    <!-- Choice lists mirror core/enums.h in declaration order. -->
+    <entry name="OcrEngine" type="Enum">
+      <label>Text-recognition backend</label>
+      <choices>
+        <choice name="Automatic"/>
+        <choice name="MeikiOcr"/>
+        <choice name="ScreenAi"/>
+      </choices>
+      <default>Automatic</default>
+    </entry>
+    <entry name="MeikiIntraOpThreads" type="Int">
+      <label>ONNX Runtime intra-op thread count for the meikiocr models</label>
+      <default>6</default>
+      <min>1</min>
+      <max>32</max>
+    </entry>
+    <entry name="MeikiDetectionThreshold" type="Double">
+      <label>Score a detected text box has to reach</label>
+      <default>0.5</default>
+      <min>0.0</min>
+      <max>1.0</max>
+    </entry>
+    <entry name="MeikiRecognitionThreshold" type="Double">
+      <label>Score a recognized character has to reach</label>
+      <default>0.1</default>
+      <min>0.0</min>
+      <max>1.0</max>
+    </entry>
+    <entry name="MeikiPunctuationConfidenceFactor" type="Double">
+      <label>Factor applied to the score of a recognized punctuation character</label>
+      <default>0.2</default>
+      <min>0.0</min>
+      <max>1.0</max>
+    </entry>
+    <entry name="MeikiAllowGpu" type="Bool">
+      <label>Offer the CUDA and ROCm execution providers to ONNX Runtime</label>
+      <default>false</default>
+    </entry>
+    <entry name="MeikiUseSmallDetector" type="Bool">
+      <label>Run the smaller detection model</label>
+      <default>false</default>
+    </entry>
+    <!-- ocr/meikicorrections.h: context-sensitive post-recognition rewrite rules.
+         Their confidence gates assume MeikiPunctuationConfidenceFactor 0.2. -->
+    <entry name="MeikiApplyCorrections" type="Bool">
+      <label>Apply the post-recognition correction rules to every meikiocr line</label>
+      <default>true</default>
+    </entry>
+    <!-- Read through paths::expandPath(), which is what resolves the leading tilde. -->
+    <entry name="ScreenAiResourcesDir" type="String">
+      <label>Directory holding libchromescreenai.so and its model files</label>
+      <default>~/.config/screen_ai/resources</default>
+    </entry>
+    <entry name="ModelDirectory" type="String">
+      <label>Directory holding the meikiocr ONNX models; empty selects paths::modelsDir()</label>
+      <default></default>
+    </entry>
+    <!-- Set by the "Not Now" button of the first-run dialog. Esc and the window close button
+         write FirstRunCompleted alone, which is what closes the prompt for every later start
+         while leaving this answer unrecorded. -->
+    <entry name="ModelDownloadDeclined" type="Bool">
+      <label>The meikiocr model download has been declined</label>
+      <default>false</default>
+    </entry>
+  </group>
+
+  <group name="Lookup">
+    <entry name="MaxLookupLength" type="Int">
+      <label>Longest span of source text a lookup considers, in characters</label>
+      <default>41</default>
+      <min>5</min>
+      <max>100</max>
+    </entry>
+    <entry name="MaxResults" type="Int">
+      <label>Results the popup lists</label>
+      <default>10</default>
+      <min>1</min>
+      <max>50</max>
+    </entry>
+    <entry name="LookupCategory" type="Enum">
+      <label>Dictionary types a lookup consults</label>
+      <choices>
+        <choice name="All"/>
+        <choice name="Word"/>
+        <choice name="Name"/>
+        <choice name="Kanji"/>
+      </choices>
+      <default>All</default>
+    </entry>
+    <!-- lookup/ocrvariants.h: voiced and semi-voiced kana and similar-kanji substitutions. -->
+    <entry name="LookupOcrVariants" type="Bool">
+      <label>Look up one-character recognition variants where they match more text than the exact read</label>
+      <default>true</default>
+    </entry>
+    <!-- lookup::VariantOptions controls candidate breadth, confidence gating and ranking.
+         Wider searches cost more and can return unrelated words; keep these user-configurable. -->
+    <entry name="LookupVariantConfidenceGate" type="Double">
+      <label>Recognition confidence above which a character is never exchanged; 1 exchanges every character</label>
+      <default>0.8</default>
+      <min>0</min>
+      <max>1</max>
+    </entry>
+    <entry name="LookupVariantWithoutConfidences" type="Bool">
+      <label>Run the variant pass on text recognized without confidences, which is every Chrome Screen AI read</label>
+      <default>false</default>
+    </entry>
+    <entry name="LookupVariantMaxKeyLength" type="Int">
+      <label>Longest span, in characters, the variant pass exchanges characters in; 0 is no limit</label>
+      <default>12</default>
+      <min>0</min>
+      <max>100</max>
+    </entry>
+    <entry name="LookupVariantMaxKeys" type="Int">
+      <label>Variant spellings one lookup tries at most; 0 is no limit</label>
+      <default>400</default>
+      <min>0</min>
+      <max>100000</max>
+    </entry>
+    <entry name="LookupVariantCommonWordsOnly" type="Bool">
+      <label>Keep a variant only where the dictionaries mark the word as common, or where it is katakana</label>
+      <default>true</default>
+    </entry>
+    <entry name="LookupVariantShortAndHiragana" type="Bool">
+      <label>Keep variants written entirely in hiragana and two-character variants other than two kanji</label>
+      <default>false</default>
+    </entry>
+    <entry name="LookupVariantNameDictionaries" type="Bool">
+      <label>Look the variants up in the name dictionaries too</label>
+      <default>false</default>
+    </entry>
+    <entry name="LookupVariantRankFirst" type="Bool">
+      <label>List a variant before the shorter exact matches it outmatches, rather than after every exact match</label>
+      <default>true</default>
+    </entry>
+    <entry name="CopyWordMode" type="Enum">
+      <label>String the copy-word shortcut writes to the clipboard</label>
+      <choices>
+        <choice name="MatchedText"/>
+        <choice name="Headword"/>
+        <choice name="Reading"/>
+      </choices>
+      <default>MatchedText</default>
+    </entry>
+  </group>
+
+  <!-- app/LookupWindow. While the window is open the scan asks the lookup for the larger of
+       MaxResults and LookupWindowMaxResults, and each view lists the first results of that one
+       list. -->
+  <group name="LookupWindow">
+    <entry name="LookupWindowMaxResults" type="Int">
+      <label>Results the lookup window lists</label>
+      <default>20</default>
+      <min>1</min>
+      <max>100</max>
+    </entry>
+    <entry name="HidePopupWhileLookupWindowOpen" type="Bool">
+      <label>Show no popup card while the lookup window is open</label>
+      <default>false</default>
+    </entry>
+  </group>
+
+  <group name="PopupContent">
+    <entry name="ShowAllGlosses" type="Bool">
+      <label>List every gloss of a sense rather than the first one</label>
+      <default>false</default>
+    </entry>
+    <entry name="ShowDeconjugation" type="Bool">
+      <label>Show the deconjugation path that reached the headword</label>
+      <default>true</default>
+    </entry>
+    <entry name="ShowPartOfSpeech" type="Bool">
+      <label>Show the part-of-speech tags of each sense</label>
+      <default>false</default>
+    </entry>
+    <entry name="ShowTags" type="Bool">
+      <label>Show the field, dialect and miscellaneous tags of each sense</label>
+      <default>false</default>
+    </entry>
+    <entry name="ShowFrequency" type="Bool">
+      <label>Show the frequency rank of a result</label>
+      <default>true</default>
+    </entry>
+    <entry name="ShowKanji" type="Bool">
+      <label>Show the kanji card for a single-character lookup</label>
+      <default>true</default>
+    </entry>
+    <entry name="ShowKanjiExamples" type="Bool">
+      <label>List example words in the kanji card</label>
+      <default>true</default>
+    </entry>
+    <entry name="ShowKanjiComponents" type="Bool">
+      <label>List the component characters in the kanji card</label>
+      <default>true</default>
+    </entry>
+    <entry name="CompactMode" type="Bool">
+      <label>Join the senses of one entry onto a single line</label>
+      <default>true</default>
+    </entry>
+    <entry name="ShowAlternativeSpellings" type="Bool">
+      <label>Show the spellings of an entry other than the headword</label>
+      <default>true</default>
+    </entry>
+    <entry name="ShowPitchAccent" type="Bool">
+      <label>Draw the pitch-accent contour over each reading</label>
+      <default>true</default>
+    </entry>
+    <entry name="ShowDictionaryName" type="Bool">
+      <label>Name the dictionary each result came from</label>
+      <default>false</default>
+    </entry>
+    <entry name="ShowOrthographyInfo" type="Bool">
+      <label>Show the orthography tags of the spellings and the readings</label>
+      <default>true</default>
+    </entry>
+    <entry name="ShowStrokeCountAndGrade" type="Bool">
+      <label>Show the stroke count and the school grade in the kanji card</label>
+      <default>true</default>
+    </entry>
+  </group>
+
+  <group name="PopupAppearance">
+    <entry name="ThemePreset" type="Enum">
+      <label>Popup color preset; Custom reads the four color entries below</label>
+      <choices>
+        <choice name="Nazeka"/>
+        <choice name="CelestialIndigo"/>
+        <choice name="NeutralSlate"/>
+        <choice name="Academic"/>
+        <choice name="Custom"/>
+      </choices>
+      <default>Nazeka</default>
+    </entry>
+    <!-- Empty selects QFontDatabase::systemFont(QFontDatabase::GeneralFont). -->
+    <entry name="FontFamily" type="String">
+      <label>Popup font family; empty selects the session UI font</label>
+      <default></default>
+    </entry>
+    <entry name="FontSizeHeader" type="Int">
+      <label>Headword and reading size, in pixels</label>
+      <default>18</default>
+      <min>6</min>
+      <max>72</max>
+    </entry>
+    <entry name="FontSizeDefinitions" type="Int">
+      <label>Definition text size, in pixels</label>
+      <default>14</default>
+      <min>6</min>
+      <max>72</max>
+    </entry>
+    <!-- A QTextBlockFormat::ProportionalHeight on every block that sets no line height of its own. -->
+    <entry name="LineHeight" type="Int">
+      <label>Line height, in percent of the font's line spacing</label>
+      <default>100</default>
+      <min>80</min>
+      <max>300</max>
+    </entry>
+    <!-- Split between the margin above and the margin below the rule renderHtml() draws between two entries. -->
+    <entry name="EntrySpacing" type="Int">
+      <label>Space added between two entries, in logical pixels</label>
+      <default>0</default>
+      <min>0</min>
+      <max>60</max>
+    </entry>
+    <entry name="ColorBackground" type="Color">
+      <label>Popup card background</label>
+      <default>#2E2E2E</default>
+    </entry>
+    <entry name="ColorForeground" type="Color">
+      <label>Popup body text</label>
+      <default>#F0F0F0</default>
+    </entry>
+    <entry name="ColorHighlightWord" type="Color">
+      <label>Headword and kanji character</label>
+      <default>#88D8FF</default>
+    </entry>
+    <entry name="ColorHighlightReading" type="Color">
+      <label>Kana reading</label>
+      <default>#90EE90</default>
+    </entry>
+    <!-- Alpha channel of the card background, on the 0 to 255 scale Qt's rgba() takes. -->
+    <entry name="BackgroundOpacity" type="Int">
+      <label>Popup card opacity, from 50 to 255</label>
+      <default>245</default>
+      <min>50</min>
+      <max>255</max>
+    </entry>
+    <entry name="PopupPositionMode" type="Enum">
+      <label>Placement of the popup against the pointer</label>
+      <choices>
+        <choice name="FlipBoth"/>
+        <choice name="FlipVertically"/>
+        <choice name="FlipHorizontally"/>
+        <choice name="VisualNovel"/>
+      </choices>
+      <default>VisualNovel</default>
+    </entry>
+    <entry name="PopupMaxWidth" type="Int">
+      <label>Width the popup card stops growing at, in logical pixels</label>
+      <default>600</default>
+      <min>200</min>
+      <max>2000</max>
+    </entry>
+    <entry name="PopupMaxHeight" type="Int">
+      <label>Height the popup card stops growing at, in logical pixels</label>
+      <default>700</default>
+      <min>200</min>
+      <max>2000</max>
+    </entry>
+    <entry name="PopupCursorOffset" type="Int">
+      <label>Gap between the pointer and the popup card, in logical pixels</label>
+      <default>15</default>
+      <min>0</min>
+      <max>200</max>
+    </entry>
+    <entry name="PopupCornerRadius" type="Int">
+      <label>Popup card corner radius, in logical pixels</label>
+      <default>8</default>
+      <min>0</min>
+      <max>40</max>
+    </entry>
+    <entry name="PopupFadeMs" type="Int">
+      <label>Duration of the popup fade, in milliseconds; 0 shows and hides at once</label>
+      <default>120</default>
+      <min>0</min>
+      <max>1000</max>
+    </entry>
+  </group>
+</kcfg>
