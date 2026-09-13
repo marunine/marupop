@@ -25,8 +25,13 @@ int clampToRange(qreal value, int lowEdge, int highEdge, int span)
 
 } // namespace
 
-QRect placePopup(QPoint cursor, QSize popup, QRect screen, PopupPositionMode mode, int offset)
+QRect placePopup(QPoint cursor, QSize popup, QRect screen, PopupPositionMode mode, int offset, PopupSides *sides)
 {
+    const bool known = sides != nullptr && sides->known;
+    const bool wasLeft = known && sides->left;
+    const bool wasAbove = known && sides->above;
+    bool flippedLeft = false;
+    bool flippedAbove = false;
     const int left = screen.x();
     const int top = screen.y();
     const int right = screen.x() + screen.width();
@@ -46,9 +51,15 @@ QRect placePopup(QPoint cursor, QSize popup, QRect screen, PopupPositionMode mod
             below = false;
         } else if (cursorY < screenHeight / 3) {
             below = true;
+        } else if (known) {
+            // The half with a band either side of it, so a pointer reading along a line at
+            // mid-screen does not send the card across the line with every pixel it wavers by.
+            below = wasAbove ? cursorY < (screenHeight / 2) - kSideHysteresisPx
+                             : cursorY < (screenHeight / 2) + kSideHysteresisPx;
         } else {
             below = cursorY < screenHeight / 2;
         }
+        flippedAbove = !below;
         y = below ? cursor.y() + offset : cursor.y() - height - offset;
 
         const qreal half = screen.width() / 2.0;
@@ -68,31 +79,36 @@ QRect placePopup(QPoint cursor, QSize popup, QRect screen, PopupPositionMode mod
         break;
     }
     case PopupPositionMode::FlipHorizontally:
-        if (cursor.x() + offset + width > right) {
-            x = cursor.x() - width - offset;
-        }
-        break;
     case PopupPositionMode::FlipVertically:
-        if (cursor.y() + offset + height > bottom) {
-            y = cursor.y() - height - offset;
-        }
-        break;
-    case PopupPositionMode::FlipBoth:
-        if (cursor.x() + offset + width > right) {
+    case PopupPositionMode::FlipBoth: {
+        // A flipped card stays flipped until the unflipped one would clear the edge by the
+        // hysteresis, rather than returning the moment it fits by one pixel. The flipped side is
+        // the one the mode chose for the pointer a few pixels back, so keeping it never puts the
+        // card anywhere the mode itself would not.
+        const int edgeRight = wasLeft ? right - kSideHysteresisPx : right;
+        const int edgeBottom = wasAbove ? bottom - kSideHysteresisPx : bottom;
+        if (mode != PopupPositionMode::FlipVertically && cursor.x() + offset + width > edgeRight) {
             x = cursor.x() - width - offset;
+            flippedLeft = true;
         }
-        if (cursor.y() + offset + height > bottom) {
+        if (mode != PopupPositionMode::FlipHorizontally && cursor.y() + offset + height > edgeBottom) {
             y = cursor.y() - height - offset;
+            flippedAbove = true;
         }
         break;
     }
+    }
 
+    if (sides != nullptr) {
+        *sides = PopupSides{.known = true, .left = flippedLeft, .above = flippedAbove};
+    }
     return QRect{QPoint{clampToRange(x, left, right, width), clampToRange(y, top, bottom, height)}, popup};
 }
 
-QRect placePopupAvoiding(QPoint cursor, QSize popup, QRect screen, PopupPositionMode mode, int offset, QRect avoid)
+QRect placePopupAvoiding(
+    QPoint cursor, QSize popup, QRect screen, PopupPositionMode mode, int offset, QRect avoid, PopupSides *sides)
 {
-    const QRect unconstrained = placePopup(cursor, popup, screen, mode, offset);
+    const QRect unconstrained = placePopup(cursor, popup, screen, mode, offset, sides);
     if (avoid.isEmpty() || !unconstrained.intersects(avoid)) {
         return unconstrained;
     }

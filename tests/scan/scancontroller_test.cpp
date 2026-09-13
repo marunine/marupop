@@ -19,6 +19,7 @@
 #include "scan/scancontroller.h"
 
 #include <QDeadlineTimer>
+#include <QElapsedTimer>
 #include <QGuiApplication>
 #include <QImage>
 #include <QScreen>
@@ -140,6 +141,10 @@ struct Harness
         ocrService.setBackend(std::move(owned));
 
         controller = std::make_unique<ScanController>(tracker, frames, ocrService, [this](const lookup::Request &r) {
+            if (holdLookups.load()) {
+                lookupEntered.release(1);
+                lookupReleased.acquire(1);
+            }
             ++lookups;
             requests.append(r);
             return cannedResponse(r);
@@ -190,7 +195,16 @@ struct Harness
     QList<QString> statuses;
     QList<QString> errors;
     std::atomic<int> lookups{0};
+    // While set, every lookup releases lookupEntered on the pool thread and waits for
+    // lookupReleased, which is how a case holds a lookup open while the pointer moves on. A case
+    // that sets it releases every lookup it held before it ends.
+    std::atomic<bool> holdLookups{false};
+    QSemaphore lookupEntered;
+    QSemaphore lookupReleased;
 };
+
+// One character of the fake text in logical pixels.
+const int kCellLogical = kCharSize.width() / static_cast<int>(kScale);
 
 QPoint centreOfWorkspace()
 {
@@ -681,6 +695,231 @@ TEST(ScanControllerTest, dropsTheRecognitionResultOfAnOvertakenScan)
     ASSERT_EQ(harness.responses.size(), 1);
     EXPECT_EQ(harness.contexts.first().cursorLogical, second);
     EXPECT_EQ(harness.lookups.load(), 1);
+}
+
+// The card follows the pointer through hitMoved() while a lookup runs, so the response is anchored
+// where the pointer is when it arrives. Anchoring it at the tested position pulled the card back by
+// however far the pointer travelled during the lookup, once per character crossed.
+TEST(ScanControllerTest, anchorsAResponseWhereThePointerIsWhenItArrives)
+{
+    configureScanning(false, false);
+    Harness harness;
+    const QPoint cursor = centreOfWorkspace();
+    harness.aimAt(cursor);
+
+    harness.controller->setScanning(true);
+    harness.tracker.move(cursor);
+    pump([&harness] {
+        return !harness.responses.isEmpty();
+    });
+    ASSERT_EQ(harness.responses.size(), 1);
+    EXPECT_EQ(harness.contexts.first().anchorLogical, cursor);
+
+    // Two characters on, inside the cached region: the lookup for it is held on the pool thread.
+    harness.holdLookups = true;
+    const QPoint tested = cursor + QPoint{2 * kCellLogical, 0};
+    harness.tracker.move(tested);
+    ASSERT_TRUE(harness.lookupEntered.tryAcquire(1, 5000));
+
+    // A few pixels further inside the same character while the lookup runs.
+    const QPoint moved = tested + QPoint{3, 1};
+    harness.tracker.move(moved);
+    EXPECT_EQ(harness.follows.constLast(), moved);
+
+    harness.holdLookups = false;
+    harness.lookupReleased.release(1);
+    pump([&harness] {
+        return harness.responses.size() >= 2;
+    });
+    ASSERT_EQ(harness.responses.size(), 2);
+    EXPECT_EQ(harness.contexts.at(1).cursorLogical, tested);
+    EXPECT_EQ(harness.contexts.at(1).anchorLogical, moved) << "the response pulled the card back";
+    EXPECT_EQ(harness.contexts.at(1).anchorScreen, QGuiApplication::primaryScreen());
+}
+
+// A lookup dispatched for a character the pointer has since left belongs to no text under the
+// pointer, so its response is dropped rather than putting the card back up after the miss hid it.
+TEST(ScanControllerTest, dropsALookupInFlightWhenThePointerLeavesTheText)
+{
+    configureScanning(false, false);
+    Harness harness;
+    const QPoint cursor = centreOfWorkspace();
+    harness.aimAt(cursor);
+
+    harness.controller->setScanning(true);
+    harness.tracker.move(cursor);
+    pump([&harness] {
+        return !harness.responses.isEmpty();
+    });
+    ASSERT_EQ(harness.responses.size(), 1);
+    // No re-grab re-aims the fake text under the pointer, as in
+    // aMoveThatLeavesTheTextCarriesNoPositionAndHidesTheCard.
+    PopSettings::setTriggerOnCursorMove(false);
+    harness.controller->applySettings();
+
+    harness.holdLookups = true;
+    const QPoint character = cursor + QPoint{2 * kCellLogical, 0};
+    harness.tracker.move(character);
+    ASSERT_TRUE(harness.lookupEntered.tryAcquire(1, 5000));
+
+    // Off the line, inside the cached region.
+    harness.tracker.move(cursor + QPoint{0, 24});
+    ASSERT_EQ(harness.misses.size(), 1);
+
+    harness.holdLookups = false;
+    harness.lookupReleased.release(1);
+    pump([&harness] {
+        return harness.lookups.load() >= 2;
+    });
+    settle(200);
+    EXPECT_EQ(harness.responses.size(), 1) << "a lookup for a character the pointer left put the card back up";
+
+    // Back onto the same character: looked up again rather than taken for the answer on screen.
+    harness.tracker.move(character);
+    pump([&harness] {
+        return harness.responses.size() >= 2;
+    });
+    ASSERT_EQ(harness.responses.size(), 2);
+    EXPECT_EQ(harness.contexts.at(1).cursorIndex, kHitIndex + 2);
+}
+
+// A grab that returns after the pointer left the region it covers says nothing about the pointer.
+// The card keeps its response and follows the pointer until the scan around the new position
+// lands, rather than hiding for a miss that only means the pixels are elsewhere.
+TEST(ScanControllerTest, keepsTheCardThroughAGrabThatReturnsAfterThePointerLeftItsRegion)
+{
+    // The longest throttle, so no pointer-driven scan overtakes the one held below.
+    configureScanning(false, false, 200, 5000);
+    Harness harness;
+    const QPoint cursor = centreOfWorkspace();
+    harness.aimAt(cursor);
+
+    harness.controller->setScanning(true);
+    harness.tracker.move(cursor);
+    pump([&harness] {
+        return !harness.responses.isEmpty();
+    });
+    ASSERT_EQ(harness.responses.size(), 1);
+
+    harness.backend->blocking = true;
+    harness.controller->forceRescan();
+    pump([&harness] {
+        return harness.backend->entered.available() > 0;
+    });
+    ASSERT_TRUE(harness.backend->entered.tryAcquire(1));
+
+    // Past the 64 logical pixel half-width of the region while its recognition runs.
+    const QPoint away = cursor + QPoint{200, 0};
+    harness.tracker.move(away);
+    EXPECT_EQ(harness.follows.constLast(), away);
+
+    harness.backend->blocking = false;
+    harness.backend->released.release(1);
+    pump([&harness] {
+        return harness.backend->calls.load() >= 2;
+    });
+    settle(200);
+    EXPECT_TRUE(harness.misses.isEmpty()) << "a grab of the region the pointer left hid the card";
+    EXPECT_EQ(harness.responses.size(), 1);
+
+    const QPoint further = away + QPoint{2, 0};
+    harness.tracker.move(further);
+    EXPECT_EQ(harness.follows.constLast(), further);
+}
+
+// The poll interval counts from the last scan that returned. A pointer-driven grab has just looked
+// at the pixels, so a poll on a fixed phase would re-grab them right behind it.
+TEST(ScanControllerTest, countsThePollIntervalFromTheLastScanThatReturned)
+{
+    constexpr int pollMs = 1000;
+    configureScanning(false, true, pollMs);
+    Harness harness;
+    const QPoint first = centreOfWorkspace();
+    const QPoint second = first + QPoint{200, 0};
+    harness.aimAt(first);
+
+    QElapsedTimer clock;
+    clock.start();
+    harness.controller->setScanning(true);
+    harness.tracker.move(first);
+    pump([&harness] {
+        return !harness.responses.isEmpty();
+    });
+    ASSERT_EQ(harness.frames.requestedRects().size(), 1);
+
+    // A pointer-driven scan most of an interval in.
+    pump(
+        [&clock] {
+            return clock.elapsed() >= 600;
+        },
+        pollMs);
+    // Both regions are centred on the pointer, so one origin puts the text under both.
+    ASSERT_EQ(originFor(first), originFor(second));
+    harness.tracker.move(second);
+    pump([&harness] {
+        return harness.responses.size() >= 2;
+    });
+    ASSERT_EQ(harness.frames.requestedRects().size(), 2);
+    QElapsedTimer sinceReturn;
+    sinceReturn.start();
+
+    // Past the point a poll counted from the start of scanning would have grabbed.
+    pump(
+        [&clock] {
+            return clock.elapsed() >= 1300;
+        },
+        pollMs);
+    EXPECT_EQ(harness.frames.requestedRects().size(), 2) << "the poll grabbed on a phase fixed at the start";
+
+    pump([&harness] {
+        return harness.frames.requestedRects().size() >= 3;
+    });
+    ASSERT_EQ(harness.frames.requestedRects().size(), 3);
+    EXPECT_EQ(harness.frames.requestedRects().at(2), initialRectAt(second));
+    // Qt::CoarseTimer may fire up to 5% early.
+    EXPECT_GE(sinceReturn.elapsed(), pollMs * 9 / 10);
+}
+
+// A poll tick that finds a scan in flight leaves it to finish rather than taking over its
+// generation and dropping the recognition pass it waits on. One tick is the whole deferral.
+TEST(ScanControllerTest, aPollTickDefersOnceToAScanInFlight)
+{
+    constexpr int pollMs = 400;
+    configureScanning(false, true, pollMs);
+    Harness harness;
+    const QPoint cursor = centreOfWorkspace();
+    harness.aimAt(cursor);
+    harness.backend->blocking = true;
+
+    QElapsedTimer clock;
+    clock.start();
+    harness.controller->setScanning(true);
+    harness.tracker.move(cursor);
+    pump([&harness] {
+        return harness.backend->entered.available() > 0;
+    });
+    ASSERT_TRUE(harness.backend->entered.tryAcquire(1));
+
+    // Past the first tick, short of the second.
+    pump(
+        [&clock] {
+            return clock.elapsed() >= (pollMs * 3) / 2;
+        },
+        pollMs * 2);
+    EXPECT_EQ(harness.frames.requestedRects().size(), 1) << "a poll took over a scan in flight";
+
+    // The second tick grabs regardless, so a scan that never returns cannot stop the poll.
+    pump([&harness] {
+        return harness.frames.requestedRects().size() >= 2;
+    });
+    EXPECT_EQ(harness.frames.requestedRects().size(), 2);
+
+    harness.backend->blocking = false;
+    harness.backend->released.release(1);
+    pump([&harness] {
+        return !harness.responses.isEmpty();
+    });
+    EXPECT_EQ(harness.responses.size(), 1);
 }
 
 TEST(ScanControllerTest, reportsTheBackendAndTheScanningStateAsStatus)

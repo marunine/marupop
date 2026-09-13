@@ -78,6 +78,14 @@ alternating indefinitely between two region sizes.
 `lookupReady()` carries new content and a `HitContext`. `hitMoved()` carries position updates
 for the current hit, allowing the popup to follow the pointer without rerendering every sample.
 Emit position updates after hit testing so leaving the recognized text dismisses the result.
+The popup anchors new content at `HitContext::anchorLogical`, the pointer position at delivery,
+not at `cursorLogical`, the position the hit was tested at, so a result cannot pull the card
+back behind the pointer. A no-hit cancels the lookup in flight. A grab returning after the
+pointer left its rectangle keeps the card following the pointer until the rescan lands.
+The periodic poll counts its interval from the last scan that returned, including scans
+triggered by pointer movement, and a tick defers once to a scan in flight rather than
+superseding it. Placement keeps the side the card took within `popup::kSideHysteresisPx` of
+the point where the mode changes sides.
 A requested rectangle, scan generation and lookup ticket reject answers from superseded work.
 An alive flag protects queued completion after controller destruction.
 

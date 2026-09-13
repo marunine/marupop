@@ -131,6 +131,9 @@ private:
 
     // Starts a grab. rect is in logical global desktop coordinates; an empty rect is ignored.
     void startScan(QRect rect);
+    // The scan in flight returned: a frame answered from the cache, a recognition pass, or a
+    // failure. Re-arms the periodic poll, so its interval counts from here.
+    void scanReturned();
     // Hit-tests entry at the current pointer position and takes it from there: a lookup, a
     // grown rect, or nothingUnderCursor(). True where a character was found, which is what
     // tells the pointer path that no fresh grab is needed. allowGrowth is false on the path
@@ -177,6 +180,9 @@ private:
     // The rect the periodic poll re-grabs: the one the current cached result came from, or a
     // fresh initial rect around the pointer.
     [[nodiscard]] QRect pollRect() const;
+    // True where a move trigger or the periodic poll will scan a position outside the cached
+    // region, which is what lets the card follow the pointer there.
+    [[nodiscard]] bool willRescan() const;
     [[nodiscard]] bool isActive() const;
     // Applies the scanning and lock state to the tracker, the poller and the cached state.
     void updateActivity();
@@ -205,6 +211,10 @@ private:
     // The rect of the grab in flight. A frame for any other rect belongs to a grab that has
     // been overtaken and is dropped.
     QRect m_pendingRect;
+    // A grab was started and neither its frame nor its recognition pass has returned.
+    bool m_scanInFlight = false;
+    // A poll tick found m_scanInFlight set and was skipped. The next tick grabs regardless.
+    bool m_pollDeferred = false;
     // The rect and hash of the cached result the pointer is currently over.
     QRect m_currentRect;
     quint64 m_currentHash = 0;

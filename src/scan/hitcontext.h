@@ -21,15 +21,20 @@ namespace maru::scan
 
 struct HitContext
 {
-    // The pointer position the hit was tested at, which is where the popup anchors the response.
-    // It stays the position at the time of the test, because matchedRectLogical and
-    // paragraphRectLogical below are computed in the coordinate space of that hit. Later pointer
-    // samples reach the popup through scan::ScanController::hitMoved() instead, which carries a
-    // position and no rectangle.
+    // The pointer position the hit was tested at. It stays the position at the time of the test,
+    // because matchedRectLogical and paragraphRectLogical below are computed in the coordinate
+    // space of that hit.
     QPoint cursorLogical;
-    // The output under cursorLogical, or nullptr when the tracker reported none. The popup
-    // needs it to place a layer-shell surface on the right output.
+    // The output under cursorLogical, or nullptr when the tracker reported none.
     QScreen *screen = nullptr;
+    // The pointer position when the response was delivered, which is where the popup anchors it.
+    // The grab, the recognition pass and the lookup stand between the test and the delivery, and
+    // the card follows the pointer through hitMoved() meanwhile; placing the response at
+    // cursorLogical would pull the card back to where the pointer was before those stages ran.
+    QPoint anchorLogical;
+    // The output under anchorLogical, or nullptr when the tracker reported none. The popup needs
+    // it to place a layer-shell surface on the right output.
+    QScreen *anchorScreen = nullptr;
 
     // The characters the response highlights, which is the span the popup points at.
     QRect matchedRectLogical;

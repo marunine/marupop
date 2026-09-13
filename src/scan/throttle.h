@@ -72,6 +72,8 @@ public:
     void setIntervalMs(int intervalMs);
     [[nodiscard]] int intervalMs() const;
 
+    // Starts the timer, or restarts a running one from zero, which is how ScanController counts
+    // the interval from the last scan that returned.
     void start();
     void stop();
     [[nodiscard]] bool isActive() const;

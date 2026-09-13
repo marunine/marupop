@@ -114,6 +114,7 @@ void PopupWindow::applyTheme()
 {
     m_theme = themeFromSettings();
     m_positionMode = settings::popupPositionMode();
+    m_sides = {};
     m_view->setTheme(m_theme);
     if (auto *box = qobject_cast<QVBoxLayout *>(layout())) {
         box->setContentsMargins(m_theme.padding, m_theme.padding, m_theme.padding, m_theme.padding);
@@ -306,10 +307,19 @@ void PopupWindow::showNear(QPoint cursorLogical, QScreen *screen)
 
     // The avoid rect is applied on a session whose pixel source composites the card into the next
     // grab; on every other session the placement is the mode's own, unchanged.
-    m_rect = m_avoidsText
-                 ? placePopupAvoiding(
-                       cursorLogical, size(), target->geometry(), m_positionMode, m_theme.cursorOffset, m_avoidRect)
-                 : placePopup(cursorLogical, size(), target->geometry(), m_positionMode, m_theme.cursorOffset);
+    // A card coming up afresh, or on another screen, has no side to keep: the previous one was
+    // chosen against another pointer or another edge.
+    if (!wasVisible || !sameScreen) {
+        m_sides = {};
+    }
+    // An empty avoid rect answers the plain placement.
+    m_rect = placePopupAvoiding(cursorLogical,
+                                size(),
+                                target->geometry(),
+                                m_positionMode,
+                                m_theme.cursorOffset,
+                                m_avoidsText ? m_avoidRect : QRect{},
+                                &m_sides);
     if (wasVisible && !contentChanged && sameScreen && m_rect == previousRect) {
         // The placement clamps the card into the screen, so every pointer sample inside the band
         // where the card rests against a screen edge lands it on the rectangle it already

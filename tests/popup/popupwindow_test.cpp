@@ -203,6 +203,53 @@ TEST(PopupWindowTest, hidesRatherThanShowsAnEmptyModel)
     resetSettings();
 }
 
+// A pointer reading along a line at the half of the screen wavers across it by a pixel or two. The
+// card keeps the side it took until the pointer passes the half by popup::kSideHysteresisPx, and a
+// card shown afresh places without that history.
+TEST(PopupWindowTest, keepsTheCardOnOneSideOfAPointerWaveringAcrossTheHalf)
+{
+    resetSettings();
+    PopSettings::setPopupFadeMs(0);
+    ASSERT_EQ(settings::popupPositionMode(), PopupPositionMode::VisualNovel);
+    PopupWindow window;
+    window.applyTheme();
+    window.setModel(samplePopupModel());
+
+    QScreen *screen = QGuiApplication::primaryScreen();
+    ASSERT_NE(screen, nullptr);
+    const QRect geometry = screen->geometry();
+    if (geometry.height() < 3 * (window.height() + themeFromSettings().cursorOffset)) {
+        GTEST_SKIP() << "the screen is too short for the card to clear the pointer on either side";
+    }
+    const int half = geometry.y() + (geometry.height() / 2);
+    const int x = geometry.center().x();
+    const auto below = [&window](QPoint cursor) {
+        return window.popupRect().top() > cursor.y();
+    };
+    const auto above = [&window](QPoint cursor) {
+        return window.popupRect().bottom() < cursor.y();
+    };
+
+    const QPoint upper{x, half - 2};
+    const QPoint lower{x, half + 2};
+    window.showNear(upper, screen);
+    EXPECT_TRUE(below(upper));
+    window.showNear(lower, screen);
+    EXPECT_TRUE(below(lower)) << "a two pixel waver across the half sent the card across the pointer";
+
+    const QPoint past{x, half + kSideHysteresisPx + 2};
+    window.showNear(past, screen);
+    EXPECT_TRUE(above(past));
+    window.showNear(upper, screen);
+    EXPECT_TRUE(above(upper));
+
+    window.hidePopup();
+    ASSERT_FALSE(window.isVisible());
+    window.showNear(upper, screen);
+    EXPECT_TRUE(below(upper)) << "a card shown afresh kept the side of the one before it";
+    resetSettings();
+}
+
 // The lookup window's suppression: the card on screen is hidden, and neither a new model nor a
 // new position brings it back until the suppression is released.
 TEST(PopupWindowTest, aSuppressedCardHidesAndDropsEveryModelAndPosition)

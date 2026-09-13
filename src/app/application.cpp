@@ -300,7 +300,7 @@ void Application::wireScanning()
                 // pixel source composites the card into the next grab. The value is kept for the
                 // hitMoved() samples that follow, which carry no rectangle.
                 m_popup->setAvoidRect(context.paragraphRectLogical);
-                m_popup->showNear(context.cursorLogical, context.screen);
+                m_popup->showNear(context.anchorLogical, context.anchorScreen);
             });
     connect(m_scan, &scan::ScanController::hitMoved, this, [this](QPoint cursorLogical, QScreen *screen) {
         // The card already carries the response for the character under the pointer, so this call

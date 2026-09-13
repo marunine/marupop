@@ -217,8 +217,7 @@ void ScanController::onPositionChanged(QPoint logical, QScreen *screen)
     // a move trigger or the periodic poll re-grabs. Neither of those runs while both settings are
     // off, so willRescan is what stops the card following a pointer whose position nothing will
     // ever evaluate.
-    const bool willRescan = m_triggerOnCursorMove || m_periodicPollEnabled;
-    if (moved && m_hitActive && (answered || willRescan)) {
+    if (moved && m_hitActive && (answered || willRescan())) {
         Q_EMIT hitMoved(logical, screen);
     }
     if (answered) {
@@ -275,6 +274,16 @@ void ScanController::onPollTick()
     // The poll exists for text that changes under a pointer that does not move: a subtitle, a
     // visual novel line, a scrolling page. It costs one grab and one hash; the recognition
     // pass runs only where the hash changed.
+    //
+    // A scan still in flight is left to finish: a poll grab would take over its generation and
+    // drop the recognition pass it is waiting on, and its return re-arms the poll anyway. One tick
+    // is the whole deferral, so a grab the source never answers delays the poll by one interval
+    // rather than stopping it.
+    if (m_scanInFlight && !m_pollDeferred) {
+        m_pollDeferred = true;
+        return;
+    }
+    m_pollDeferred = false;
     startScan(pollRect());
 }
 
@@ -294,6 +303,7 @@ void ScanController::onFrameReady(const capture::Frame &frame)
         // The poll's whole point: the same pixels answer from the cache and the recognition
         // pass, which is the expensive half, does not run.
         qCDebug(logScan) << "the frame for" << frame.logicalRect << "is unchanged; skipping recognition";
+        scanReturned();
         evaluate(*entry, frame.grabMs, true);
         return;
     }
@@ -322,6 +332,8 @@ void ScanController::onFrameReady(const capture::Frame &frame)
 
 void ScanController::onFrameFailed(const QString &message)
 {
+    // Before the repeat guard: a compositor that fails every grab is still polled at the interval.
+    scanReturned();
     if (message == m_lastError) {
         // A compositor that is gone answers every grab the same way, and the poll asks twice a
         // second by default. The log line is inside the guard for that reason: a persistent
@@ -339,6 +351,7 @@ void ScanController::onRecognized(
     if (!isActive()) {
         return;
     }
+    scanReturned();
     if (!result.success) {
         const QString message =
             result.errorMessage.isEmpty() ? i18nc("@info", "Text recognition failed.") : result.errorMessage;
@@ -377,6 +390,17 @@ bool ScanController::evaluate(const CachedScan &entry, qint64 grabMs, bool allow
         // flicker at the scan rate rather than an answer, and it is what the layer rule the setup
         // asks for would produce on its own.
         return holdThroughOcclusion();
+    }
+    if (allowGrowth && !entry.logicalRect.contains(m_cursor) && willRescan()) {
+        // A grab that returned after the pointer left the region it covers. Its pixels say nothing
+        // about the pointer, so a miss here is not the pointer leaving the text: the card keeps the
+        // response it has and follows the pointer through hitMoved() until the scan around the new
+        // position lands. Growing would only move the region onto the pointer one rung larger, and
+        // the move trigger does that at the initial size.
+        if (m_triggerOnCursorMove) {
+            m_moveThrottle.request();
+        }
+        return m_hitActive;
     }
     const std::optional<ocr::Hit> hit = ocr::hitTest(entry.result, capture::logicalToImage(frame, m_cursor));
     if (!hit.has_value() || hit->paragraph < 0 || hit->paragraph >= entry.result.paragraphs.size()) {
@@ -556,6 +580,12 @@ void ScanController::deliverLookup(quint64 ticket, const lookup::Response &respo
         context.matchedRectLogical = capture::imageToLogical(frame, span);
     }
 
+    // Where the pointer is now rather than where the hit was tested: the card followed the pointer
+    // through hitMoved() while the lookup ran, and anchoring the response at the tested position
+    // would pull it back by however far the pointer travelled meanwhile.
+    context.anchorLogical = m_cursor;
+    context.anchorScreen = m_cursorScreen;
+
     m_hitActive = true;
     m_nothingReported = false;
     // The one line a user or a bug report needs: what was under the pointer, what it resolved
@@ -649,6 +679,13 @@ QRect ScanController::initialRectAroundCursor() const
 
 void ScanController::reportNoHit()
 {
+    // A lookup still in flight answers for a character the pointer has since left. Delivered, it
+    // would put the card back up at a position with no text under it, and nothing re-evaluates a
+    // pointer at rest to take it away again. The record of the last hit goes with it, so a return
+    // to that character is looked up again rather than taken for the answer on screen.
+    ++m_lookupTicket;
+    m_lastParagraph = -1;
+    m_lastCharIndex = -1;
     if (!m_hitActive && m_nothingReported) {
         return;
     }
@@ -690,7 +727,20 @@ void ScanController::startScan(QRect rect)
     // Cleared here and set again by growAndRescan(), which is the one caller that grows: every
     // other path starts a scan at the initial size or re-grabs the current region.
     m_grewUnmeasured = false;
+    m_scanInFlight = true;
     m_frames.grab(rect);
+}
+
+void ScanController::scanReturned()
+{
+    m_scanInFlight = false;
+    m_pollDeferred = false;
+    // The poll interval counts from the last scan that returned rather than from a fixed phase:
+    // a pointer-driven scan has just looked at these pixels, and a poll right behind it would only
+    // grab them again.
+    if (isActive() && m_periodicPollEnabled) {
+        m_poller.start();
+    }
 }
 
 QRect ScanController::pollRect() const
@@ -719,6 +769,11 @@ bool ScanController::descentWouldResolve() const
     return finerRegionAvailable();
 }
 
+bool ScanController::willRescan() const
+{
+    return m_triggerOnCursorMove || m_periodicPollEnabled;
+}
+
 bool ScanController::isActive() const
 {
     return m_scanning && !(m_pauseWhileLocked && m_locked);
@@ -744,6 +799,8 @@ void ScanController::updateActivity()
         m_currentHash = 0;
         m_currentResolves = true;
         m_pendingRect = {};
+        m_scanInFlight = false;
+        m_pollDeferred = false;
         m_lastRect = {};
         m_lastHash = 0;
         m_lastParagraph = -1;

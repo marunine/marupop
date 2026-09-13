@@ -4,6 +4,7 @@
 #pragma once
 
 #include "core/enums.h"
+#include "popup/placement.h"
 #include "popup/renderoptions.h"
 #include "popup/theme.h"
 
@@ -148,6 +149,10 @@ private:
     // is never read.
     QPointer<QScreen> m_surfaceScreen;
     QRect m_rect;
+    // The side of the pointer the card took on the last placement, which the next one keeps
+    // within kSideHysteresisPx of the point the mode changes sides at. Cleared when the card is
+    // shown afresh, moves to another screen or the position mode changes.
+    PopupSides m_sides;
     // The paragraph the card must stay off, in logical global desktop coordinates. Empty until
     // the first setAvoidRect().
     QRect m_avoidRect;

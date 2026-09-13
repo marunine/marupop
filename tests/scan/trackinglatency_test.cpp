@@ -355,7 +355,7 @@ struct Harness
                          [this](const lookup::Response &, const HitContext &context) {
                              ++lookups;
                              lookupLatencyNs = moveTimer.isValid() ? moveTimer.nsecsElapsed() : 0;
-                             place(context.cursorLogical);
+                             place(context.anchorLogical);
                          });
         QObject::connect(
             controller.get(), &ScanController::hitMoved, controller.get(), [this](QPoint point, QScreen *) {

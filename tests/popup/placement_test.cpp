@@ -141,6 +141,76 @@ TEST(PlacementTest, worksAgainstAScreenWithANegativeOrigin)
     EXPECT_LE(clamped.top() + clamped.height(), leftScreen.y() + leftScreen.height());
 }
 
+// The side a card took on the previous placement, carried through PopupSides.
+
+TEST(PlacementSidesTest, recordsTheSideWithoutAHistory)
+{
+    PopupSides sides;
+    EXPECT_EQ(placePopup(QPoint{1900, 1050}, card, primaryScreen, PopupPositionMode::FlipBoth, offset, &sides),
+              placePopup(QPoint{1900, 1050}, card, primaryScreen, PopupPositionMode::FlipBoth, offset));
+    EXPECT_TRUE(sides.known);
+    EXPECT_TRUE(sides.left);
+    EXPECT_TRUE(sides.above);
+}
+
+TEST(PlacementSidesTest, visualNovelKeepsItsSideAcrossTheHalfWithinTheHysteresis)
+{
+    PopupSides sides;
+    const auto placeAt = [&sides](int y) {
+        return placePopup(QPoint{960, y}, card, primaryScreen, PopupPositionMode::VisualNovel, offset, &sides).y();
+    };
+    // The half is 540. Below it, and then past it by less than the hysteresis: still below.
+    EXPECT_EQ(placeAt(530), 545);
+    EXPECT_EQ(placeAt(560), 575);
+    // Past it by the hysteresis: above.
+    EXPECT_EQ(placeAt(540 + kSideHysteresisPx), 540 + kSideHysteresisPx - 115);
+    // Back across the half by less than the hysteresis: still above.
+    EXPECT_EQ(placeAt(520), 405);
+    EXPECT_EQ(placeAt(540 - kSideHysteresisPx - 1), 540 - kSideHysteresisPx - 1 + 15);
+}
+
+TEST(PlacementSidesTest, visualNovelThirdsOverrideTheKeptSide)
+{
+    PopupSides sides{.known = true, .left = false, .above = true};
+    EXPECT_EQ(placePopup(QPoint{960, 100}, card, primaryScreen, PopupPositionMode::VisualNovel, offset, &sides).y(),
+              115);
+    EXPECT_FALSE(sides.above);
+    sides = PopupSides{.known = true, .left = false, .above = false};
+    EXPECT_EQ(placePopup(QPoint{960, 1000}, card, primaryScreen, PopupPositionMode::VisualNovel, offset, &sides).y(),
+              885);
+    EXPECT_TRUE(sides.above);
+}
+
+TEST(PlacementSidesTest, aFlippedCardReturnsOnceItClearsTheEdgeByTheHysteresis)
+{
+    PopupSides sides;
+    const auto placeAt = [&sides](int x) {
+        return placePopup(QPoint{x, 100}, card, primaryScreen, PopupPositionMode::FlipHorizontally, offset, &sides).x();
+    };
+    // The unflipped card leaves the screen past 1705.
+    EXPECT_EQ(placeAt(1710), 1495);
+    EXPECT_TRUE(sides.left);
+    // Fits unflipped by 5 pixels, and stays flipped.
+    EXPECT_EQ(placeAt(1700), 1485);
+    EXPECT_EQ(placePopup(QPoint{1700, 100}, card, primaryScreen, PopupPositionMode::FlipHorizontally, offset).x(),
+              1715);
+    // Clears the edge by the hysteresis: unflipped.
+    EXPECT_EQ(placeAt(1705 - kSideHysteresisPx), 1705 - kSideHysteresisPx + 15);
+    EXPECT_FALSE(sides.left);
+}
+
+TEST(PlacementSidesTest, aFlippedCardReturnsVerticallyOnceItClearsTheBottom)
+{
+    PopupSides sides;
+    const auto placeAt = [&sides](int y) {
+        return placePopup(QPoint{100, y}, card, primaryScreen, PopupPositionMode::FlipVertically, offset, &sides).y();
+    };
+    // The unflipped card leaves the screen past 965.
+    EXPECT_EQ(placeAt(970), 855);
+    EXPECT_EQ(placeAt(960), 845);
+    EXPECT_EQ(placeAt(965 - kSideHysteresisPx), 965 - kSideHysteresisPx + 15);
+}
+
 // popup::placePopupAvoiding(), which is what keeps the card off the paragraph it answers for on a
 // session whose pixel source composites MaruPop's own windows into the next grab.
 

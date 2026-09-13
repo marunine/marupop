@@ -37,7 +37,30 @@ namespace maru::popup
 // screen.y() + screen.height(), one logical pixel past meikipop's QRect.right() and
 // QRect.bottom(); the card therefore reaches the true screen edge where meikipop stops one
 // pixel short.
-[[nodiscard]] QRect placePopup(QPoint cursor, QSize popup, QRect screen, PopupPositionMode mode, int offset);
+//
+// sides, where given, carries the side the card took on the previous placement in and the side it
+// takes on this one out. A pointer resting near a point where the mode changes sides would
+// otherwise send the card across the pointer on every sample its hand jitters by, so a side the
+// previous placement took is kept until the pointer has passed the point by kSideHysteresisPx:
+// the flip modes return from a flipped side only once the unflipped card clears the screen edge
+// by that much, and VisualNovel keeps its side across the half of the screen within that
+// distance of it. The thirds of VisualNovel and the flip conditions themselves are unchanged, so a
+// kept side is always one the mode would have chosen a few pixels earlier. A sides whose known
+// flag is false places without history, as a null pointer does.
+struct PopupSides
+{
+    bool known = false;
+    // The card is left of the pointer: a flip on the horizontal axis.
+    bool left = false;
+    // The card is above the pointer: a flip on the vertical axis, or VisualNovel's upper side.
+    bool above = false;
+};
+
+// Logical pixels the pointer has to pass a side change by before a card that has a side leaves it.
+constexpr int kSideHysteresisPx = 32;
+
+[[nodiscard]] QRect
+placePopup(QPoint cursor, QSize popup, QRect screen, PopupPositionMode mode, int offset, PopupSides *sides = nullptr);
 
 // The same placement, moved off avoid where a placement off it exists inside screen.
 //
@@ -53,8 +76,14 @@ namespace maru::popup
 // tie is broken in the order above, below, left, right. Where no band fits the card, answer the
 // unconstrained placement, because a card outside the screen is worse than a card over the text.
 //
-// An empty avoid answers placePopup() unchanged.
-[[nodiscard]] QRect
-placePopupAvoiding(QPoint cursor, QSize popup, QRect screen, PopupPositionMode mode, int offset, QRect avoid);
+// An empty avoid answers placePopup() unchanged. sides is passed through to placePopup() and
+// records the side the mode chose, before any band moved the card.
+[[nodiscard]] QRect placePopupAvoiding(QPoint cursor,
+                                       QSize popup,
+                                       QRect screen,
+                                       PopupPositionMode mode,
+                                       int offset,
+                                       QRect avoid,
+                                       PopupSides *sides = nullptr);
 
 } // namespace maru::popup
