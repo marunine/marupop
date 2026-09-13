@@ -54,6 +54,9 @@ struct PopupSides
     bool left = false;
     // The card is above the pointer: a flip on the vertical axis, or VisualNovel's upper side.
     bool above = false;
+    // The band of placePopupAvoiding() the card took, in its order above, below, left, right, or
+    // -1 where the card took the unconstrained placement.
+    int band = -1;
 };
 
 // Logical pixels the pointer has to pass a side change by before a card that has a side leaves it.
@@ -77,7 +80,10 @@ placePopup(QPoint cursor, QSize popup, QRect screen, PopupPositionMode mode, int
 // unconstrained placement, because a card outside the screen is worse than a card over the text.
 //
 // An empty avoid answers placePopup() unchanged. sides is passed through to placePopup() and
-// records the side the mode chose, before any band moved the card.
+// records the side the mode chose, before any band moved the card, and the band the card took.
+// A band the previous placement took counts as kSideHysteresisPx nearer than it is, so a pointer
+// where two bands are about equally near keeps the card in one of them rather than sending it
+// across the paragraph on every sample its hand jitters by.
 [[nodiscard]] QRect placePopupAvoiding(QPoint cursor,
                                        QSize popup,
                                        QRect screen,

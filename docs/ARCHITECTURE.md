@@ -85,7 +85,8 @@ pointer left its rectangle keeps the card following the pointer until the rescan
 The periodic poll counts its interval from the last scan that returned, including scans
 triggered by pointer movement, and a tick defers once to a scan in flight rather than
 superseding it. Placement keeps the side the card took within `popup::kSideHysteresisPx` of
-the point where the mode changes sides.
+the point where the mode changes sides, and keeps the band beside the paragraph
+`popup::placePopupAvoiding()` chose until another band is nearer by that distance.
 A requested rectangle, scan generation and lookup ticket reject answers from superseded work.
 An alive flag protects queued completion after controller destruction.
 

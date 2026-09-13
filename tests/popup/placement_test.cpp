@@ -264,6 +264,35 @@ TEST(PlacementAvoidingTest, takesTheNearestBand)
     EXPECT_GT(avoided.top(), paragraph.bottom()) << "the card went above the text when below was nearer";
 }
 
+TEST(PlacementAvoidingTest, keepsItsBandForAPointerWaveringBetweenTwoEquallyNearBands)
+{
+    // A paragraph 200 logical pixels tall. The card FlipHorizontally puts right of the pointer is
+    // centred 65 pixels below it, so a pointer at y 335 has the bands above and below the
+    // paragraph equally near, and a hand wavering 5 pixels either side of it would otherwise send
+    // the card across the paragraph on every sample.
+    const QRect paragraph{400, 300, 900, 200};
+    PopupSides sides;
+    const auto placeAt = [&](int y) {
+        return placePopupAvoiding(
+            QPoint{600, y}, card, primaryScreen, PopupPositionMode::FlipHorizontally, offset, paragraph, &sides);
+    };
+    const QRect first = placeAt(330);
+    ASSERT_LT(first.bottom(), paragraph.top()) << "the case no longer starts in the band above";
+    ASSERT_GT(placePopupAvoiding(
+                  QPoint{600, 340}, card, primaryScreen, PopupPositionMode::FlipHorizontally, offset, paragraph)
+                  .top(),
+              paragraph.bottom())
+        << "without a history the case no longer changes bands";
+
+    for (const int y : {340, 330, 338, 332, 340}) {
+        EXPECT_EQ(placeAt(y), first) << "the card left the band above for a pointer at y " << y;
+    }
+    // The band below nearer by more than the hysteresis: the card crosses.
+    EXPECT_GT(placeAt(335 + kSideHysteresisPx).top(), paragraph.bottom());
+    // And stays there when the pointer wavers back.
+    EXPECT_GT(placeAt(340).top(), paragraph.bottom());
+}
+
 TEST(PlacementAvoidingTest, keepsThePlainPlacementWhereNoBandFitsTheCard)
 {
     // A paragraph that leaves no strip of the screen wide or tall enough for the card. A card

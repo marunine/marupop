@@ -108,6 +108,8 @@ QRect placePopup(QPoint cursor, QSize popup, QRect screen, PopupPositionMode mod
 QRect placePopupAvoiding(
     QPoint cursor, QSize popup, QRect screen, PopupPositionMode mode, int offset, QRect avoid, PopupSides *sides)
 {
+    // Read before placePopup() overwrites sides, which also resets its band.
+    const int keptBand = sides != nullptr && sides->known ? sides->band : -1;
     const QRect unconstrained = placePopup(cursor, popup, screen, mode, offset, sides);
     if (avoid.isEmpty() || !unconstrained.intersects(avoid)) {
         return unconstrained;
@@ -126,8 +128,10 @@ QRect placePopupAvoiding(
     };
 
     QRect best;
-    qint64 bestDistance = 0;
-    for (const QRect &band : bands) {
+    int bestBand = -1;
+    qreal bestDistance = 0.0;
+    for (int index = 0; index < 4; ++index) {
+        const QRect &band = bands[index];
         if (band.width() < popup.width() || band.height() < popup.height()) {
             continue;
         }
@@ -137,13 +141,22 @@ QRect placePopupAvoiding(
                                      clampToRange(unconstrained.y(), band.top(), band.bottom() + 1, popup.height())},
                               popup};
         const QPoint delta = candidate.center() - unconstrained.center();
-        const auto distance = static_cast<qint64>(delta.x()) * delta.x() + static_cast<qint64>(delta.y()) * delta.y();
-        if (best.isEmpty() || distance < bestDistance) {
+        // The band the card already holds counts as nearer by the hysteresis.
+        const qreal distance =
+            std::hypot(qreal(delta.x()), qreal(delta.y())) - (index == keptBand ? kSideHysteresisPx : 0);
+        if (bestBand < 0 || distance < bestDistance) {
             best = candidate;
+            bestBand = index;
             bestDistance = distance;
         }
     }
-    return best.isEmpty() ? unconstrained : best;
+    if (bestBand < 0) {
+        return unconstrained;
+    }
+    if (sides != nullptr) {
+        sides->band = bestBand;
+    }
+    return best;
 }
 
 } // namespace maru::popup
