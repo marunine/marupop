@@ -46,6 +46,9 @@ extract() {
     # written but not yet staged is part of this extraction. Reading the index alone omits the
     # i18n calls of every unstaged file from the template.
     #
+    # LC_ALL=C because the file order sets the entry order: a UTF-8 locale collates without the
+    # path separators, sorting src/dict/updatecheckjob.cpp after src/dictui/ where CI does not.
+    #
     # shellcheck disable=SC2046 # the file list has to word-split into separate arguments
     xgettext \
         --from-code=UTF-8 \
@@ -62,7 +65,7 @@ extract() {
         --copyright-holder="marunine" \
         --msgid-bugs-address=https://github.com/marunine/marupop/issues \
         -o "$staging" \
-        $(git ls-files --cached --others --exclude-standard 'src/*.cpp' 'src/*.h' | sort)
+        $(git ls-files --cached --others --exclude-standard 'src/*.cpp' 'src/*.h' | LC_ALL=C sort)
 
     # --join-existing appends to the file the pass above wrote, so all three land in one template.
     xgettext --from-code=UTF-8 --join-existing --language=Desktop -o "$staging" \
