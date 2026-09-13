@@ -83,14 +83,28 @@ bool appendProvider(Ort::SessionOptions &sessionOptions, const QString &provider
             return true;
         }
         if (provider == QLatin1String("DnnlExecutionProvider")) {
-            // OrtDnnlProviderOptions is opaque in the Arch builds, so the legacy C entry point
-            // is the only way to reach the provider. It is an exported dynamic symbol, present
-            // because onnxruntime_c_api.h declares it and every Arch variant exports it.
-            OrtStatus *status =
-                OrtSessionOptionsAppendExecutionProvider_Dnnl(static_cast<OrtSessionOptions *>(sessionOptions), 1);
+            // Through the OrtApi table rather than the legacy OrtSessionOptionsAppendExecutionProvider_Dnnl
+            // entry point: onnxruntime_c_api.h declares that symbol for every build, but only a
+            // build with DNNL compiled in exports it, so onnxruntime-cpu fails to link against it.
+            // The table entries exist in every build and return a status when DNNL is absent.
+            // onnxruntime_c_api.h only declares OrtDnnlProviderOptions. Its definition is in
+            // dnnl_provider_options.h, which no ORT header includes and onnxruntime-cpu does not
+            // ship, so CreateDnnlProviderOptions allocates it.
+            const OrtApi &api = Ort::GetApi();
+            OrtDnnlProviderOptions *options = nullptr;
+            OrtStatus *status = api.CreateDnnlProviderOptions(&options);
+            if (status == nullptr) {
+                const char *const keys[] = {"use_arena"};
+                const char *const values[] = {"1"};
+                status = api.UpdateDnnlProviderOptions(options, keys, values, 1);
+            }
+            if (status == nullptr) {
+                status = api.SessionOptionsAppendExecutionProvider_Dnnl(sessionOptions, options);
+            }
+            api.ReleaseDnnlProviderOptions(options);
             if (status != nullptr) {
-                qCDebug(logMeikiOcr) << "dnnl unavailable:" << Ort::GetApi().GetErrorMessage(status);
-                Ort::GetApi().ReleaseStatus(status);
+                qCDebug(logMeikiOcr) << "dnnl unavailable:" << api.GetErrorMessage(status);
+                api.ReleaseStatus(status);
                 return false;
             }
             return true;
