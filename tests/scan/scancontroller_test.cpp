@@ -116,20 +116,6 @@ using maru::test::FakeBackend;
 using maru::test::FakeLock;
 using maru::test::FakeTracker;
 
-// The canned dictionary answer: three characters from the pointer, whatever they are.
-lookup::Response cannedResponse(const lookup::Request &request)
-{
-    lookup::Result result;
-    result.matchedText = request.sourceText.mid(request.cursorIndex, kHighlightLength);
-    result.primarySpelling = result.matchedText;
-
-    lookup::Response response;
-    response.highlightStart = request.cursorIndex;
-    response.highlightLength = kHighlightLength;
-    response.results.append(result);
-    return response;
-}
-
 struct Harness
 {
     Harness()
@@ -147,7 +133,9 @@ struct Harness
             }
             ++lookups;
             requests.append(r);
-            return cannedResponse(r);
+            // kHighlightLength characters from the pointer, so the mapped highlight spans three
+            // character cells.
+            return test::cannedResponse(r, kHighlightLength);
         });
 
         QObject::connect(controller.get(),

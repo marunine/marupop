@@ -276,21 +276,6 @@ private:
     bool m_ready = false;
 };
 
-// Return one character at the pointer so the controller can build a highlight.
-// No dictionary work is charged; this isolates capture, OCR and placement behavior.
-lookup::Response cannedResponse(const lookup::Request &request)
-{
-    lookup::Result result;
-    result.matchedText = request.sourceText.mid(request.cursorIndex, 1);
-    result.primarySpelling = result.matchedText;
-
-    lookup::Response response;
-    response.highlightStart = request.cursorIndex;
-    response.highlightLength = 1;
-    response.results.append(result);
-    return response;
-}
-
 // One pointer sample and what the popup was anchored at when it was taken.
 struct Sample
 {
@@ -344,7 +329,9 @@ struct Harness
         controller = std::make_unique<ScanController>(
             tracker, frames, ocrService, [calls = lookupCalls](const lookup::Request &r) {
                 calls->fetch_add(1);
-                return cannedResponse(r);
+                // The canned response replaces the dictionary lookup, so the measured latency
+                // covers capture, OCR and placement.
+                return test::cannedResponse(r);
             });
 
         // The two signals src/app/application.cpp places the card on. lookupReady() carries a new
