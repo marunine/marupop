@@ -6,6 +6,7 @@
 #include "dict/codec.h"
 
 #include <QDateTime>
+#include <QDir>
 #include <QFile>
 #include <QFileInfo>
 #include <QMutexLocker>
@@ -16,6 +17,10 @@
 #include <sqlite3.h>
 #include <utility>
 #include <xxhash.h>
+
+#ifdef Q_OS_WIN
+#include <windows.h>
+#endif
 
 namespace maru::dict
 {
@@ -67,17 +72,70 @@ QString columnText(sqlite3_stmt *statement, int index)
     return QString::fromUtf8(text, sqlite3_column_bytes(statement, index));
 }
 
+// The file name in UTF-8, the encoding sqlite3_open_v2() takes on every platform.
+// QFile::encodeName() returns the ANSI code page encoding on Windows, which lacks characters that
+// a user folder name can contain.
+QByteArray sqliteFileName(const QString &path)
+{
+    return QDir::toNativeSeparators(path).toUtf8();
+}
+
+#ifdef Q_OS_WIN
+// The GetLastError() codes MoveFileExW() and DeleteFileW() set for a file another handle holds
+// open.
+bool isInUse(DWORD error)
+{
+    return error == ERROR_SHARING_VIOLATION || error == ERROR_ACCESS_DENIED || error == ERROR_USER_MAPPED_FILE ||
+           error == ERROR_LOCK_VIOLATION;
+}
+#endif
+
 // Moves source onto target in one step. QFile::rename() refuses a target that exists and would
 // need it removed first, and the window between that removal and a rename that then fails is what
-// destroys a working dictionary; rename(2) replaces the target atomically instead.
-bool renameOver(const QString &source, const QString &target)
+// destroys a working dictionary; rename(2) replaces the target atomically instead, and
+// MoveFileExW(MOVEFILE_REPLACE_EXISTING) does on Windows. A non-null inUse receives whether the
+// move failed because target is open. Only Windows reports an open target.
+bool renameOver(const QString &source, const QString &target, bool *inUse = nullptr)
 {
+    if (inUse != nullptr)
+        *inUse = false;
+#ifdef Q_OS_WIN
+    if (MoveFileExW(reinterpret_cast<LPCWSTR>(QDir::toNativeSeparators(source).utf16()),
+                    reinterpret_cast<LPCWSTR>(QDir::toNativeSeparators(target).utf16()),
+                    MOVEFILE_REPLACE_EXISTING | MOVEFILE_WRITE_THROUGH) != FALSE)
+        return true;
+    const DWORD error = GetLastError();
+    if (inUse != nullptr)
+        *inUse = isInUse(error);
+    qCDebug(logDictImport) << "Cannot move" << source << "to" << target << "error" << error;
+    return false;
+#else
     if (std::rename(QFile::encodeName(source).constData(), QFile::encodeName(target).constData()) == 0)
         return true;
     // The errno value rather than strerror(), which is not thread safe and whose message adds
     // nothing an import failure report needs beyond the code.
     qCWarning(logDictImport) << "Cannot rename" << source << "to" << target << "errno" << errno;
     return false;
+#endif
+}
+
+// Returns true when path is absent after the call, including a path absent before it. inUse
+// receives whether the deletion failed because the file is open. Only Windows reports an open
+// file.
+bool removeFile(const QString &path, bool *inUse)
+{
+    *inUse = false;
+#ifdef Q_OS_WIN
+    if (DeleteFileW(reinterpret_cast<LPCWSTR>(QDir::toNativeSeparators(path).utf16())) != FALSE)
+        return true;
+    const DWORD error = GetLastError();
+    if (error == ERROR_FILE_NOT_FOUND || error == ERROR_PATH_NOT_FOUND)
+        return true;
+    *inUse = isInUse(error);
+    return false;
+#else
+    return QFile::remove(path) || !QFileInfo::exists(path);
+#endif
 }
 
 } // namespace
@@ -87,6 +145,55 @@ QString keyFilterPathFor(const QString &dbPath)
     if (dbPath.endsWith(QLatin1String(".db")))
         return dbPath.chopped(3) + QLatin1String(".keys");
     return dbPath + QLatin1String(".keys");
+}
+
+QString stagedPathFor(const QString &path)
+{
+    return path + QLatin1String(".staged");
+}
+
+StagedStore promoteStagedStore(const QString &dbPath)
+{
+    const QString keysPath = keyFilterPathFor(dbPath);
+    const QString stagedDb = stagedPathFor(dbPath);
+    const QString stagedKeys = stagedPathFor(keysPath);
+    const bool haveDb = QFileInfo::exists(stagedDb);
+    const bool haveKeys = QFileInfo::exists(stagedKeys);
+    if (!haveDb && !haveKeys)
+        return StagedStore::None;
+    const auto failed = [](const QString &path, bool inUse) {
+        if (inUse)
+            return StagedStore::Pending;
+        qCWarning(logDict) << "Cannot move the staged store into place at" << path;
+        return StagedStore::Failed;
+    };
+    bool inUse = false;
+    if (haveDb) {
+        if (!removeFile(keysPath, &inUse))
+            return failed(keysPath, inUse);
+        if (!renameOver(stagedDb, dbPath, &inUse))
+            return failed(dbPath, inUse);
+    }
+    if (haveKeys && !renameOver(stagedKeys, keysPath, &inUse))
+        return failed(keysPath, inUse);
+    return StagedStore::Promoted;
+}
+
+StoreRemoval removeStoreFiles(const QString &dbPath)
+{
+    StoreRemoval result = StoreRemoval::Removed;
+    const QString keysPath = keyFilterPathFor(dbPath);
+    for (const QString &path : {dbPath, keysPath, stagedPathFor(dbPath), stagedPathFor(keysPath)}) {
+        bool inUse = false;
+        if (removeFile(path, &inUse))
+            continue;
+        if (!inUse) {
+            qCWarning(logDict) << "Cannot delete the store file" << path;
+            return StoreRemoval::Failed;
+        }
+        result = StoreRemoval::Pending;
+    }
+    return result;
 }
 
 Store::Store() = default;
@@ -115,6 +222,9 @@ OpenResult Store::open(const QString &dbPath)
     // so the guarantee holds.
     // QUrl::fromLocalFile() yields file:///path and percent-encodes three sets: the URI
     // delimiters #, ? and %, spaces, and non-ASCII bytes. SQLite decodes the percent-encoding.
+    // On Windows, QUrl::fromLocalFile() yields file:///C:/path. SQLite parses a drive letter
+    // directly after "file:" as a URI authority, so the path follows the empty authority of
+    // file:///.
     const QByteArray uri = QUrl::fromLocalFile(dbPath).toEncoded() + "?immutable=1";
     const int flags = SQLITE_OPEN_READONLY | SQLITE_OPEN_NOMUTEX | SQLITE_OPEN_URI;
     if (sqlite3_open_v2(uri.constData(), &m_db, flags, nullptr) != SQLITE_OK) {
@@ -306,7 +416,7 @@ bool StoreWriter::begin(const QString &dbPath, DictType type, const QHash<QStrin
     QFile::remove(m_tempDbPath);
 
     const int flags = SQLITE_OPEN_READWRITE | SQLITE_OPEN_CREATE | SQLITE_OPEN_NOMUTEX;
-    if (sqlite3_open_v2(QFile::encodeName(m_tempDbPath).constData(), &m_db, flags, nullptr) != SQLITE_OK) {
+    if (sqlite3_open_v2(sqliteFileName(m_tempDbPath).constData(), &m_db, flags, nullptr) != SQLITE_OK) {
         qCWarning(logDictImport) << "Cannot create" << m_tempDbPath << sqlite3_errmsg(m_db);
         abort();
         return false;
@@ -499,10 +609,34 @@ bool StoreWriter::finish()
     // rename(2) replaces the previous database in one step. Removing it first would leave the
     // dictionary with no database at all for the duration of a rename that then fails.
     const QString tempKeysPath = m_keysPath + QLatin1String(".tmp");
-    if (!renameOver(m_tempDbPath, m_dbPath)) {
-        abort();
-        return false;
+    bool inUse = false;
+    if (!renameOver(m_tempDbPath, m_dbPath, &inUse)) {
+        if (!inUse) {
+            abort();
+            return false;
+        }
+        // On Windows, a Store in a published snapshot holds the previous database open.
+        const QString stagedKeys = stagedPathFor(m_keysPath);
+        if (!renameOver(m_tempDbPath, stagedPathFor(m_dbPath))) {
+            abort();
+            return false;
+        }
+        if (!renameOver(tempKeysPath, stagedKeys)) {
+            // A staged database without a key filter runs every query in SQLite, as any store
+            // with a missing sidecar does. The staged key filter of an earlier import indexes
+            // other keys and is deleted.
+            QFile::remove(tempKeysPath);
+            QFile::remove(stagedKeys);
+        }
+        qCInfo(logDictImport) << "Staged" << m_dbPath << "until the open copy is released";
+        m_payloadIds.clear();
+        m_tempDbPath.clear();
+        return true;
     }
+    // The staged files of an earlier import predate the database moved into place.
+    // promoteStagedStore() would move them over the new database.
+    QFile::remove(stagedPathFor(m_dbPath));
+    QFile::remove(stagedPathFor(m_keysPath));
 
     // The database at m_dbPath is now the new one. A sidecar left over from the previous import
     // indexes keys that database no longer holds, and Store::find() would reject a candidate the

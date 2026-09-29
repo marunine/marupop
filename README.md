@@ -4,6 +4,7 @@
 
 MaruPop is an OCR pop-up Japanese dictionary for KDE Plasma 6 on Wayland.
 Hyprland support is experimental.
+Windows support is experimental.
 
 ![MaruPop showing English and Japanese definitions](docs/preview.webp)
 
@@ -69,6 +70,25 @@ kbuildsycoca6
 marupop
 ```
 
+### Windows
+
+Required build tools:
+
+- Visual Studio 2022 or later with:
+  - "Desktop development with C++"
+  - "C++ Clang tools for Windows" for the `windows-clang-cl` preset
+- [vcpkg](https://github.com/microsoft/vcpkg) installed with `VCPKG_ROOT` configured
+- git
+
+Run from the repository folder in a "Developer PowerShell for VS" prompt:
+
+```powershell
+cmake --preset windows-msvc
+cmake --build --preset windows-msvc
+cmake --install build --prefix "$env:LOCALAPPDATA\Programs\MaruPop"
+& "$env:LOCALAPPDATA\Programs\MaruPop\bin\marupop.exe"
+```
+
 ### Experimental Hyprland setup
 
 Hyprland detection is automatic.
@@ -105,6 +125,9 @@ Models and dictionaries are required for lookups.
 5. Point at Japanese text to display a dictionary popup.
 
 **Use Chrome Screen AI** selects an installed Chrome Screen AI component for text recognition.
+On Windows, Chrome installs the component in a version folder under
+`%LOCALAPPDATA%\Google\Chrome\User Data\screen_ai`.
+Select the version folder in **Configure MaruPop… → Text Recognition**.
 
 **Manage Dictionaries…** also supports Yomitan imports from ZIP files or folders.
 
@@ -120,11 +143,13 @@ MaruPop runs in the system tray.
 | Meta+Alt+C | Copy the word under the pointer |
 | Meta+Alt+P | Pin or unpin the popup |
 
+Meta is the Windows key on Windows.
+
 Pin the popup to scroll and select text with the mouse or keyboard.
 
 Open **Configure MaruPop…** from the tray menu to change recognition, lookup, and popup settings.
 
-The **Shortcuts** page lets you change the key bindings on KDE Plasma.
+The **Shortcuts** page lets you change the key bindings on KDE Plasma and Windows.
 
 ## Privacy
 

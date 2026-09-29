@@ -354,12 +354,20 @@ QWidget *SettingsDialog::createRecognitionPage()
     auto *screenAiForm = new QFormLayout(screenAiGroup);
     auto *resources = new PathRequester(PathRequester::Kind::Directory, screenAiGroup);
     resources->setObjectName(QStringLiteral("kcfg_ScreenAiResourcesDir"));
+#ifdef Q_OS_WIN
+    // Chrome installs the component in a folder named after the component version.
+    resources->setPlaceholderText(QStringLiteral("%LOCALAPPDATA%\\Google\\Chrome\\User Data\\screen_ai\\<version>"));
+    const QString screenAiNoteText = i18nc("@info",
+                                           "Chrome Screen AI requires a separate installation. Select the folder "
+                                           "containing chrome_screen_ai.dll and its model files.");
+#else
     resources->setPlaceholderText(QStringLiteral("~/.config/screen_ai/resources"));
+    const QString screenAiNoteText = i18nc("@info",
+                                           "Chrome Screen AI requires a separate installation. Select the folder "
+                                           "containing libchromescreenai.so and its model files.");
+#endif
     screenAiForm->addRow(i18nc("@label:textbox", "Component folder:"), resources);
-    auto *screenAiNote = new QLabel(i18nc("@info",
-                                          "Chrome Screen AI requires a separate installation. Select the folder "
-                                          "containing libchromescreenai.so and its model files."),
-                                    screenAiGroup);
+    auto *screenAiNote = new QLabel(screenAiNoteText, screenAiGroup);
     screenAiNote->setWordWrap(true);
     screenAiForm->addRow(QString(), screenAiNote);
     layout->addWidget(screenAiGroup);
@@ -727,15 +735,22 @@ QWidget *SettingsDialog::createShortcutsPage()
     hint->setMessageType(KMessageWidget::Information);
     hint->setCloseButtonVisible(false);
     hint->setWordWrap(true);
+#ifdef Q_OS_WIN
+    hint->setText(i18nc("@info",
+                        "Global shortcuts work in any application. Windows assigns each key combination to the "
+                        "first application that registers it."));
+#else
     hint->setText(i18nc(
         "@info", "Global shortcuts work in any application. Configure them here or in System Settings under MaruPop."));
+#endif
     layout->addWidget(hint);
 
     auto *form = new QFormLayout;
     const QStringList ids = ShortcutRegistry::actionIds();
     for (const QString &id : ids) {
         auto *button = new ShortcutButton(page);
-        // Not a kcfg_ name: the three hotkeys are KGlobalAccel actions, not settings entries.
+        // ShortcutRegistry owns the three hotkeys, so the object name omits the kcfg_ prefix that
+        // KConfigDialog binds to settings entries.
         button->setObjectName(QStringLiteral("shortcut_") + id);
         button->setKeySequence(m_editedShortcuts.value(id).isEmpty() ? QKeySequence{}
                                                                      : m_editedShortcuts.value(id).constFirst());

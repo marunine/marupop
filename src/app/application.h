@@ -15,9 +15,9 @@
 #include <functional>
 #include <memory>
 
-class KAboutApplicationDialog;
 class KJob;
 class QCommandLineParser;
+class QDialog;
 class QTimer;
 
 namespace maru::platform
@@ -69,7 +69,8 @@ class TrayIcon;
 
 // The resident shell: it owns every service, wires them to each other, routes requests from
 // the tray, the hotkeys and the command line, and re-applies the settings the dialog writes.
-// Kept out of main(), which only builds the KAboutData, the parser and the KDBusService.
+// Kept out of main(), which only builds the KAboutData, the parser and the single-instance
+// service.
 //
 // Nothing is constructed by the constructor: start() builds the pipeline, so a test can
 // construct an Application without registering a StatusNotifierItem on the session bus.
@@ -112,11 +113,13 @@ public:
 private:
     void buildPipeline();
     void wireScanning();
+    // True when a result of response holds a Store that DictionaryManager::isCurrentStore()
+    // rejects.
+    [[nodiscard]] bool holdsReplacedStore(const lookup::Response &response) const;
     void wireHotkeys();
 
     void showSettings();
     void showDictionaryManager();
-    // KAboutApplicationDialog over the KAboutData main() installed.
     void showAbout();
     // The first-run model prompt, shown once and only where no engine can run yet.
     void maybeRunFirstRun();
@@ -141,9 +144,8 @@ private:
     void startDictionaryDownload(const QUuid &id);
     void startDictionaryImport(const QUuid &id);
 
-    // States of the entry in ~/.config/autostart. Hidden is the state System Settings'
-    // Autostart module writes to disable an entry, so it is the one that means the user turned
-    // autostart off elsewhere; Missing means the entry has to be written again.
+    // Hidden records autostart turned off outside MaruPop: the desktop startup manager writes the
+    // Hidden state to disable an entry.
     enum class AutostartEntry
     {
         Missing,
@@ -199,9 +201,9 @@ private:
     QTimer *m_updateTimer = nullptr;
     QTimer *m_statusFlash = nullptr;
 
-    QPointer<KAboutApplicationDialog> m_aboutDialog; // created on the first About request
-    QPointer<QWidget> m_dictionaryDialog;            // the dictui window, one at a time
-    bool m_autostartApplied = false;                 // Autostart value the entry was last written for
+    QPointer<QDialog> m_aboutDialog;      // created on the first About request
+    QPointer<QWidget> m_dictionaryDialog; // the dictui window, one at a time
+    bool m_autostartApplied = false;      // Autostart value the entry was last written for
 };
 
 } // namespace maru

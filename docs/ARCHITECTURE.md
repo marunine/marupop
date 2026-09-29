@@ -3,7 +3,7 @@
 # Architecture
 
 MaruPop is a native Qt Widgets application for Japanese text recognition and dictionary lookup
-on Plasma Wayland. Hyprland has an experimental backend. Build requirements are in
+on Plasma Wayland. Hyprland and Windows have experimental backends. Build requirements are in
 [README.md](../README.md).
 
 ## Components
@@ -12,8 +12,9 @@ on Plasma Wayland. Hyprland has an experimental backend. Build requirements are 
 | --- | --- |
 | `src/app/` | Service ownership, tray, global shortcuts, settings and lookup window |
 | `src/core/` | KConfigXT settings, paths, enums and logging categories |
-| `src/platform/` | Session detection and construction of capture, cursor, lock and shortcut services |
+| `src/platform/` | Session detection, service construction, desktop integration and `platform::SingleInstance` on Windows |
 | `src/wayland/` | Protocol registry and shared-memory buffers on Qt's Wayland connection |
+| `src/win32/` | Win32 message-only windows, registry watches, capture exclusion and foreground activation |
 | `src/capture/` | Screen capture, authorization, coordinate conversion and scan-region geometry |
 | `src/cursor/` | KWin cursor relay, Hyprland socket polling and lock watchers |
 | `src/ocr/` | Recognition backends, preprocessing, corrections, grouping, hit testing and model downloads |
@@ -34,7 +35,8 @@ provenance. [Development tools](../tools/README.md) reproduce individual subsyst
 
 `platform::Backend` constructs four interfaces: `capture::FrameSource`,
 `cursor::CursorTracker`, `cursor::LockWatcher` and `ShortcutRegistry`. Application code uses
-those interfaces. `MARUPOP_PLATFORM=kde|hyprland|wlroots|unknown` overrides session detection.
+those interfaces. `MARUPOP_PLATFORM=kde|hyprland|wlroots|windows|unknown` overrides session
+detection. Application code reaches KIO and KXmlGui through `platform/desktop.h`.
 Hyprland's socket takes precedence over a reachable KWin D-Bus name because a nested compositor
 can inherit the parent Plasma bus.
 
@@ -55,6 +57,12 @@ On Hyprland, `HyprCursorTracker` reads `cursorpos` from socket1 and `WlrFrameSou
 compositor capture sessions created as the pointer moves. The popup's `no_screen_share` layer
 rule prevents self-recognition; the captured overlap is black, so `Frame::occluded` also
 prevents hit testing there and popup placement avoids the recognized paragraph.
+
+On Windows, `WinFrameSource` has two grab paths, DXGI Desktop Duplication and `BitBlt`. Equal
+pixels must hash equal on both paths. The popup carries `WDA_EXCLUDEFROMCAPTURE`, which Windows 10
+version 2004 (build 19041) and later honor. On earlier releases, `capturesOwnWindows()` is true
+and frames mark the popup rectangle as `Frame::occluded`, as on a wlroots-family compositor.
+`WinShortcuts` stores the key sequences in the `Shortcuts` group of `marupoprc`.
 
 Protocol bindings use `wl::Registry` on the display owned by Qt. Generate the client bindings
 in `src/CMakeLists.txt`, where the consuming `marupop_lib` target is defined. Compositor
@@ -97,7 +105,10 @@ Three coordinate spaces meet here:
 - Device pixels account for each output's device-pixel ratio.
 
 `capture::imageToLogical()` and `logicalToImage()` own conversion between image and desktop
-coordinates. Screen layout code accounts for mixed output scales. Tests use a fixed synthetic
+coordinates. Screen layout code accounts for mixed output scales. Qt on Windows places each
+screen's top-left corner at its device coordinates and divides the screen size by the screen's
+device-pixel ratio. Logical space therefore has gaps and overlaps between screens of different
+scales. A capture rectangle maps to device pixels through one screen. Tests use a fixed synthetic
 page where the text stays at desktop coordinates as the capture rectangle changes.
 
 ## Concurrency and dictionary lifetime
@@ -139,6 +150,20 @@ behavior. Ranking prioritizes matched span length and then the remaining ranking
 JMdict part-of-speech data prevents a lemma from matching through an incompatible conjugation
 class. Frequency and pitch data decorate results after the lexical query.
 
+Windows rejects replacing or deleting a file that another handle holds open without
+`FILE_SHARE_DELETE`. SQLite and `QFile::map()` open the store files without `FILE_SHARE_DELETE`.
+A reimport or removal of an open store therefore completes after the last `Store` on the old
+files closes. The snapshots published while a reimport waits omit the dictionary. The
+`pending-removals` file in the dictionary folder records each removal that waits, and the next
+`DictionaryManager::load()` completes a removal still recorded at process exit.
+`DictionaryManager::load()` deletes store files only for a recorded removal.
+`Application::buildPipeline()` saves the list after every load, including a load of an unreadable
+list. A lookup response holds the `Store` of each result. Code
+that retains a response releases it on `DictionaryManager::changed` when
+`DictionaryManager::isCurrentStore()` rejects the `Store` of a result. `Application` applies the
+check to its retained response and to the lookup window, and drops a response that arrives with a
+released `Store`.
+
 Each imported dictionary uses SQLite and key-filter sidecars. CBOR payloads carry type-specific
 records. An incompatible codec produces `NeedsReimport`, so record format changes cause an
 explicit reimport. A sorted XXH3 key filter rejects misses before SQLite queries; a hash
@@ -171,6 +196,11 @@ so logical DPI affects rendering.
 Settings use the `kcfg_<Name>` binding convention. Shortcuts implement their own apply/reset
 logic because they belong to compositor actions. Keep stored setting names stable when UI
 labels change. Theme previews update controls before Apply instead of writing settings early.
+
+On Windows, `platform::SingleInstance` replaces `KDBusService`. Autostart is a value under
+`HKCU\Software\Microsoft\Windows\CurrentVersion\Run`. A disabled entry under
+`HKCU\Software\Microsoft\Windows\CurrentVersion\Explorer\StartupApproved\Run` corresponds to
+`Hidden=true` in the XDG autostart file.
 
 `MARUPOP_APPLICATION_ID` is `io.github.marunine.marupop` across desktop metadata, icons and
 D-Bus identity. The separate component name `marupop` owns the existing settings namespace.

@@ -19,7 +19,12 @@
 
 #include <KLocalizedString>
 #include <KMessageWidget>
+
+#ifdef Q_OS_WIN
+#include "app/pathrequester.h"
+#else
 #include <KUrlRequester>
+#endif
 
 namespace maru
 {
@@ -90,7 +95,11 @@ void AddDictionaryDialog::buildUi()
     m_formatCombo->setObjectName(QStringLiteral("formatCombo"));
     form->addRow(i18nc("@label:listbox", "Format:"), m_formatCombo);
 
+#ifdef Q_OS_WIN
+    m_pathRequester = new PathRequester(PathRequester::Kind::File, this);
+#else
     m_pathRequester = new KUrlRequester(this);
+#endif
     m_pathRequester->setObjectName(QStringLiteral("pathRequester"));
     m_pathLabel = new QLabel(i18nc("@label:textbox", "Location:"), this);
     form->addRow(m_pathLabel, m_pathRequester);
@@ -114,8 +123,12 @@ void AddDictionaryDialog::buildUi()
     connect(buttons, &QDialogButtonBox::accepted, this, &AddDictionaryDialog::accept);
     connect(buttons, &QDialogButtonBox::rejected, this, &AddDictionaryDialog::reject);
     connect(m_formatCombo, &QComboBox::currentIndexChanged, this, &AddDictionaryDialog::onFormatChanged);
+#ifdef Q_OS_WIN
+    connect(m_pathRequester, &PathRequester::pathChanged, this, &AddDictionaryDialog::onPathChanged);
+#else
     connect(m_pathRequester, &KUrlRequester::textChanged, this, &AddDictionaryDialog::onPathChanged);
     connect(m_pathRequester, &KUrlRequester::urlSelected, this, &AddDictionaryDialog::onPathChanged);
+#endif
     connect(m_nameEdit, &QLineEdit::textEdited, this, [this] {
         m_nameEdited = true;
         revalidate();
@@ -202,11 +215,19 @@ void AddDictionaryDialog::onFormatChanged()
 
     if (yomitan) {
         // Both, so the same field accepts the unpacked folder and the .zip Yomitan publishes.
+#ifdef Q_OS_WIN
+        m_pathRequester->setKind(PathRequester::Kind::FileOrDirectory);
+#else
         m_pathRequester->setMode(KFile::Directory | KFile::File | KFile::ExistingOnly | KFile::LocalOnly);
+#endif
         m_pathRequester->setNameFilters({i18nc("@item:inlistbox file filter", "Yomitan dictionary archive (*.zip)"),
                                          i18nc("@item:inlistbox file filter", "All files (*)")});
     } else if (!builtIn) {
+#ifdef Q_OS_WIN
+        m_pathRequester->setKind(PathRequester::Kind::File);
+#else
         m_pathRequester->setMode(KFile::File | KFile::LocalOnly);
+#endif
         m_pathRequester->setNameFilters({i18nc("@item:inlistbox file filter", "Text file (*.txt)"),
                                          i18nc("@item:inlistbox file filter", "All files (*)")});
     }
@@ -222,12 +243,16 @@ void AddDictionaryDialog::onFormatChanged()
 
 QString AddDictionaryDialog::localPath() const
 {
+#ifdef Q_OS_WIN
+    return m_pathRequester->path();
+#else
     const QUrl url = m_pathRequester->url();
     if (url.isLocalFile())
         return url.toLocalFile();
     // A path typed by hand that KUrlRequester could not turn into a URL is still the path the
     // user meant, and dict::Dictionary::sourcePath is a plain string either way.
     return m_pathRequester->text();
+#endif
 }
 
 void AddDictionaryDialog::onPathChanged()

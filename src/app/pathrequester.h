@@ -3,9 +3,11 @@
 #pragma once
 
 #include <QString>
+#include <QStringList>
 #include <QWidget>
 
 class QLineEdit;
+class QToolButton;
 
 namespace maru
 {
@@ -28,6 +30,9 @@ public:
     {
         Directory,
         File,
+        // The browse button opens a menu with a file choice and a folder choice. Each
+        // QFileDialog mode selects either files or one directory.
+        FileOrDirectory,
     };
 
     explicit PathRequester(Kind kind = Kind::Directory, QWidget *parent = nullptr);
@@ -36,14 +41,24 @@ public:
     void setPath(const QString &path);
     void setPlaceholderText(const QString &text);
 
+    void setKind(Kind kind);
+    // Name filters of the file dialog in QFileDialog::setNameFilters() format, for example
+    // "Text file (*.txt)". An empty list shows all files.
+    void setNameFilters(const QStringList &filters);
+
 Q_SIGNALS:
     void pathChanged(const QString &path);
 
 private:
     void browse();
+    void browseFile();
+    void browseDirectory();
+    void updateBrowseButton();
 
     QLineEdit *m_edit = nullptr;
+    QToolButton *m_browse = nullptr;
     Kind m_kind = Kind::Directory;
+    QStringList m_nameFilters;
 };
 
 } // namespace maru

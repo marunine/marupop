@@ -24,30 +24,24 @@
 #include "ocr/modelstore.h"
 #include "ocr/ocrservice.h"
 #include "platform/backend.h"
+#include "platform/desktop.h"
 #include "popup/popupwindow.h"
 #include "scan/scancontroller.h"
 #include "scan/wordcopier.h"
 
 #include <QApplication>
 #include <QCommandLineParser>
+#include <QDialog>
 #include <QDir>
 #include <QFile>
 #include <QFileInfo>
 #include <QStandardPaths>
 #include <QTimer>
 
-#include <KAboutApplicationDialog>
-#include <KAboutData>
 #include <KConfigDialog>
-#include <KDesktopFile>
-#include <KIO/JobTracker>
-#include <KJobTrackerInterface>
 #include <KLocalizedString>
 
-#include <cerrno>
-#include <filesystem>
-#include <system_error>
-#include <unistd.h>
+#include <algorithm>
 
 namespace maru
 {
@@ -65,47 +59,6 @@ constexpr QLatin1StringView lookupWindowOption("lookup-window");
 constexpr int kUpdateCheckIntervalMs = 6 * 60 * 60 * 1000;
 // How long a hotkey's confirmation stays in the tray tooltip.
 constexpr int kStatusFlashMs = 4000;
-
-// The installed desktop entry is named after the application id, and the autostart copy has to
-// carry the same name: KWin resolves a caller's /proc/pid/exe to a desktop entry, and the XDG
-// autostart directory is one of the places an entry of that name is looked up.
-constexpr QLatin1StringView desktopFileName(MARUPOP_APPLICATION_ID ".desktop");
-
-QString autostartFilePath()
-{
-    return QStandardPaths::writableLocation(QStandardPaths::GenericConfigLocation) + QStringLiteral("/autostart/") +
-           desktopFileName;
-}
-
-QString installedDesktopFilePath()
-{
-    return QStandardPaths::locate(QStandardPaths::ApplicationsLocation, desktopFileName);
-}
-
-// Empty for a path that is empty or unreadable, which every caller treats as "nothing to
-// compare against" rather than "the two files differ".
-QByteArray fileContents(const QString &path)
-{
-    QFile file{path};
-    if (path.isEmpty() || !file.open(QIODevice::ReadOnly)) {
-        return {};
-    }
-    return file.readAll();
-}
-
-// True once the descriptor's data is on disk. A signal interrupts fsync() often enough in a
-// Qt application to be worth retrying, and a filesystem that implements no fsync reports
-// EINVAL or ENOSYS for data that was still written correctly.
-bool syncToDisk(int descriptor)
-{
-    while (fsync(descriptor) != 0) {
-        if (errno == EINTR) {
-            continue;
-        }
-        return errno == EINVAL || errno == ENOSYS;
-    }
-    return true;
-}
 
 // The LookupOcrVariants and LookupVariant* settings, as the engine takes them.
 [[nodiscard]] lookup::VariantOptions variantOptionsFromSettings()
@@ -147,6 +100,9 @@ void Application::start()
     buildPipeline();
 
     m_tray = new TrayIcon(this);
+#ifdef Q_OS_WIN
+    m_notifier->setTrayIcon(m_tray);
+#endif
     connect(m_tray, &TrayIcon::toggleScanningRequested, this, &Application::toggleScanning);
     connect(m_tray, &TrayIcon::lookupWindowRequested, this, &Application::toggleLookupWindow);
     connect(m_tray, &TrayIcon::settingsRequested, this, &Application::showSettings);
@@ -285,6 +241,13 @@ void Application::wireScanning()
             &scan::ScanController::lookupReady,
             this,
             [this](const lookup::Response &response, const scan::HitContext &context) {
+                // A lookup that ran on the snapshot before a dictionary change can deliver a
+                // Store the change released. Such a response returns here before the popup, the
+                // retained response and the lookup window receive it. The rescan that the change
+                // started answers from the current snapshot.
+                if (holdsReplacedStore(response)) {
+                    return;
+                }
                 m_lastResponse = response;
                 m_lastHit = context;
                 // A closed window is handed m_lastResponse by the next showLookupWindow() instead.
@@ -352,7 +315,23 @@ void Application::wireScanning()
         if (m_engine) {
             m_engine->setDictionaries(m_dictionaries->snapshot(), m_dictionaries->wordClasses());
         }
+        // Releases the Store of a reimported or removed dictionary. A response that holds one
+        // keeps its files open (DictionaryManager::isCurrentStore()).
+        if (holdsReplacedStore(m_lastResponse)) {
+            m_lastResponse = {};
+            m_lastHit = {};
+        }
+        if (m_lookupWindow && holdsReplacedStore(m_lookupWindow->response())) {
+            m_lookupWindow->clearLookup();
+        }
         m_scan->forceRescan();
+    });
+}
+
+bool Application::holdsReplacedStore(const lookup::Response &response) const
+{
+    return std::ranges::any_of(response.results, [this](const lookup::Result &result) {
+        return result.dictionary.store != nullptr && !m_dictionaries->isCurrentStore(result.dictionary.store.get());
     });
 }
 
@@ -530,7 +509,7 @@ void Application::showAbout()
         m_aboutDialog->activateWindow();
         return;
     }
-    auto *dialog = new KAboutApplicationDialog(KAboutData::applicationData());
+    QDialog *dialog = platform::createAboutDialog();
     dialog->setAttribute(Qt::WA_DeleteOnClose);
     m_aboutDialog = dialog;
     dialog->show();
@@ -622,7 +601,7 @@ void Application::startDictionaryDownload(const QUuid &id)
     }
     // A dictionary dump is tens of megabytes, so it belongs in Plasma's transfer list beside
     // every other download.
-    KIO::getJobTracker()->registerJob(job);
+    platform::registerJob(job);
     connect(job, &KJob::result, this, [this, id, job] {
         if (job->error() != 0) {
             reportFailure(i18nc("@title:window", "Dictionary Download Failed"), job->errorString());
@@ -642,7 +621,7 @@ void Application::startDictionaryImport(const QUuid &id)
     if (job == nullptr) {
         return;
     }
-    KIO::getJobTracker()->registerJob(job);
+    platform::registerJob(job);
     connect(job, &KJob::result, this, [this, id, job] {
         if (job->error() != 0) {
             reportFailure(i18nc("@title:window", "Dictionary Import Failed"), job->errorString());
@@ -702,132 +681,6 @@ void Application::applySettings()
     if (PopSettings::autostart() != m_autostartApplied && applyAutostart()) {
         m_autostartApplied = PopSettings::autostart();
     }
-}
-
-void Application::adoptAutostartState()
-{
-    // A process killed between the write and the rename in applyAutostart() leaves the staging
-    // file behind. XDG autostart reads *.desktop, so it starts nothing, and a start is the one
-    // moment no write is in flight to remove it at.
-    QFile::remove(autostartFilePath() + QStringLiteral(".new"));
-
-    const AutostartEntry entry = autostartEntryState();
-    // System Settings' Autostart module edits the same entry, and its toggle disables one by
-    // writing Hidden=true rather than deleting it. Hidden is therefore the one state that
-    // means the user turned autostart off somewhere else, and reading it here is what stops
-    // the next apply from rewriting the file from a setting the user changed elsewhere.
-    //
-    // A missing entry is written again. That is indistinguishable on disk from the module's
-    // Remove button, which deletes the entry, so a removal made that way is undone at the next
-    // start; the setting in this application stays authoritative for a state a home directory
-    // restored from a backup produces just as readily.
-    if (entry == AutostartEntry::Hidden && PopSettings::autostart()) {
-        qCDebug(logApp) << "the autostart entry is hidden; turning the setting off to match it";
-        PopSettings::setAutostart(false);
-        PopSettings::self()->save();
-        return;
-    }
-    if (entry == AutostartEntry::Enabled && !PopSettings::autostart()) {
-        qCDebug(logApp) << "an enabled autostart entry exists; turning the setting on to match it";
-        PopSettings::setAutostart(true);
-        PopSettings::self()->save();
-        // Falls through to the refresh below rather than returning. The entry that got here is
-        // one this application did not write -- added through System Settings' Autostart
-        // module, for instance -- so its contents are whatever that produced, and only a copy
-        // of the installed entry carries the X-KDE-* keys the autostarted process needs.
-    }
-    if (!PopSettings::autostart()) {
-        return;
-    }
-    // The setting asks for the entry. Write it when it has gone missing, and refresh a copy an
-    // upgrade left behind, so a key added to the installed entry reaches the autostarted
-    // process as well. The comparison is over the whole file, so an edit made to the autostart
-    // copy by hand is reverted here: an Exec= line that stops matching /proc/pid/exe is the
-    // way to lose the capture interfaces, and the installed entry is the one KWin resolves.
-    const QByteArray installed = fileContents(installedDesktopFilePath());
-    if (installed.isEmpty()) {
-        // A start can neither fix a missing installation nor ask the user to, and a run from a
-        // build tree reaches this every time, so the state stays in the log. The settings
-        // dialog turning autostart on runs applyAutostart(), which reports it at the point the
-        // user can act on it.
-        qCWarning(logApp) << "no readable" << desktopFileName << "; the autostart entry is left as it is";
-        return;
-    }
-    if (entry == AutostartEntry::Missing || installed != fileContents(autostartFilePath())) {
-        qCDebug(logApp) << "writing the autostart entry from the installed one";
-        applyAutostart();
-    }
-}
-
-Application::AutostartEntry Application::autostartEntryState()
-{
-    const QString target = autostartFilePath();
-    if (!QFile::exists(target)) {
-        return AutostartEntry::Missing;
-    }
-    return KDesktopFile{target}.desktopGroup().readEntry("Hidden", false) ? AutostartEntry::Hidden
-                                                                          : AutostartEntry::Enabled;
-}
-
-bool Application::applyAutostart()
-{
-    const QString target = autostartFilePath();
-    if (!PopSettings::autostart()) {
-        // Reported, because adoptAutostartState() reads an entry that survives removal as the
-        // user having enabled autostart and turns the setting back on at the next start.
-        if (QFile::exists(target) && !QFile::remove(target)) {
-            reportFailure(i18nc("@title:window", "Autostart Failed"),
-                          i18n("The autostart entry %1 could not be removed.", target));
-            return false;
-        }
-        return true;
-    }
-
-    // A byte-exact copy of the installed entry, X-KDE-* keys included: KWin maps a caller's
-    // /proc/pid/exe to a desktop entry, and a stripped copy that ever won that match would
-    // silently cost the process its capture interfaces. Plasma's own Autostart module copies
-    // the file for the same reason (plasma-workspace, kcms/autostart/autostartmodel.cpp).
-    const QByteArray installed = fileContents(installedDesktopFilePath());
-    if (installed.isEmpty()) {
-        // Covers a missing, unreadable and zero-byte installed entry alike, and matches the
-        // guard in adoptAutostartState(). An entry already in the autostart directory is left
-        // alone: it names a binary that runs, and an empty replacement would autostart nothing.
-        reportFailure(i18nc("@title:window", "Autostart Failed"),
-                      i18n("Could not read the desktop entry %1. Install MaruPop to enable autostart.",
-                           QLatin1StringView{desktopFileName}));
-        return false;
-    }
-    QDir{}.mkpath(QFileInfo{target}.path());
-    // Written beside the target and renamed onto it, so a write that runs out of space or
-    // hits a read-only directory leaves the working entry that was there. std::filesystem
-    // rather than QFile::rename, which refuses an existing target and would need the working
-    // entry removed first.
-    const QString staging = target + QStringLiteral(".new");
-    QFile file{staging};
-    // Synced before the rename: the rename is what makes the entry visible, and a crash between
-    // the two would otherwise leave a zero-length entry that autostarts nothing.
-    if (!file.open(QIODevice::WriteOnly | QIODevice::Truncate) || file.write(installed) != installed.size() ||
-        !file.flush() || !syncToDisk(file.handle())) {
-        file.remove();
-        reportFailure(i18nc("@title:window", "Autostart Failed"),
-                      i18n("The autostart entry %1 could not be written.", target));
-        return false;
-    }
-    file.close();
-    std::error_code error;
-    std::filesystem::rename(std::filesystem::path{QFile::encodeName(staging).toStdString()},
-                            std::filesystem::path{QFile::encodeName(target).toStdString()},
-                            error);
-    if (error) {
-        QFile::remove(staging);
-        reportFailure(i18nc("@title:window", "Autostart Failed"),
-                      i18n("The autostart entry %1 could not be written.", target));
-        return false;
-    }
-    // The setting keeps whatever the user chose on every path above. Rewriting it here would
-    // leave the open settings dialog showing a checkbox that disagrees with the stored value,
-    // and the next start reading an entry that disagrees with the setting.
-    return true;
 }
 
 void Application::reportFailure(const QString &title, const QString &message)

@@ -12,6 +12,7 @@
 #include "dictui/adddictionarydialog.h"
 #include "dictui/configuredictionarydialog.h"
 #include "dictui/dictionarymodel.h"
+#include "platform/desktop.h"
 
 #include <QAction>
 #include <QDialogButtonBox>
@@ -31,10 +32,6 @@
 #include <QTreeView>
 #include <QVBoxLayout>
 
-#include <KActionCollection>
-#include <KIO/JobTracker>
-#include <KIO/OpenFileManagerWindowJob>
-#include <KJobTrackerInterface>
 #include <KLocalizedString>
 #include <KMessageBox>
 #include <KMessageWidget>
@@ -137,18 +134,23 @@ void DictionaryManagerDialog::setJobTrackingEnabled(bool enabled)
 
 void DictionaryManagerDialog::buildActions()
 {
-    m_actions = new KActionCollection(this);
-    m_actions->setComponentName(QStringLiteral("marupop-dictionaries"));
-
-    const auto add = [this](const QString &name, const QString &text, const QString &icon, auto slot) {
-        auto *action = m_actions->addAction(name);
+    // Each action is a child of the dialog, named for findChild(), and added to the dialog, so its
+    // shortcut triggers while the dialog window is active (Qt::WindowShortcut).
+    const auto create = [this](const QString &name) {
+        auto *action = new QAction(this);
+        action->setObjectName(name);
+        addAction(action);
+        return action;
+    };
+    const auto add = [this, &create](const QString &name, const QString &text, const QString &icon, auto slot) {
+        QAction *action = create(name);
         action->setText(text);
         action->setIcon(QIcon::fromTheme(icon));
         connect(action, &QAction::triggered, this, slot);
         return action;
     };
 
-    m_addAction = m_actions->addAction(QStringLiteral("add_dictionary"));
+    m_addAction = create(QStringLiteral("add_dictionary"));
     m_addAction->setText(i18nc("@action", "Add Dictionary…"));
     m_addAction->setIcon(QIcon::fromTheme(QStringLiteral("list-add")));
 
@@ -206,17 +208,16 @@ void DictionaryManagerDialog::buildActions()
             addCustomEntry(dict::DictType::CustomName);
         });
 
-    KActionCollection::setDefaultShortcut(m_moveUpAction, QKeySequence(Qt::CTRL | Qt::Key_Up));
-    KActionCollection::setDefaultShortcut(m_moveDownAction, QKeySequence(Qt::CTRL | Qt::Key_Down));
-    KActionCollection::setDefaultShortcut(m_moveToTopAction, QKeySequence(Qt::CTRL | Qt::SHIFT | Qt::Key_Up));
-    KActionCollection::setDefaultShortcut(m_moveToBottomAction, QKeySequence(Qt::CTRL | Qt::SHIFT | Qt::Key_Down));
-    KActionCollection::setDefaultShortcut(m_removeAction, QKeySequence::Delete);
+    m_moveUpAction->setShortcut(QKeySequence(Qt::CTRL | Qt::Key_Up));
+    m_moveDownAction->setShortcut(QKeySequence(Qt::CTRL | Qt::Key_Down));
+    m_moveToTopAction->setShortcut(QKeySequence(Qt::CTRL | Qt::SHIFT | Qt::Key_Up));
+    m_moveToBottomAction->setShortcut(QKeySequence(Qt::CTRL | Qt::SHIFT | Qt::Key_Down));
+    m_removeAction->setShortcut(QKeySequence::Delete);
 
     m_moveUpAction->setToolTip(i18nc("@info:tooltip", "Move the dictionary up. Ctrl+Shift+Up moves it to the top."));
     m_moveDownAction->setToolTip(
         i18nc("@info:tooltip", "Move the dictionary down. Ctrl+Shift+Down moves it to the bottom."));
 
-    m_actions->addAssociatedWidget(this);
     buildAddMenu();
 }
 
@@ -546,7 +547,7 @@ void DictionaryManagerDialog::openContainingFolder()
     const dict::Dictionary *entry = selectedDictionary();
     if (entry == nullptr || entry->sourcePath.isEmpty())
         return;
-    KIO::highlightInFileManager({QUrl::fromLocalFile(entry->sourcePath)});
+    platform::revealInFileManager(entry->sourcePath);
 }
 
 void DictionaryManagerDialog::addCustomEntry(dict::DictType type)
@@ -660,7 +661,7 @@ void DictionaryManagerDialog::startNextTask()
     });
 
     if (m_jobTracking)
-        KIO::getJobTracker()->registerJob(job);
+        platform::registerJob(job);
     setBusy(true);
     job->start();
 }

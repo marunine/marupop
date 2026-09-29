@@ -21,8 +21,13 @@ maru_add_gtest_app(trackinglatency_test trackinglatency_test.cpp)
 target_link_libraries(scancontroller_test PRIVATE marupop_testsupport)
 target_link_libraries(scanresolution_test PRIVATE marupop_testsupport)
 target_link_libraries(trackinglatency_test PRIVATE marupop_testsupport)
-# The same binary a second time on the harness's 1920x1080 virtual output. It needs no compositor
-# service, only a workspace the size of a real desktop: the region ladder, the number of
-# characters a sweep crosses and the distance the pointer travels all scale with it, so the
-# offscreen 800x800 run and this one are the two ends of the range the numbers hold over.
-maru_add_nested_test(trackinglatency_test_nested BINARY trackinglatency_test)
+if(MARUPOP_PLATFORM_WAYLAND)
+    # The same binary a second time on the harness's 1920x1080 virtual output. It needs no compositor
+    # service, only a workspace the size of a real desktop: the region ladder, the number of
+    # characters a sweep crosses and the distance the pointer travels all scale with it, so the
+    # offscreen 800x800 run and this one are the two ends of the range the numbers hold over.
+    maru_add_nested_test(trackinglatency_test_nested BINARY trackinglatency_test)
+else()
+    maru_add_gtest_app(winpipeline_test winpipeline_test.cpp)
+    target_link_libraries(winpipeline_test PRIVATE marupop_testsupport)
+endif()

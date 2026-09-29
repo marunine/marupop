@@ -12,12 +12,17 @@ instructions](tools/README.md#the-kwin-privilege-gate).
 
 Add `-DCMAKE_BUILD_TYPE=Debug` and `-DMARUPOP_BUILD_DEV_TOOLS=ON` when configuring for development.
 
+On Windows, use the `windows-msvc` or `windows-clang-cl` preset from the
+[README](README.md#windows).
+
 Verification steps:
 
-1. Run the [tests](docs/TESTING.md#run-tests).
+1. Run the [tests](docs/TESTING.md#run-tests), or the [Windows tests](docs/TESTING.md#windows-tests).
 2. Run `po/extract-messages.sh --check` to check the translation template.
 3. Run the [compositor tests](docs/TESTING.md#compositor-tests) after changing capture,
    popup behavior, cursor tracking or shortcuts.
+4. Run the [interactive desktop tests](docs/TESTING.md#interactive-desktop-tests) after changing
+   the Windows capture, popup or pointer code.
 
 See [TESTING.md](docs/TESTING.md) for test inputs and skip conditions.
 The [CI workflow](.github/workflows/ci.yml) lists the automated checks and their dependencies.
@@ -44,6 +49,21 @@ staged C++ formatting and the staged translation template, as the CI format job 
 4. Check the AppStream metadata with `appstreamcli validate --no-net --pedantic`.
 5. Verify that the desktop entry's `Exec` uses the final executable path.
 6. Check the installed notices against [NOTICE](NOTICE).
+
+### Windows packaging
+
+1. Configure with `cmake --preset windows-msvc`.
+   The build folder is `build`.
+2. Build with `cmake --build --preset windows-msvc`.
+   The executables are in `build\bin`.
+3. Install with `cmake --install build --prefix <folder>`.
+   The installed executable is `<folder>\bin\marupop.exe`.
+4. Run `<folder>\bin\marupop.exe --check-authorization`.
+   The report ends with `Screen capture: available.`
+5. Check the notices under `<folder>\share\doc\marupop` against [NOTICE](NOTICE).
+
+Update the `REF`, `SHA512` and version of the ports under `packaging/vcpkg/ports/` when the
+`vcpkg.json` baseline changes the KDE Frameworks release.
 
 ## Generated files and attribution
 

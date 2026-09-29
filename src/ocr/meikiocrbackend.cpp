@@ -12,6 +12,7 @@
 #include "ocr/ortenv_p.h"
 
 #include <QElapsedTimer>
+#include <QFile>
 #include <QFileInfo>
 #include <QHash>
 #include <QImage>
@@ -21,12 +22,22 @@
 #include <KLocalizedString>
 
 #include <algorithm>
+#include <string>
 
 namespace maru::ocr
 {
 
 namespace
 {
+
+std::basic_string<ORTCHAR_T> ortPath(const QString &path)
+{
+#ifdef _WIN32
+    return path.toStdWString();
+#else
+    return std::string{QFile::encodeName(path).constData()};
+#endif
+}
 
 constexpr QLatin1StringView kCpuProvider{"CPUExecutionProvider"};
 
@@ -212,9 +223,9 @@ bool MeikiOcrBackend::initialize()
             if (provider != kCpuProvider && !appendProvider(options, provider)) {
                 continue;
             }
-            sessions->detection = std::make_unique<Ort::Session>(ortEnv(), qPrintable(detectionPath), options);
-            sessions->horizontal = std::make_unique<Ort::Session>(ortEnv(), qPrintable(horizontalPath), options);
-            sessions->vertical = std::make_unique<Ort::Session>(ortEnv(), qPrintable(verticalPath), options);
+            sessions->detection = std::make_unique<Ort::Session>(ortEnv(), ortPath(detectionPath).c_str(), options);
+            sessions->horizontal = std::make_unique<Ort::Session>(ortEnv(), ortPath(horizontalPath).c_str(), options);
+            sessions->vertical = std::make_unique<Ort::Session>(ortEnv(), ortPath(verticalPath).c_str(), options);
             sessions->detectionIo.fill(*sessions->detection);
             sessions->horizontalIo.fill(*sessions->horizontal);
             sessions->verticalIo.fill(*sessions->vertical);

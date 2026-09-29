@@ -15,8 +15,11 @@
 #include "dict/updatecheckjob.h"
 
 #include <QCoreApplication>
+#include <QFile>
+#include <QFileInfo>
 #include <QSignalSpy>
 #include <QTemporaryDir>
+#include <QTest>
 
 #include <gtest/gtest.h>
 #include <ranges>
@@ -167,6 +170,298 @@ TEST(DictDictionaryManager, PersistsTheListAcrossReloads)
     int expected = 1;
     for (const Dictionary *dictionary : reloaded.dictionaries())
         EXPECT_EQ(dictionary->priority, expected++);
+}
+
+namespace
+{
+
+bool createFile(const QString &path)
+{
+    QFile file(path);
+    return file.open(QIODevice::WriteOnly) && file.write("store") == 5;
+}
+
+} // namespace
+
+// Application::buildPipeline() seeds the built-ins and saves the list after every load(), also
+// after a load() that failed or that read a list naming no dictionary. Store files that the list
+// omits therefore stay across such starts. pending-removals is the record of a removal.
+TEST(DictDictionaryManager, KeepsTheStoreFilesTheListOmitsAcrossStarts)
+{
+    const QList<QByteArray> lists{
+        QByteArrayLiteral(R"({"version": 1})"),
+        QByteArrayLiteral(R"({"dictionaries": {"name": "JMdict"}})"),
+        QByteArrayLiteral(R"({"dictionaries": [{"id": "not-an-id", "name": "JMdict", "type": "JMdict"}]})"),
+        QByteArrayLiteral(R"({"dictionaries": [)"),
+    };
+    for (const QByteArray &list : lists) {
+        QTemporaryDir directory;
+        ASSERT_TRUE(directory.isValid());
+        const QString store = databasePathFor(directory.path(), QUuid::createUuid());
+        const QList<QString> files{store, keyFilterPathFor(store), stagedPathFor(store)};
+        for (const QString &path : files)
+            ASSERT_TRUE(createFile(path));
+        const QString listPath = directory.filePath(QStringLiteral("dictionaries.json"));
+        {
+            QFile file(listPath);
+            ASSERT_TRUE(file.open(QIODevice::WriteOnly));
+            ASSERT_EQ(file.write(list), list.size());
+        }
+
+        for (int start = 0; start < 2; ++start) {
+            DictionaryManager manager(directory.path(), nullptr);
+            (void)manager.load();
+            manager.seedBuiltIns();
+            ASSERT_TRUE(manager.save());
+        }
+        for (const QString &path : files)
+            EXPECT_TRUE(QFile::exists(path)) << list.toStdString() << " " << path.toStdString();
+    }
+}
+
+// pending-removals records the removals whose files a Store held open at process exit. load()
+// completes them, except for an id whose listed entry holds an import.
+TEST(DictDictionaryManager, CompletesThePendingRemovalsOfAnEarlierProcess)
+{
+    QTemporaryDir directory;
+    ASSERT_TRUE(directory.isValid());
+    QUuid listed;
+    {
+        DictionaryManager manager(directory.path(), nullptr);
+        ASSERT_TRUE(manager.load());
+        listed = importedDictionary(
+                     manager, DictType::JMdict, QStringLiteral("JMdict"), fixture(QStringLiteral("MockJMdict.xml")))
+                     .id;
+        ASSERT_FALSE(listed.isNull());
+        ASSERT_TRUE(manager.save());
+    }
+    const QString removed = databasePathFor(directory.path(), QUuid::createUuid());
+    const QList<QString> removedFiles{
+        removed,
+        keyFilterPathFor(removed),
+        stagedPathFor(removed),
+        stagedPathFor(keyFilterPathFor(removed)),
+    };
+    for (const QString &path : removedFiles)
+        ASSERT_TRUE(createFile(path));
+    const QString record = directory.filePath(QStringLiteral("pending-removals"));
+    {
+        QFile file(record);
+        ASSERT_TRUE(file.open(QIODevice::WriteOnly));
+        file.write(QFileInfo(removed).completeBaseName().toLatin1() + "\n");
+        file.write(listed.toString(QUuid::WithoutBraces).toLatin1() + "\n");
+        file.write("not-an-id\n");
+    }
+
+    DictionaryManager manager(directory.path(), nullptr);
+    ASSERT_TRUE(manager.load());
+    for (const QString &path : removedFiles)
+        EXPECT_FALSE(QFile::exists(path)) << path.toStdString();
+    EXPECT_TRUE(QFile::exists(databasePathFor(directory.path(), listed)));
+    EXPECT_NE(handleFor(manager.snapshot(), listed), nullptr);
+    EXPECT_FALSE(QFile::exists(record));
+}
+
+#ifdef Q_OS_WIN
+// A Store open in a snapshot keeps the removal of a built-in dictionary pending on Windows. A
+// reimport of the entry before the Store closes writes staged files under the same id, which the
+// pending removal must leave in place.
+TEST(DictDictionaryManager, AReimportDuringAPendingRemovalKeepsTheNewStore)
+{
+    QTemporaryDir directory;
+    ASSERT_TRUE(directory.isValid());
+    DictionaryManager manager(directory.path(), nullptr);
+    ASSERT_TRUE(manager.load());
+    manager.seedBuiltIns();
+    Dictionary *jmdict = manager.dictionaryNamed(QStringLiteral("JMdict"));
+    ASSERT_NE(jmdict, nullptr);
+    const QUuid id = jmdict->id;
+    jmdict->sourcePath = fixture(QStringLiteral("MockJMdict.xml"));
+    const auto import = [&manager, &id] {
+        DictionaryImportJob *job = manager.createImportJob(id);
+        ASSERT_NE(job, nullptr);
+        EXPECT_TRUE(runJob(job));
+        EXPECT_TRUE(manager.applyImportResult(id, job));
+        delete job;
+    };
+    import();
+    const QString dbPath = databasePathFor(directory.path(), id);
+
+    {
+        const DictionarySnapshot held = manager.snapshot();
+        ASSERT_NE(handleFor(held, id), nullptr);
+        ASSERT_TRUE(manager.remove(id));
+        EXPECT_TRUE(QFile::exists(dbPath));
+        import();
+        EXPECT_TRUE(QFile::exists(stagedPathFor(dbPath)));
+        EXPECT_EQ(handleFor(manager.snapshot(), id), nullptr);
+    }
+
+    // The retry publishes a snapshot and emits changed() once it settles the staged store.
+    QSignalSpy changed(&manager, &DictionaryManager::changed);
+    ASSERT_TRUE(changed.wait(5000));
+    ASSERT_NE(handleFor(manager.snapshot(), id), nullptr);
+    EXPECT_FALSE(QFile::exists(stagedPathFor(dbPath)));
+    const auto records = find(*handleFor(manager.snapshot(), id), normalizeKey(QStringLiteral("廃墟")));
+    EXPECT_EQ(records.size(), 1U);
+}
+
+// A removal still pending when the manager is destroyed completes at the next load().
+TEST(DictDictionaryManager, ARemovalPendingAtExitCompletesAtTheNextLoad)
+{
+    QTemporaryDir directory;
+    ASSERT_TRUE(directory.isValid());
+    QString dbPath;
+    {
+        DictionarySnapshot held;
+        {
+            DictionaryManager manager(directory.path(), nullptr);
+            ASSERT_TRUE(manager.load());
+            const QUuid id =
+                importedDictionary(
+                    manager, DictType::JMdict, QStringLiteral("JMdict"), fixture(QStringLiteral("MockJMdict.xml")))
+                    .id;
+            dbPath = databasePathFor(directory.path(), id);
+            held = manager.snapshot();
+            ASSERT_TRUE(manager.remove(id));
+            ASSERT_TRUE(manager.save());
+            EXPECT_TRUE(QFile::exists(dbPath));
+            EXPECT_TRUE(QFile::exists(directory.filePath(QStringLiteral("pending-removals"))));
+        }
+    }
+
+    DictionaryManager manager(directory.path(), nullptr);
+    ASSERT_TRUE(manager.load());
+    EXPECT_FALSE(QFile::exists(dbPath));
+    EXPECT_FALSE(QFile::exists(keyFilterPathFor(dbPath)));
+    EXPECT_FALSE(QFile::exists(directory.filePath(QStringLiteral("pending-removals"))));
+}
+
+// A staged reimport waits for the previous Store to close. A snapshot published while a second
+// import of the entry runs leaves the entry out, because the files at the database path predate the
+// staged files.
+TEST(DictDictionaryManager, KeepsAStagedDictionaryOutOfTheSnapshotDuringAnImport)
+{
+    QTemporaryDir directory;
+    ASSERT_TRUE(directory.isValid());
+    DictionaryManager manager(directory.path(), nullptr);
+    ASSERT_TRUE(manager.load());
+    const QUuid id = importedDictionary(
+                         manager, DictType::JMdict, QStringLiteral("JMdict"), fixture(QStringLiteral("MockJMdict.xml")))
+                         .id;
+    const DictionarySnapshot held = manager.snapshot();
+    ASSERT_NE(handleFor(held, id), nullptr);
+    {
+        DictionaryImportJob *job = manager.createImportJob(id);
+        ASSERT_NE(job, nullptr);
+        ASSERT_TRUE(runJob(job));
+        ASSERT_TRUE(manager.applyImportResult(id, job));
+        delete job;
+    }
+    ASSERT_TRUE(QFile::exists(stagedPathFor(databasePathFor(directory.path(), id))));
+    ASSERT_EQ(handleFor(manager.snapshot(), id), nullptr);
+
+    DictionaryImportJob *second = manager.createImportJob(id);
+    ASSERT_NE(second, nullptr);
+    ASSERT_TRUE(manager.rename(id, QStringLiteral("JMdict (renamed)")));
+    EXPECT_EQ(handleFor(manager.snapshot(), id), nullptr);
+    delete second;
+}
+
+// A failed reimport writes no store files, so the pending removal of the previous import stays and
+// completes once the Store closes.
+TEST(DictDictionaryManager, AFailedReimportKeepsThePendingRemoval)
+{
+    QTemporaryDir directory;
+    ASSERT_TRUE(directory.isValid());
+    DictionaryManager manager(directory.path(), nullptr);
+    ASSERT_TRUE(manager.load());
+    manager.seedBuiltIns();
+    Dictionary *jmdict = manager.dictionaryNamed(QStringLiteral("JMdict"));
+    ASSERT_NE(jmdict, nullptr);
+    const QUuid id = jmdict->id;
+    jmdict->sourcePath = fixture(QStringLiteral("MockJMdict.xml"));
+    {
+        DictionaryImportJob *job = manager.createImportJob(id);
+        ASSERT_NE(job, nullptr);
+        ASSERT_TRUE(runJob(job));
+        ASSERT_TRUE(manager.applyImportResult(id, job));
+        delete job;
+    }
+    const QString dbPath = databasePathFor(directory.path(), id);
+
+    {
+        const DictionarySnapshot held = manager.snapshot();
+        ASSERT_TRUE(manager.remove(id));
+        manager.dictionary(id)->sourcePath = directory.filePath(QStringLiteral("missing.xml"));
+        DictionaryImportJob *job = manager.createImportJob(id);
+        ASSERT_NE(job, nullptr);
+        EXPECT_FALSE(runJob(job));
+        delete job;
+        EXPECT_TRUE(QFile::exists(dbPath));
+    }
+
+    EXPECT_TRUE(QTest::qWaitFor(
+        [&dbPath] {
+            return !QFile::exists(dbPath);
+        },
+        5000));
+    EXPECT_FALSE(QFile::exists(keyFilterPathFor(dbPath)));
+}
+#endif
+
+// A Store stays current while the manager holds it open. Disabling, reimporting and removing the
+// dictionary each release it.
+TEST(DictDictionaryManager, ReportsWhichStoresAreCurrent)
+{
+    QTemporaryDir directory;
+    ASSERT_TRUE(directory.isValid());
+    DictionaryManager manager(directory.path(), nullptr);
+    ASSERT_TRUE(manager.load());
+    // The id alone: a Dictionary copy holds its Store, which keeps the files open on Windows.
+    const QUuid id = importedDictionary(
+                         manager, DictType::JMdict, QStringLiteral("JMdict"), fixture(QStringLiteral("MockJMdict.xml")))
+                         .id;
+    ASSERT_FALSE(id.isNull());
+
+    // The snapshot keeps each Store alive, so a released Store keeps its address.
+    DictionarySnapshot first = manager.snapshot();
+    const DictionaryHandle *handle = handleFor(first, id);
+    ASSERT_NE(handle, nullptr);
+    const Store *original = handle->store.get();
+    EXPECT_TRUE(manager.isCurrentStore(original));
+    EXPECT_FALSE(manager.isCurrentStore(nullptr));
+
+    ASSERT_TRUE(manager.rename(id, QStringLiteral("JMdict (renamed)")));
+    EXPECT_TRUE(manager.isCurrentStore(original));
+    ASSERT_TRUE(manager.setEnabled(id, false));
+    EXPECT_FALSE(manager.isCurrentStore(original));
+    ASSERT_TRUE(manager.setEnabled(id, true));
+    DictionarySnapshot reenabled = manager.snapshot();
+    const Store *reopened = handleFor(reenabled, id)->store.get();
+    EXPECT_TRUE(manager.isCurrentStore(reopened));
+
+    DictionaryImportJob *job = manager.createImportJob(id);
+    ASSERT_NE(job, nullptr);
+    ASSERT_TRUE(runJob(job));
+    ASSERT_TRUE(manager.applyImportResult(id, job));
+    delete job;
+    EXPECT_FALSE(manager.isCurrentStore(reopened));
+
+    // On Windows, first and reenabled hold the previous files open, and the reimport stages its
+    // files until both release them.
+    QSignalSpy changed(&manager, &DictionaryManager::changed);
+    first.reset();
+    reenabled.reset();
+    if (handleFor(manager.snapshot(), id) == nullptr)
+        ASSERT_TRUE(changed.wait(5000));
+    const DictionarySnapshot second = manager.snapshot();
+    ASSERT_NE(handleFor(second, id), nullptr);
+    const Store *reimported = handleFor(second, id)->store.get();
+    EXPECT_TRUE(manager.isCurrentStore(reimported));
+
+    ASSERT_TRUE(manager.remove(id));
+    EXPECT_FALSE(manager.isCurrentStore(reimported));
 }
 
 // A list that fails to parse is copied before the first start saves over it.

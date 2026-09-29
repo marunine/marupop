@@ -8,7 +8,6 @@
 #include <QImage>
 #include <QMetaType>
 #include <QObject>
-#include <QPointer>
 #include <QRect>
 
 #include <functional>
@@ -16,9 +15,6 @@
 
 namespace maru::capture
 {
-
-class KWinGrab;
-class KWinGrabber;
 
 // One captured region. image is in device pixels and carries scale as its devicePixelRatio();
 // logicalRect is the region that was requested, in logical global desktop coordinates.
@@ -74,6 +70,9 @@ public:
     // scene without them.
     [[nodiscard]] virtual bool capturesOwnWindows() const;
 
+    // Releases the resources the source keeps between grabs. The next grab acquires them again.
+    virtual void release();
+
     // The rectangle MaruPop's own popup covers right now, in logical global desktop coordinates,
     // or an empty rect while no popup is mapped. Assigned by the application from
     // popup::PopupWindow::occlusionRect(); a source that captures its own windows calls it once
@@ -108,32 +107,6 @@ private:
     std::optional<QRect> m_pending;
     QElapsedTimer m_elapsed;
     std::function<QRect()> m_occlusion;
-};
-
-// FrameSource over org.kde.KWin.ScreenShot2 CaptureArea, with include-cursor false (so a
-// pointer moving over static text leaves the frame hash unchanged), hide-caller-windows true
-// (so MaruPop's own popup never reaches the OCR pass) and native-resolution true (so a HiDPI
-// output is read at its own pixel density).
-class KWinFrameSource : public FrameSource
-{
-    Q_OBJECT
-
-public:
-    explicit KWinFrameSource(QObject *parent = nullptr);
-    ~KWinFrameSource() override;
-
-    void grab(const QRect &logical) override;
-
-    // True when org.kde.KWin owns its bus name.
-    [[nodiscard]] static bool available();
-
-private:
-    void issue(const QRect &logical);
-    void deliver(const QImage &source, const QRect &logical);
-    void issueNext();
-
-    KWinGrabber *m_grabber;
-    QPointer<KWinGrab> m_grab;
 };
 
 // FrameSource that answers with a supplied image, for tests and for a caller that has to run

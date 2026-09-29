@@ -18,6 +18,7 @@
 
 #include <QDir>
 #include <QFile>
+#include <QFileInfo>
 #include <QJsonArray>
 #include <QJsonDocument>
 #include <QJsonObject>
@@ -25,6 +26,7 @@
 #include <QRegularExpression>
 #include <QSaveFile>
 #include <QSet>
+#include <QTimer>
 
 #include <algorithm>
 
@@ -174,6 +176,8 @@ DictionaryManager::DictionaryManager(QString directory, QObject *parent)
     , m_directory(std::move(directory))
 {
     QDir().mkpath(m_directory);
+    m_retryTimer.setSingleShot(true);
+    connect(&m_retryTimer, &QTimer::timeout, this, &DictionaryManager::retryPending);
 }
 
 DictionaryManager::~DictionaryManager() = default;
@@ -188,8 +192,10 @@ bool DictionaryManager::load()
     m_dictionaries.clear();
 
     QFile file(listPath());
-    if (!file.exists())
+    if (!file.exists()) {
+        adoptPendingRemovals();
         return true;
+    }
     if (!file.open(QIODevice::ReadOnly)) {
         qCWarning(logDict) << "Cannot read" << listPath() << file.errorString();
         return false;
@@ -209,14 +215,97 @@ bool DictionaryManager::load()
     }
 
     const QJsonArray entries = document.object().value(QLatin1String("dictionaries")).toArray();
-    for (const auto &entry : entries) {
-        auto dictionary = std::make_unique<Dictionary>(Dictionary::fromJson(entry.toObject()));
-        m_dictionaries.push_back(std::move(dictionary));
-    }
+    for (const auto &entry : entries)
+        m_dictionaries.push_back(std::make_unique<Dictionary>(Dictionary::fromJson(entry.toObject())));
     renumber();
+    adoptPendingRemovals();
     publishSnapshot();
     Q_EMIT changed();
     return true;
+}
+
+void DictionaryManager::schedulePendingRetry()
+{
+    if (!m_retryTimer.isActive())
+        m_retryTimer.start(m_retryDelayMs);
+}
+
+void DictionaryManager::retryPending()
+{
+    bool progressed = false;
+    // removeStoreFiles() has logged a Failed removal, such as a denied write, which a retry
+    // repeats. The files of an id with a running import belong to that import until it finishes.
+    for (auto id = m_pendingRemovals.begin(); id != m_pendingRemovals.end();) {
+        if (!m_runningImports.contains(*id) &&
+            removeStoreFiles(databasePathFor(m_directory, *id)) != StoreRemoval::Pending) {
+            id = m_pendingRemovals.erase(id);
+            progressed = true;
+        } else {
+            ++id;
+        }
+    }
+    if (progressed)
+        savePendingRemovals();
+    qsizetype settled = 0;
+    for (auto id = m_pendingPromotions.begin(); id != m_pendingPromotions.end();) {
+        if (!m_runningImports.contains(*id) &&
+            promoteStagedStore(databasePathFor(m_directory, *id)) != StagedStore::Pending) {
+            id = m_pendingPromotions.erase(id);
+            ++settled;
+        } else {
+            ++id;
+        }
+    }
+    if (settled > 0) {
+        publishSnapshot();
+        qCInfo(logDict) << "settled" << settled << "staged dictionary stores";
+        Q_EMIT changed();
+        progressed = true;
+    }
+    if (m_pendingRemovals.isEmpty() && m_pendingPromotions.isEmpty()) {
+        m_retryDelayMs = kPendingRetryMs;
+        return;
+    }
+    m_retryDelayMs = progressed ? kPendingRetryMs : std::min(m_retryDelayMs * 2, kPendingRetryMaxMs);
+    schedulePendingRetry();
+}
+
+QString DictionaryManager::pendingRemovalsPath() const
+{
+    return m_directory + QLatin1String("/pending-removals");
+}
+
+void DictionaryManager::savePendingRemovals() const
+{
+    if (m_pendingRemovals.isEmpty()) {
+        QFile::remove(pendingRemovalsPath());
+        return;
+    }
+    QSaveFile file(pendingRemovalsPath());
+    if (file.open(QIODevice::WriteOnly)) {
+        for (const QUuid &id : m_pendingRemovals)
+            file.write(id.toString(QUuid::WithoutBraces).toLatin1() + '\n');
+        if (file.commit())
+            return;
+    }
+    qCWarning(logDict) << "Cannot write" << pendingRemovalsPath() << file.errorString();
+}
+
+void DictionaryManager::adoptPendingRemovals()
+{
+    QFile file(pendingRemovalsPath());
+    if (!file.open(QIODevice::ReadOnly))
+        return;
+    const QList<QByteArray> lines = file.readAll().split('\n');
+    file.close();
+    for (const QByteArray &line : lines) {
+        const QUuid id = QUuid::fromString(QLatin1StringView(line.trimmed()));
+        const Dictionary *entry = id.isNull() ? nullptr : dictionary(id);
+        if (!id.isNull() && (entry == nullptr || !entry->importedAt.isValid()))
+            m_pendingRemovals.insert(id);
+    }
+    retryPending();
+    savePendingRemovals();
 }
 
 bool DictionaryManager::save() const
@@ -307,6 +396,13 @@ DictionarySnapshot DictionaryManager::snapshot() const
     return m_snapshot;
 }
 
+bool DictionaryManager::isCurrentStore(const Store *store) const
+{
+    return store != nullptr && std::ranges::any_of(m_dictionaries, [store](const std::unique_ptr<Dictionary> &entry) {
+               return entry->store.get() == store;
+           });
+}
+
 std::shared_ptr<const WordClassTable> DictionaryManager::wordClasses() const
 {
     QMutexLocker locker(&m_publishedMutex);
@@ -326,6 +422,21 @@ Store *DictionaryManager::openStore(Dictionary &entry, QList<QUuid> &readyIds, Q
     // every mutation and would otherwise reopen, and warn about, a store that failed each time.
     if (entry.storeUnavailable)
         return nullptr;
+
+    // Lookups started after the reimport skip the superseded files. While an import of the entry
+    // runs, the import thread may be writing the staged files, which stay unpromoted, and the files
+    // at the database path are current only when no staged files wait beside them.
+    const QString dbPath = databasePathFor(m_directory, entry.id);
+    if (m_runningImports.contains(entry.id)) {
+        if (QFileInfo::exists(stagedPathFor(dbPath)) || QFileInfo::exists(stagedPathFor(keyFilterPathFor(dbPath))))
+            return nullptr;
+    } else if (promoteStagedStore(dbPath) == StagedStore::Pending) {
+        m_pendingPromotions.insert(entry.id);
+        schedulePendingRetry();
+        return nullptr;
+    } else {
+        m_pendingPromotions.remove(entry.id);
+    }
 
     auto opened = std::make_shared<Store>();
     const OpenResult result = opened->open(databasePathFor(m_directory, entry.id));
@@ -460,8 +571,14 @@ bool DictionaryManager::remove(const QUuid &id)
 
     (*found)->store.reset();
     (*found)->storeUnavailable = false;
-    QFile::remove(databasePathFor(m_directory, removedId));
-    QFile::remove(keyFilterPathFor(databasePathFor(m_directory, removedId)));
+    // The last published snapshot and the lookups running on it still hold the Store, which keeps
+    // the files open on Windows.
+    if (removeStoreFiles(databasePathFor(m_directory, removedId)) == StoreRemoval::Pending) {
+        m_pendingRemovals.insert(removedId);
+        savePendingRemovals();
+        schedulePendingRetry();
+    }
+    m_pendingPromotions.remove(removedId);
     QFile::remove(wordClassTablePathFor(m_directory, removedId));
     QDir(sourceDirectoryFor(m_directory, removedId)).removeRecursively();
 
@@ -697,9 +814,25 @@ DictionaryImportJob *DictionaryManager::createImportJob(const QUuid &id)
     if (!entry->updateUrl.isEmpty())
         meta.insert(QString(metakeys::sourceUrl), entry->updateUrl.toString());
 
-    auto *job =
-        new DictionaryImportJob(std::move(importer), entry->sourcePath, databasePathFor(m_directory, id), entry->type);
+    const QString dbPath = databasePathFor(m_directory, id);
+    ++m_runningImports[id];
+    auto *job = new DictionaryImportJob(std::move(importer), entry->sourcePath, dbPath, entry->type);
     job->setStoreMeta(meta);
+    // KJob emits finished() before result(), and from its destructor for a job that never
+    // started. DictionaryImportJob joins the import thread before either.
+    connect(job, &KJob::finished, this, [this, id](KJob *finished) {
+        if (--m_runningImports[id] == 0)
+            m_runningImports.remove(id);
+        // StoreWriter::finish() of a successful import replaced or staged over the files of a
+        // pending removal, so the removal would delete the import. A failed or killed import
+        // leaves the removal in place. qobject_cast() answers nullptr in the ~KJob emission.
+        const auto *import = qobject_cast<const DictionaryImportJob *>(finished);
+        if (import != nullptr && import->error() == KJob::NoError && import->result().ok &&
+            m_pendingRemovals.remove(id))
+            savePendingRemovals();
+        if (!m_pendingRemovals.isEmpty() || m_pendingPromotions.contains(id))
+            schedulePendingRetry();
+    });
     return job;
 }
 

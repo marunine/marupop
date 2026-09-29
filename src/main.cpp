@@ -1,10 +1,16 @@
 // SPDX-FileCopyrightText: 2026 marunine
 // SPDX-License-Identifier: LGPL-3.0-only
+#include "app/appicon.h"
 #include "app/application.h"
-#include "capture/wlrframesource.h"
 #include "marupop_version.h"
 #include "platform/backend.h"
 #include "platform/session.h"
+
+#ifdef Q_OS_WIN
+#include "platform/singleinstance.h"
+#else
+#include "capture/wlrframesource.h"
+#endif
 
 #include <QApplication>
 #include <QCommandLineParser>
@@ -14,9 +20,15 @@
 #include <QTextStream>
 
 #include <KAboutData>
+#include <KLocalizedString>
+
+#ifdef Q_OS_WIN
+#include <cstdio>
+#include <windows.h>
+#else
 #include <KCrash>
 #include <KDBusService>
-#include <KLocalizedString>
+#endif
 
 // KStyleManager arrived in KConfigWidgets 6.3; the guard is the form Dolphin and Gwenview use.
 #define HAVE_STYLE_MANAGER __has_include(<KStyleManager>)
@@ -44,6 +56,35 @@ bool authorizationIsTheWholeCommandLine(int argc, char **argv)
     return argc == 2 && qstrcmp(argv[1], "--check-authorization") == 0;
 }
 
+#ifdef Q_OS_WIN
+// A GUI-subsystem process starts without a console, and the CRT leaves its stdout and stderr
+// unbound at startup. A stream that the parent redirected to a file or a pipe has a handle from
+// process creation.
+void attachParentConsole()
+{
+    const auto redirected = [](DWORD which) {
+        HANDLE handle = GetStdHandle(which);
+        return handle != nullptr && handle != INVALID_HANDLE_VALUE && GetFileType(handle) != FILE_TYPE_UNKNOWN;
+    };
+    const bool outputRedirected = redirected(STD_OUTPUT_HANDLE);
+    const bool errorRedirected = redirected(STD_ERROR_HANDLE);
+    if ((outputRedirected && errorRedirected) || AttachConsole(ATTACH_PARENT_PROCESS) == FALSE) {
+        return;
+    }
+    FILE *stream = nullptr;
+    if (!outputRedirected) {
+        freopen_s(&stream, "CONOUT$", "w", stdout);
+    }
+    if (!errorRedirected) {
+        freopen_s(&stream, "CONOUT$", "w", stderr);
+    }
+}
+
+bool screencopyAvailable()
+{
+    return false;
+}
+#else
 // Whether WAYLAND_DISPLAY names a socket that exists, resolved the way libwayland resolves it:
 // an absolute value as given, a bare name under XDG_RUNTIME_DIR.
 //
@@ -62,6 +103,12 @@ bool waylandSocketExists()
     const QString runtimeDir = qEnvironmentVariable("XDG_RUNTIME_DIR");
     return !runtimeDir.isEmpty() && QFileInfo::exists(runtimeDir + QLatin1Char('/') + display);
 }
+
+bool screencopyAvailable()
+{
+    return maru::capture::WlrFrameSource::available();
+}
+#endif
 
 // screencopyBound says whether zwlr_screencopy_manager_v1 was bound, which only a caller with a
 // QGuiApplication can answer. False from the QCoreApplication path, where the lines still name
@@ -85,6 +132,11 @@ int reportAuthorization(bool screencopyBound)
 
 int main(int argc, char **argv)
 {
+#ifdef Q_OS_WIN
+    if (argc > 1) {
+        attachParentConsole();
+    }
+#endif
     if (authorizationIsTheWholeCommandLine(argc, argv)) {
         KLocalizedString::setApplicationDomain(QByteArrayLiteral("marupop"));
         // A Wayland session is the one case where the report needs a display connection: the
@@ -93,6 +145,7 @@ int main(int argc, char **argv)
         // compositor WAYLAND_DISPLAY names and never opens a window, so the option stays
         // answerable from a TTY, over SSH and on a host with no display at all, which is what
         // the QCoreApplication branch below covers.
+#ifndef Q_OS_WIN
         if (waylandSocketExists()) {
             // Only where the caller named no platform. Overwriting QT_QPA_PLATFORM would abort
             // the process this option exists to diagnose: a session that sets it to xcb or
@@ -102,8 +155,9 @@ int main(int argc, char **argv)
                 qputenv("QT_QPA_PLATFORM", QByteArrayLiteral("wayland"));
             }
             QGuiApplication app(argc, argv);
-            return reportAuthorization(maru::capture::WlrFrameSource::available());
+            return reportAuthorization(screencopyAvailable());
         }
+#endif
         QCoreApplication app(argc, argv);
         return reportAuthorization(false);
     }
@@ -139,13 +193,14 @@ int main(int argc, char **argv)
     // from kde.org leaves the relay loaded, reporting itself available, and delivering no
     // pointer position at all. Setting the project's own domain is what makes the two agree.
     QCoreApplication::setOrganizationDomain(QStringLiteral("marunine.github.io"));
+#ifndef Q_OS_WIN
     // Installs the crash handler that hands the backtrace to DrKonqi. A tray-resident process
     // otherwise crashes silently, and the user's only symptom is a hotkey that stopped working.
     KCrash::initialize();
+#endif
     // The reverse-DNS application id, which the installed desktop entry is named after and
     // which its Icon= repeats. KWin, the taskbar and KGlobalAccel all key off this.
     QGuiApplication::setDesktopFileName(QStringLiteral(MARUPOP_APPLICATION_ID));
-    QApplication::setWindowIcon(QIcon::fromTheme(QStringLiteral(MARUPOP_APPLICATION_ID)));
     // The app is tray-resident: neither a closed dialog nor a helper launched through KIO
     // finishing may end the process (Dolphin's gotcha).
     QApplication::setQuitOnLastWindowClosed(false);
@@ -169,16 +224,28 @@ int main(int argc, char **argv)
     if (parser.isSet(checkAuthorizationOption)) {
         // A QApplication is already up here, so the Wayland registry answers whether the
         // wlroots-family pixel source would bind.
-        return reportAuthorization(maru::capture::WlrFrameSource::available());
+        return reportAuthorization(screencopyAvailable());
     }
 
     // A second invocation forwards its arguments here instead of starting another instance.
+#ifdef Q_OS_WIN
+    maru::platform::SingleInstance service(QCoreApplication::arguments());
+    if (!service.isPrimary()) {
+        return 0;
+    }
+    using ActivationService = maru::platform::SingleInstance;
+#else
     KDBusService service(KDBusService::Unique);
+    using ActivationService = KDBusService;
+#endif
 
+    // Set after the single-instance check, so a second invocation exits before applicationIcon()
+    // renders the SVG sources on Windows.
+    QApplication::setWindowIcon(maru::applicationIcon(false, maru::IconBackground::Window));
     maru::Application application;
     application.start();
     QObject::connect(&service,
-                     &KDBusService::activateRequested,
+                     &ActivationService::activateRequested,
                      &application,
                      [&application](const QStringList &arguments, const QString & /*workingDirectory*/) {
                          application.activate(arguments);

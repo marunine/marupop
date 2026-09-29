@@ -1,0 +1,124 @@
+{
+  "version": 6,
+  "cmakeMinimumRequired": {
+    "major": 3,
+    "minor": 25,
+    "patch": 0
+  },
+  "configurePresets": [
+    {
+      "name": "windows-base",
+      "hidden": true,
+      "generator": "Ninja",
+      "toolchainFile": "$env{VCPKG_ROOT}/scripts/buildsystems/vcpkg.cmake",
+      "condition": {
+        "type": "equals",
+        "lhs": "${hostSystemName}",
+        "rhs": "Windows"
+      },
+      "architecture": {
+        "value": "x64",
+        "strategy": "external"
+      },
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "RelWithDebInfo",
+        "BUILD_TESTING": "ON",
+        "MARUPOP_BUILD_DEV_TOOLS": "ON",
+        "MARUPOP_GIT_HOOKS": "OFF",
+        "VCPKG_TARGET_TRIPLET": "x64-windows",
+        "VCPKG_HOST_TRIPLET": "x64-windows",
+        "VCPKG_MANIFEST_FEATURES": "tests"
+      }
+    },
+    {
+      "name": "windows-msvc",
+      "displayName": "Windows, MSVC",
+      "description": "cl.exe from the Visual Studio developer environment, dependencies from vcpkg.json",
+      "inherits": "windows-base",
+      "binaryDir": "${sourceDir}/build",
+      "cacheVariables": {
+        "CMAKE_C_COMPILER": "cl",
+        "CMAKE_CXX_COMPILER": "cl"
+      }
+    },
+    {
+      "name": "windows-msvc-debug",
+      "displayName": "Windows, MSVC, Debug",
+      "inherits": "windows-msvc",
+      "binaryDir": "${sourceDir}/build-debug",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Debug"
+      }
+    },
+    {
+      "name": "windows-clang-cl",
+      "displayName": "Windows, clang-cl",
+      "description": "clang-cl from the Visual Studio LLVM component, with vcpkg dependencies built by cl.exe for the same ABI",
+      "inherits": "windows-base",
+      "binaryDir": "${sourceDir}/build-clang-cl",
+      "cacheVariables": {
+        "CMAKE_C_COMPILER": "clang-cl",
+        "CMAKE_CXX_COMPILER": "clang-cl"
+      }
+    },
+    {
+      "name": "windows-ci",
+      "displayName": "Windows CI",
+      "description": "x64-windows-release vcpkg triplet: one release build per port in place of a debug and a release build",
+      "inherits": "windows-msvc",
+      "binaryDir": "${sourceDir}/build-ci",
+      "cacheVariables": {
+        "VCPKG_TARGET_TRIPLET": "x64-windows-release",
+        "VCPKG_HOST_TRIPLET": "x64-windows-release",
+        "VCPKG_INSTALL_OPTIONS": "--clean-after-build"
+      }
+    }
+  ],
+  "buildPresets": [
+    {
+      "name": "windows-msvc",
+      "configurePreset": "windows-msvc"
+    },
+    {
+      "name": "windows-msvc-debug",
+      "configurePreset": "windows-msvc-debug"
+    },
+    {
+      "name": "windows-clang-cl",
+      "configurePreset": "windows-clang-cl"
+    },
+    {
+      "name": "windows-ci",
+      "configurePreset": "windows-ci"
+    }
+  ],
+  "testPresets": [
+    {
+      "name": "windows-base",
+      "hidden": true,
+      "output": {
+        "outputOnFailure": true
+      },
+      "filter": {
+        "exclude": {
+          "label": "nested|hyprland"
+        }
+      }
+    },
+    {
+      "name": "windows-msvc",
+      "inherits": "windows-base",
+      "configurePreset": "windows-msvc"
+    },
+    {
+      "name": "windows-clang-cl",
+      "inherits": "windows-base",
+      "configurePreset": "windows-clang-cl"
+    },
+    {
+      "name": "windows-ci",
+      "inherits": "windows-base",
+      "configurePreset": "windows-ci"
+    }
+  ]
+}

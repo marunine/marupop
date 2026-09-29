@@ -30,6 +30,7 @@ Q_DECLARE_LOGGING_CATEGORY(logScan)
 Q_DECLARE_LOGGING_CATEGORY(logScreenAi)
 Q_DECLARE_LOGGING_CATEGORY(logScreenAiProto)
 Q_DECLARE_LOGGING_CATEGORY(logWayland)
+Q_DECLARE_LOGGING_CATEGORY(logWin32)
 
 // The names the categories above carry, sorted. Read from the categories themselves, so the
 // string in each Q_LOGGING_CATEGORY is the one definition of a category name.

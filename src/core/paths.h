@@ -10,9 +10,9 @@
 namespace maru::paths
 {
 
-// $XDG_DATA_HOME/marupop, created on demand. The models and the dictionaries live under it,
-// rather than under the config directory, because both are downloaded content rather than
-// configuration and both reach hundreds of megabytes.
+// $XDG_DATA_HOME/marupop on Linux and %LOCALAPPDATA%\marupop on Windows, created on demand.
+// The models and the dictionaries live under it, rather than under the config directory, because
+// both are downloaded content rather than configuration and both reach hundreds of megabytes.
 [[nodiscard]] QString dataDir();
 
 // dataDir()/models, created on demand. ocr::ModelStore writes the meikiocr ONNX files here
@@ -30,8 +30,10 @@ namespace maru::paths
 [[nodiscard]] QString kwinScriptInstallDir();
 
 // A leading ~ replaced with QDir::homePath(), and $VAR and ${VAR} replaced with the value of
-// the environment variable. An empty path comes back empty. Applied to the two configured
-// directory entries, ScreenAiResourcesDir and ModelDirectory, whose values a user types.
+// the environment variable. On Windows, a leading ~\ is replaced as well, %VAR% is replaced too,
+// and each of the three forms is replaced only where VAR is set. An empty path comes back empty.
+// Applied to the two configured directory entries, ScreenAiResourcesDir and ModelDirectory,
+// whose values a user types.
 [[nodiscard]] QString expandPath(const QString &path);
 
 } // namespace maru::paths

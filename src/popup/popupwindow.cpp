@@ -19,8 +19,13 @@
 #include <QVBoxLayout>
 #include <QWindow>
 
-#include <LayerShellQt/Window>
 #include <cmath>
+
+#ifdef Q_OS_WIN
+#include "win32/window.h"
+#else
+#include <LayerShellQt/Window>
+#endif
 
 namespace maru::popup
 {
@@ -33,6 +38,7 @@ namespace
 constexpr int pinIndicatorRadius = 4;
 constexpr int pinIndicatorInset = 8;
 
+#ifndef Q_OS_WIN
 // The LayerShellQt handle of widget, or nullptr where widget has no platform window yet. Every
 // caller reads it under PopupWindow::isLayerShellSession(), which is what says the handle drives
 // a zwlr_layer_surface_v1. A file-local function rather than a member, so the header needs no
@@ -45,6 +51,7 @@ LayerShellQt::Window *layerWindowOf(const QWidget *widget)
     }
     return LayerShellQt::Window::get(handle);
 }
+#endif
 
 } // namespace
 
@@ -181,6 +188,12 @@ void PopupWindow::applyWindowFlags()
 
 void PopupWindow::configureSurface()
 {
+#ifdef Q_OS_WIN
+    // mapSurface() calls configureSurface() after winId() and before show(), the order
+    // win32::excludeFromCapture() requires.
+    win32::excludeFromCapture(windowHandle());
+    m_surfaceConfigured = true;
+#else
     if (!isLayerShellSession()) {
         return;
     }
@@ -201,6 +214,7 @@ void PopupWindow::configureSurface()
     layer->setExclusiveZone(-1); // never push panels around
     layer->setAnchors({LayerShellQt::Window::AnchorTop, LayerShellQt::Window::AnchorLeft});
     m_surfaceConfigured = true;
+#endif
 }
 
 void PopupWindow::applyGeometry()
@@ -210,6 +224,7 @@ void PopupWindow::applyGeometry()
         move(m_rect.topLeft());
         return;
     }
+#ifndef Q_OS_WIN
     auto *layer = layerWindowOf(this);
     if (layer == nullptr) {
         return;
@@ -226,6 +241,7 @@ void PopupWindow::applyGeometry()
     // character rather than the next pointer sample. A one-pixel repaint on the border row, outside
     // the view, makes the backing store flush commit the margins with an unchanged frame.
     update(QRect{m_rect.width() / 2, 0, 1, 1});
+#endif
 }
 
 void PopupWindow::mapSurface()
@@ -237,6 +253,7 @@ void PopupWindow::mapSurface()
     if (!m_surfaceConfigured) {
         configureSurface();
     }
+#ifndef Q_OS_WIN
     if (isLayerShellSession() && m_screen != nullptr) {
         if (auto *layer = layerWindowOf(this); layer != nullptr) {
             // Read by the QWaylandLayerSurface constructor that show() below triggers. The output
@@ -245,15 +262,26 @@ void PopupWindow::mapSurface()
             layer->setScreen(m_screen);
         }
     }
+#endif
     // Before applyGeometry(), which measures the margins from the origin of the output the
     // surface is about to be bound to.
     m_surfaceScreen = m_screen;
     applyGeometry();
     show();
+#ifdef Q_OS_WIN
+    win32::raiseTopmost(windowHandle());
+    if (m_pinned) {
+        // Under the foreground lock, QWidget::activateWindow() flashes the taskbar button and
+        // leaves the card inactive.
+        win32::activate(win32::handleOf(windowHandle()));
+        m_view->setFocus(Qt::ShortcutFocusReason);
+    }
+#else
     if (m_pinned) {
         activateWindow();
         m_view->setFocus(Qt::ShortcutFocusReason);
     }
+#endif
 }
 
 void PopupWindow::setSuppressed(bool suppressed)
@@ -431,9 +459,16 @@ void PopupWindow::setPinned(bool pinned)
     if (m_pinned == pinned) {
         return;
     }
+#ifdef Q_OS_WIN
+    // The foreground window belongs to another process while the card is passive.
+    if (pinned) {
+        m_previousForeground = win32::foregroundWindow();
+    }
+#else
     if (pinned && !isLayerShellSession()) {
         m_previousFocusWindow = QGuiApplication::focusWindow();
     }
+#endif
     const bool restoreFocus = !pinned && isActiveWindow();
     m_pinned = pinned;
 
@@ -455,12 +490,21 @@ void PopupWindow::setPinned(bool pinned)
     mapSurface();
     // Wayland restores the previously active surface when this layer releases its keyboard.
     // Other Qt platforms can retain the now-passive tool window as their active window.
+#ifdef Q_OS_WIN
+    if (restoreFocus && m_previousForeground != nullptr) {
+        win32::activate(m_previousForeground);
+    }
+    if (!pinned) {
+        m_previousForeground = nullptr;
+    }
+#else
     if (restoreFocus && m_previousFocusWindow != nullptr) {
         m_previousFocusWindow->requestActivate();
     }
     if (!pinned) {
         m_previousFocusWindow.clear();
     }
+#endif
 }
 
 bool PopupWindow::isPinned() const

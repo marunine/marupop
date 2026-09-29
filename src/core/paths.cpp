@@ -25,7 +25,9 @@ QString ensure(const QString &path)
 
 QString dataDir()
 {
-    return ensure(QStandardPaths::writableLocation(QStandardPaths::AppDataLocation));
+    // On Windows, AppDataLocation is in the roaming profile, which Windows copies from the profile
+    // server at every sign-in. On Linux, AppLocalDataLocation and AppDataLocation name one folder.
+    return ensure(QStandardPaths::writableLocation(QStandardPaths::AppLocalDataLocation));
 }
 
 QString modelsDir()
@@ -53,24 +55,44 @@ QString expandPath(const QString &path)
     if (result == QLatin1StringView("~")) {
         return QDir::homePath();
     }
-    if (result.startsWith(QLatin1StringView("~/"))) {
+    if (result.startsWith(QLatin1StringView("~/")) || result.startsWith(QLatin1Char('~') + QDir::separator())) {
         result = QDir::homePath() + result.mid(1);
     }
+    const QProcessEnvironment environment = QProcessEnvironment::systemEnvironment();
+    const auto expand = [&](const QRegularExpression &pattern, bool keepUnset) {
+        qsizetype offset = 0;
+        while (true) {
+            const QRegularExpressionMatch match = pattern.matchView(result, offset);
+            if (!match.hasMatch()) {
+                break;
+            }
+            QString name;
+            for (int group = match.lastCapturedIndex(); group > 0 && name.isEmpty(); --group) {
+                name = match.captured(group);
+            }
+            if (keepUnset && !environment.contains(name)) {
+                offset = match.capturedEnd();
+                continue;
+            }
+            const QString value = environment.value(name);
+            result.replace(match.capturedStart(), match.capturedLength(), value);
+            offset = match.capturedStart() + value.size();
+        }
+    };
+#ifdef Q_OS_WIN
+    // One pass expands %VAR%, $VAR and ${VAR}, and the scan resumes after each substituted value.
+    // cmd.exe and the Explorer address bar expand %VAR% and keep an unset %VAR% as written.
+    // expandPath() keeps an unset $VAR and ${VAR} as written as well, because a Windows folder
+    // name can start with $, as $Recycle.Bin does.
+    static const QRegularExpression variable(
+        QStringLiteral("%([A-Za-z_][A-Za-z0-9_()]*)%|\\$(?:\\{([A-Za-z_][A-Za-z0-9_]*)\\}|([A-Za-z_][A-Za-z0-9_]*))"));
+    expand(variable, true);
+#else
     // $VAR and ${VAR}; unset variables expand to nothing (shell behavior).
     static const QRegularExpression variable(
         QStringLiteral("\\$(\\{([A-Za-z_][A-Za-z0-9_]*)\\}|([A-Za-z_][A-Za-z0-9_]*))"));
-    const QProcessEnvironment environment = QProcessEnvironment::systemEnvironment();
-    qsizetype offset = 0;
-    while (true) {
-        const QRegularExpressionMatch match = variable.matchView(result, offset);
-        if (!match.hasMatch()) {
-            break;
-        }
-        const QString name = match.captured(2).isEmpty() ? match.captured(3) : match.captured(2);
-        const QString value = environment.value(name);
-        result.replace(match.capturedStart(), match.capturedLength(), value);
-        offset = match.capturedStart() + value.size();
-    }
+    expand(variable, false);
+#endif
     return result;
 }
 

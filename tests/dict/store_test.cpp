@@ -289,6 +289,9 @@ TEST(DictStore, RefusesToReopenAnOpenStore)
 // finish() renames the temporary database onto the target with rename(2), which replaces it in one
 // step. Removing the target first, as the writer used to, destroys a working dictionary whenever
 // the rename that follows fails.
+// AFailedDatabaseRenameKeepsThePreviousStore fails the rename by removing the temporary database
+// while sqlite3 holds it open, and Windows refuses the removal of an open file.
+#ifndef Q_OS_WIN
 TEST(DictStore, AFailedDatabaseRenameKeepsThePreviousStore)
 {
     QTemporaryDir directory;
@@ -324,6 +327,7 @@ TEST(DictStore, AFailedDatabaseRenameKeepsThePreviousStore)
     EXPECT_EQ(store.find(QStringLiteral("走る")).size(), 1U);
     EXPECT_TRUE(store.find(QStringLiteral("歩く")).empty());
 }
+#endif
 
 // The sidecar rename runs after the database is already in place. A failure there keeps the new
 // database and removes the sidecar the previous import left, because a sidecar that indexes the
@@ -384,10 +388,13 @@ TEST(DictStore, MissesAreRejectedByTheKeyFilter)
         ASSERT_TRUE(writer.finish());
     }
 
-    KeyFilter filter;
-    ASSERT_TRUE(filter.open(keyFilterPathFor(path)));
-    EXPECT_TRUE(filter.contains(QStringLiteral("走る")));
-    EXPECT_FALSE(filter.contains(QStringLiteral("歩く")));
+    {
+        // KeyFilter maps the sidecar, and Windows refuses QFile::remove() of a mapped file.
+        KeyFilter filter;
+        ASSERT_TRUE(filter.open(keyFilterPathFor(path)));
+        EXPECT_TRUE(filter.contains(QStringLiteral("走る")));
+        EXPECT_FALSE(filter.contains(QStringLiteral("歩く")));
+    }
 
     // With the sidecar removed the store still answers every query, through SQLite alone.
     ASSERT_TRUE(QFile::remove(keyFilterPathFor(path)));
@@ -408,10 +415,21 @@ void writeStore(const QString &path, const QString &word, qint32 id)
     ASSERT_TRUE(writer.finish());
 }
 
+// Writes a store holding word into the staged paths of path, the files StoreWriter::finish()
+// leaves on Windows when an open Store holds the database at path.
+void stageStore(const QString &path, const QString &word, qint32 id)
+{
+    const QString written = path + QStringLiteral(".written");
+    writeStore(written, word, id);
+    ASSERT_TRUE(QFile::rename(written, stagedPathFor(path)));
+    ASSERT_TRUE(QFile::rename(keyFilterPathFor(written), stagedPathFor(keyFilterPathFor(path))));
+}
+
 } // namespace
 
-// Store::open() passes the path in a file: URI, where # starts a fragment and % starts a
-// percent-encoded byte.
+// sqlite3_open_v2() takes a UTF-8 file name, and QFile::encodeName() on Windows returns the ANSI
+// code page encoding. Store::open() passes the path in a file: URI, where # starts a fragment and
+// % starts a percent-encoded byte.
 TEST(DictStore, OpensAStoreUnderAFolderNameWithUriDelimiters)
 {
     QTemporaryDir directory;
@@ -424,3 +442,162 @@ TEST(DictStore, OpensAStoreUnderAFolderNameWithUriDelimiters)
     ASSERT_EQ(store.open(path), OpenResult::Ok);
     EXPECT_EQ(store.find(QStringLiteral("走る")).size(), 1U);
 }
+
+// Staged files of an earlier process are promoted on every platform, because no Store holds the
+// files they replace.
+TEST(DictStore, PromotesAStagedStoreOverAClosedStore)
+{
+    QTemporaryDir directory;
+    ASSERT_TRUE(directory.isValid());
+    const QString path = directory.filePath(QStringLiteral("closed.db"));
+    writeStore(path, QStringLiteral("走る"), 1);
+    stageStore(path, QStringLiteral("歩く"), 2);
+
+    EXPECT_EQ(promoteStagedStore(path), StagedStore::Promoted);
+    EXPECT_FALSE(QFile::exists(stagedPathFor(path)));
+    EXPECT_FALSE(QFile::exists(stagedPathFor(keyFilterPathFor(path))));
+    EXPECT_EQ(promoteStagedStore(path), StagedStore::None);
+    Store store;
+    ASSERT_EQ(store.open(path), OpenResult::Ok);
+    EXPECT_EQ(store.find(QStringLiteral("歩く")).size(), 1U);
+    EXPECT_TRUE(store.find(QStringLiteral("走る")).empty());
+}
+
+// A staged store left beside a newer direct reimport would replace the newer database at the next
+// promotion.
+TEST(DictStore, ADirectReimportDeletesTheStagedFiles)
+{
+    QTemporaryDir directory;
+    ASSERT_TRUE(directory.isValid());
+    const QString path = directory.filePath(QStringLiteral("restaged.db"));
+    writeStore(path, QStringLiteral("走る"), 1);
+    stageStore(path, QStringLiteral("歩く"), 2);
+
+    writeStore(path, QStringLiteral("泳ぐ"), 3);
+    EXPECT_FALSE(QFile::exists(stagedPathFor(path)));
+    EXPECT_FALSE(QFile::exists(stagedPathFor(keyFilterPathFor(path))));
+    EXPECT_EQ(promoteStagedStore(path), StagedStore::None);
+    Store store;
+    ASSERT_EQ(store.open(path), OpenResult::Ok);
+    EXPECT_EQ(store.find(QStringLiteral("泳ぐ")).size(), 1U);
+}
+
+TEST(DictStore, RemovesTheStoreFilesAndTheirStagedCopies)
+{
+    QTemporaryDir directory;
+    ASSERT_TRUE(directory.isValid());
+    const QString path = directory.filePath(QStringLiteral("removed.db"));
+    writeStore(path, QStringLiteral("走る"), 1);
+    stageStore(path, QStringLiteral("歩く"), 2);
+
+    EXPECT_EQ(removeStoreFiles(path), StoreRemoval::Removed);
+    for (const QString &file :
+         {path, keyFilterPathFor(path), stagedPathFor(path), stagedPathFor(keyFilterPathFor(path))})
+        EXPECT_FALSE(QFile::exists(file)) << file.toStdString();
+    // The files are absent, which is the state the call establishes.
+    EXPECT_EQ(removeStoreFiles(path), StoreRemoval::Removed);
+}
+
+#ifdef Q_OS_WIN
+
+// Windows refuses to replace a database file that an open Store holds.
+TEST(DictStore, ReimportingAnOpenStoreStagesItUntilTheStoreCloses)
+{
+    QTemporaryDir directory;
+    ASSERT_TRUE(directory.isValid());
+    const QString path = directory.filePath(QStringLiteral("open.db"));
+    writeStore(path, QStringLiteral("走る"), 1);
+
+    {
+        Store open;
+        ASSERT_EQ(open.open(path), OpenResult::Ok);
+        writeStore(path, QStringLiteral("歩く"), 2);
+        EXPECT_TRUE(QFile::exists(stagedPathFor(path)));
+        EXPECT_TRUE(QFile::exists(stagedPathFor(keyFilterPathFor(path))));
+        EXPECT_EQ(open.find(QStringLiteral("走る")).size(), 1U);
+        EXPECT_EQ(promoteStagedStore(path), StagedStore::Pending);
+    }
+
+    EXPECT_EQ(promoteStagedStore(path), StagedStore::Promoted);
+    EXPECT_FALSE(QFile::exists(stagedPathFor(path)));
+    EXPECT_EQ(promoteStagedStore(path), StagedStore::None);
+    Store reopened;
+    ASSERT_EQ(reopened.open(path), OpenResult::Ok);
+    EXPECT_EQ(reopened.find(QStringLiteral("歩く")).size(), 1U);
+    EXPECT_TRUE(reopened.find(QStringLiteral("走る")).empty());
+}
+
+// The previous key filter lacks the headwords of the new database. Store::find() rejects every key
+// that the key filter lacks.
+TEST(DictStore, PromotingADatabaseStagedWithoutItsKeyFilterDropsThePreviousFilter)
+{
+    QTemporaryDir directory;
+    ASSERT_TRUE(directory.isValid());
+    const QString path = directory.filePath(QStringLiteral("nokeys.db"));
+    writeStore(path, QStringLiteral("走る"), 1);
+    ASSERT_TRUE(QFile::exists(keyFilterPathFor(path)));
+    {
+        Store open;
+        ASSERT_EQ(open.open(path), OpenResult::Ok);
+        writeStore(path, QStringLiteral("歩く"), 2);
+    }
+    ASSERT_TRUE(QFile::remove(stagedPathFor(keyFilterPathFor(path))));
+
+    EXPECT_EQ(promoteStagedStore(path), StagedStore::Promoted);
+    EXPECT_FALSE(QFile::exists(keyFilterPathFor(path)));
+    Store reopened;
+    ASSERT_EQ(reopened.open(path), OpenResult::Ok);
+    EXPECT_EQ(reopened.find(QStringLiteral("歩く")).size(), 1U);
+}
+
+// QFile opens without FILE_SHARE_DELETE, so the open staged key filter cannot move after the
+// staged database has moved.
+TEST(DictStore, ADatabasePromotedBeforeItsKeyFilterRunsWithoutTheReplacedFilter)
+{
+    QTemporaryDir directory;
+    ASSERT_TRUE(directory.isValid());
+    const QString path = directory.filePath(QStringLiteral("partial.db"));
+    writeStore(path, QStringLiteral("走る"), 1);
+    {
+        Store open;
+        ASSERT_EQ(open.open(path), OpenResult::Ok);
+        writeStore(path, QStringLiteral("歩く"), 2);
+    }
+
+    {
+        QFile stagedKeys(stagedPathFor(keyFilterPathFor(path)));
+        ASSERT_TRUE(stagedKeys.open(QIODevice::ReadOnly));
+        EXPECT_EQ(promoteStagedStore(path), StagedStore::Pending);
+        EXPECT_FALSE(QFile::exists(stagedPathFor(path)));
+        EXPECT_FALSE(QFile::exists(keyFilterPathFor(path)));
+        Store partial;
+        ASSERT_EQ(partial.open(path), OpenResult::Ok);
+        EXPECT_EQ(partial.find(QStringLiteral("歩く")).size(), 1U);
+    }
+
+    EXPECT_EQ(promoteStagedStore(path), StagedStore::Promoted);
+    EXPECT_TRUE(QFile::exists(keyFilterPathFor(path)));
+    Store promoted;
+    ASSERT_EQ(promoted.open(path), OpenResult::Ok);
+    EXPECT_EQ(promoted.find(QStringLiteral("歩く")).size(), 1U);
+    EXPECT_TRUE(promoted.find(QStringLiteral("走る")).empty());
+}
+
+// Windows refuses to delete the files of an open Store.
+TEST(DictStore, RemovingAnOpenStoreWaitsForItToClose)
+{
+    QTemporaryDir directory;
+    ASSERT_TRUE(directory.isValid());
+    const QString path = directory.filePath(QStringLiteral("removed.db"));
+    writeStore(path, QStringLiteral("走る"), 1);
+    {
+        Store open;
+        ASSERT_EQ(open.open(path), OpenResult::Ok);
+        EXPECT_EQ(removeStoreFiles(path), StoreRemoval::Pending);
+    }
+    EXPECT_EQ(removeStoreFiles(path), StoreRemoval::Removed);
+    EXPECT_FALSE(QFile::exists(path));
+    EXPECT_FALSE(QFile::exists(keyFilterPathFor(path)));
+}
+
+#endif

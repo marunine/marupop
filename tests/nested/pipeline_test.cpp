@@ -16,6 +16,7 @@
 // explicit margins, because a Wayland client cannot otherwise know or choose its position on
 // the output, and the grab has to name a rectangle in the same coordinates.
 #include "capture/framesource.h"
+#include "capture/kwinframesource.h"
 #include "eventloop.h"
 #include "kwinsession.h"
 #include "ocr/grouping.h"

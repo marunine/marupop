@@ -135,7 +135,10 @@ QString substitutesFor(QChar keyCharacter)
         return out;
 
     const auto &index = detail::kSimilarKanjiIndex;
-    const auto *found = std::ranges::lower_bound(index, code, {}, &detail::SimilarKanjiEntry::kanji);
+    // The std::array iterator is a pointer in libstdc++ and libc++ and a class type in the MSVC
+    // STL.
+    // NOLINTNEXTLINE(readability-qualified-auto)
+    const auto found = std::ranges::lower_bound(index, code, {}, &detail::SimilarKanjiEntry::kanji);
     if (found == index.end() || found->kanji != code)
         return {};
     out.reserve(found->count);

@@ -11,7 +11,7 @@ function(maru_add_dict_test name)
     # The store tests drive sqlite3 directly to age a database, which appears in no marupop_lib
     # header, so the link is here. marupop_testsupport carries the .zip fixture packers the Yomitan
     # test uses, and KF6::Archive with them.
-    target_link_libraries(${name} PRIVATE PkgConfig::SQLITE3 marupop_testsupport)
+    target_link_libraries(${name} PRIVATE marupop::sqlite3 marupop_testsupport)
 endfunction()
 
 maru_add_dict_test(dict_codec_test codec_test.cpp)

@@ -1,0 +1,18 @@
+<!-- SPDX-FileCopyrightText: 2026 marunine -->
+<!-- SPDX-License-Identifier: LGPL-3.0-only -->
+<!-- Resource copies of the application icons for the Win32 build, which reads icons from
+     resources in place of an installed icon theme. -->
+<RCC>
+  <qresource prefix="/marupop/icons">
+    <file>16-apps-io.github.marunine.marupop.svg</file>
+    <file>22-apps-io.github.marunine.marupop.svg</file>
+    <file>32-apps-io.github.marunine.marupop.svg</file>
+    <file>48-apps-io.github.marunine.marupop.svg</file>
+    <file>sc-apps-io.github.marunine.marupop.svg</file>
+    <file>16-apps-io.github.marunine.marupop-paused.svg</file>
+    <file>22-apps-io.github.marunine.marupop-paused.svg</file>
+    <file>32-apps-io.github.marunine.marupop-paused.svg</file>
+    <file>48-apps-io.github.marunine.marupop-paused.svg</file>
+    <file>sc-apps-io.github.marunine.marupop-paused.svg</file>
+  </qresource>
+</RCC>

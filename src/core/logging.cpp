@@ -31,27 +31,16 @@ Q_LOGGING_CATEGORY(logScan, "marupop.scan", QtWarningMsg)
 Q_LOGGING_CATEGORY(logScreenAi, "marupop.screenai", QtWarningMsg)
 Q_LOGGING_CATEGORY(logScreenAiProto, "marupop.screenaiproto", QtWarningMsg)
 Q_LOGGING_CATEGORY(logWayland, "marupop.wayland", QtWarningMsg)
+Q_LOGGING_CATEGORY(logWin32, "marupop.win32", QtWarningMsg)
 
 QStringList logCategoryNames()
 {
-    const std::array categories{&logApp(),
-                                &logCapture(),
-                                &logCore(),
-                                &logCursor(),
-                                &logDeconj(),
-                                &logDict(),
-                                &logDictImport(),
-                                &logJp(),
-                                &logKWinGrabber(),
-                                &logLookup(),
-                                &logMeikiOcr(),
-                                &logOcr(),
-                                &logPlatform(),
-                                &logPopup(),
-                                &logScan(),
-                                &logScreenAi(),
-                                &logScreenAiProto(),
-                                &logWayland()};
+    const std::array categories{
+        &logApp(),      &logCapture(),       &logCore(),     &logCursor(),      &logDeconj(),
+        &logDict(),     &logDictImport(),    &logJp(),       &logKWinGrabber(), &logLookup(),
+        &logMeikiOcr(), &logOcr(),           &logPlatform(), &logPopup(),       &logScan(),
+        &logScreenAi(), &logScreenAiProto(), &logWayland(),  &logWin32(),
+    };
     QStringList names;
     names.reserve(static_cast<qsizetype>(categories.size()));
     for (const QLoggingCategory *category : categories) {

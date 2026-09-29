@@ -1,6 +1,7 @@
 // SPDX-FileCopyrightText: 2026 marunine
 // SPDX-License-Identifier: LGPL-3.0-only
 #include "core/enums.h"
+#include "core/settings.h"
 #include "fakes.h"
 #include "ocr/backend.h"
 #include "ocr/ocrservice.h"
@@ -195,6 +196,9 @@ int main(int argc, char **argv)
 {
     QCoreApplication app{argc, argv};
     QCoreApplication::setApplicationName(QStringLiteral("marupop"));
+    // QDir::homePath() on Windows returns the profile folder of the process token and ignores
+    // HOME. The cases require an absent Screen AI component.
+    PopSettings::setScreenAiResourcesDir(QStringLiteral(MARUPOP_TEST_HOME "/.config/screen_ai/resources"));
     ::testing::InitGoogleTest(&argc, argv);
     return RUN_ALL_TESTS();
 }

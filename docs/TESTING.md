@@ -34,6 +34,38 @@ env MARUPOP_TEST_PRIVATE_BUS=1 QT_QPA_PLATFORM=offscreen \
 
 Set `MARUPOP_TEST_PRIVATE_BUS=1` only with `dbus-run-session`.
 
+## Windows tests
+
+Build with a [Windows preset](../README.md#windows). Run the tests from a **Developer PowerShell for
+VS** prompt:
+
+```powershell
+ctest --preset windows-msvc
+```
+
+Set `QT_QPA_FONTDIR` and `QT_QPA_PLATFORM=offscreen` to run one binary directly:
+
+```powershell
+$env:QT_QPA_PLATFORM = 'offscreen'
+$env:QT_QPA_FONTDIR = "$env:WINDIR\Fonts"
+.\build\bin\<name>.exe --gtest_filter='<Suite>.<case>'
+```
+
+### Interactive desktop tests
+
+`MARUPOP_LIVE_DESKTOP=1` enables the interactive cases. The cases show windows on the tester's
+desktop and move the pointer. DWM composes the input desktop only, the desktop that receives
+keyboard and mouse input. Run the four interactive suites from a session on the input desktop:
+
+```powershell
+$env:MARUPOP_LIVE_DESKTOP = '1'
+ctest --preset windows-msvc -R '^(winframesource|winpopup|wincursortracker|winpipeline)_test$' -V
+```
+
+`winpipeline_test` also needs a recognition backend: the meikiocr models, or a Chrome Screen AI
+component in `MARUPOP_SCREEN_AI_RESOURCES` or in the folder of the `ScreenAiResourcesDir` setting.
+Leave the pointer and the keyboard idle while the suites run.
+
 ## Compositor tests
 
 KWin tests require `kwin_wayland`, `dbus-run-session` and working EGL rendering.

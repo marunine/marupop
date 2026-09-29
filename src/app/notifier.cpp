@@ -7,7 +7,12 @@
 #include <QLatin1StringView>
 
 #include <KLocalizedString>
+
+#ifdef Q_OS_WIN
+#include "app/trayicon.h"
+#else
 #include <KNotification>
+#endif
 
 #include <array>
 
@@ -81,11 +86,25 @@ void Notifier::failure(const QString &title, const QString &message)
     notify(Event::Failed, title, message, QStringLiteral("dialog-error"));
 }
 
+#ifdef Q_OS_WIN
+void Notifier::setTrayIcon(TrayIcon *tray)
+{
+    m_tray = tray;
+}
+#endif
+
 void Notifier::notify(Event event, const QString &title, const QString &text, const QString &iconName)
 {
     if (!isEnabled(event)) {
         return;
     }
+#ifdef Q_OS_WIN
+    Q_UNUSED(iconName)
+    // The Windows shell displays the message as plain text.
+    if (m_tray != nullptr) {
+        m_tray->showMessage(title, text, event == Event::Failed);
+    }
+#else
     auto *notification =
         new KNotification(QString{kEventIds.at(static_cast<std::size_t>(event))}, KNotification::CloseOnTimeout);
     // The component name is the notifyrc file name, which stays marupop: renaming it would take
@@ -99,6 +118,7 @@ void Notifier::notify(Event event, const QString &title, const QString &text, co
     notification->setText(text.toHtmlEscaped());
     notification->setIconName(iconName);
     notification->sendEvent();
+#endif
 }
 
 } // namespace maru

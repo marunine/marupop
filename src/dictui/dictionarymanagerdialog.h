@@ -23,7 +23,6 @@ class QProgressBar;
 class QPushButton;
 class QTemporaryDir;
 class QTreeView;
-class KActionCollection;
 class KJob;
 class KMessageWidget;
 
@@ -53,11 +52,6 @@ public:
     [[nodiscard]] QTreeView *view() const
     {
         return m_view;
-    }
-
-    [[nodiscard]] KActionCollection *actionCollection() const
-    {
-        return m_actions;
     }
 
     // What Remove asks before it deletes anything. The default puts up
@@ -140,7 +134,6 @@ private:
     dict::DictionaryManager &m_manager;
     DictionaryModel *m_model = nullptr;
     QTreeView *m_view = nullptr;
-    KActionCollection *m_actions = nullptr;
     KMessageWidget *m_message = nullptr;
     QProgressBar *m_progress = nullptr;
     QLabel *m_progressLabel = nullptr;

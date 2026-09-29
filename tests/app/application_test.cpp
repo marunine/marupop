@@ -16,6 +16,10 @@
 #include <QMenu>
 #include <QTimer>
 
+#ifdef Q_OS_WIN
+#include <QSettings>
+#endif
+
 #include <gtest/gtest.h>
 
 using namespace maru;
@@ -155,6 +159,30 @@ TEST(ApplicationTest, appliesSettingsWhileResident)
     settle();
     SUCCEED();
 }
+
+#ifdef Q_OS_WIN
+TEST(ApplicationTest, keepsTheAutostartEntryOfATestRunApartFromTheUsersOwn)
+{
+    const QString runKey = QStringLiteral(R"(HKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\Run)");
+    const QString valueName = QStringLiteral(MARUPOP_APPLICATION_ID);
+    const QVariant before = QSettings{runKey, QSettings::NativeFormat}.value(valueName);
+    {
+        const ResidentSettings settings;
+        PopSettings::setAutostart(true);
+        PopSettings::self()->save();
+        Application application;
+        application.start();
+        settle();
+    }
+    EXPECT_EQ(QSettings(runKey, QSettings::NativeFormat).value(valueName), before);
+    const QSettings testRun{QStringLiteral(R"(HKEY_CURRENT_USER\Software\MaruPop-test\CurrentVersion\Run)"),
+                            QSettings::NativeFormat};
+    EXPECT_TRUE(testRun.value(valueName).toString().contains(QCoreApplication::applicationFilePath().section(u'/', -1)))
+        << testRun.value(valueName).toString().toStdString();
+    QSettings{QStringLiteral(R"(HKEY_CURRENT_USER\Software)"), QSettings::NativeFormat}.remove(
+        QStringLiteral("MaruPop-test"));
+}
+#endif
 
 int main(int argc, char **argv)
 {

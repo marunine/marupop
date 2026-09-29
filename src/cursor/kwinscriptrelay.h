@@ -40,10 +40,10 @@ public:
 
     // Exports the sink, ensures the package and the kwinrc key, and asks KWin to reload its
     // configuration. Reports the outcome through CursorTracker::availabilityChanged().
-    void start();
+    void start() override;
     // Unloads the script and leaves the package installed, so the entry stays listed under
     // System Settings, Window Management, KWin Scripts.
-    void stop();
+    void stop() override;
     // Reads org.kde.kwin.Scripting isScriptLoaded once and updates the availability.
     void refresh();
 
