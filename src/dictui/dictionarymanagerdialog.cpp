@@ -333,6 +333,11 @@ void DictionaryManagerDialog::buildUi()
     connect(m_model, &QAbstractItemModel::rowsInserted, this, &DictionaryManagerDialog::updateActions);
     connect(m_model, &QAbstractItemModel::rowsRemoved, this, &DictionaryManagerDialog::updateActions);
     connect(m_model, &QAbstractItemModel::modelReset, this, &DictionaryManagerDialog::updateActions);
+    // The current index is persistent and moves with its row. updateActions() reads the row
+    // again on rowsMoved(), which a move emits, and on layoutChanged(), which Auto-Sort
+    // Dictionaries emits.
+    connect(m_model, &QAbstractItemModel::rowsMoved, this, &DictionaryManagerDialog::updateActions);
+    connect(m_model, &QAbstractItemModel::layoutChanged, this, &DictionaryManagerDialog::updateActions);
 
     if (m_model->rowCount() > 0)
         selectRow(0);

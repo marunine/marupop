@@ -10,7 +10,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-09-13 10:47-0400\n"
+"POT-Creation-Date: 2026-09-29 18:25-0400\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -180,7 +180,7 @@ msgid ""
 msgstr ""
 
 #: src/app/modeldownloaddialog.cpp:52 src/app/modeldownloaddialog.cpp:109
-#: src/app/modelstatuswidget.cpp:234 src/dictui/dictionarymanagerdialog.cpp:771
+#: src/app/modelstatuswidget.cpp:234 src/dictui/dictionarymanagerdialog.cpp:776
 #, kde-format
 msgctxt "@action:button"
 msgid "Download"
@@ -2290,7 +2290,7 @@ msgid "Delete Dictionary"
 msgstr ""
 
 #: src/dictui/dictionarymanagerdialog.cpp:171
-#: src/dictui/dictionarymanagerdialog.cpp:380
+#: src/dictui/dictionarymanagerdialog.cpp:385
 #, kde-format
 msgctxt "@action"
 msgid "Check for Updates"
@@ -2374,122 +2374,122 @@ msgctxt "@action:inmenu"
 msgid "Custom Name List…"
 msgstr ""
 
-#: src/dictui/dictionarymanagerdialog.cpp:380
+#: src/dictui/dictionarymanagerdialog.cpp:385
 #, kde-format
 msgctxt "@action"
 msgid "Download"
 msgstr ""
 
-#: src/dictui/dictionarymanagerdialog.cpp:498
+#: src/dictui/dictionarymanagerdialog.cpp:503
 #, kde-kuit-format
 msgctxt "@info"
 msgid "Imported data for <resource>%1</resource> deleted."
 msgstr ""
 
-#: src/dictui/dictionarymanagerdialog.cpp:503
+#: src/dictui/dictionarymanagerdialog.cpp:508
 #, kde-format
 msgctxt "@action:button"
 msgid "Undo"
 msgstr ""
 
-#: src/dictui/dictionarymanagerdialog.cpp:505
+#: src/dictui/dictionarymanagerdialog.cpp:510
 #, kde-kuit-format
 msgctxt "@info"
 msgid "<resource>%1</resource> was removed."
 msgstr ""
 
-#: src/dictui/dictionarymanagerdialog.cpp:555
+#: src/dictui/dictionarymanagerdialog.cpp:560
 #, kde-format
 msgctxt "@info"
 msgid "Add a custom word list first: Add Dictionary, then Custom Word List."
 msgstr ""
 
-#: src/dictui/dictionarymanagerdialog.cpp:556
+#: src/dictui/dictionarymanagerdialog.cpp:561
 #, kde-format
 msgctxt "@info"
 msgid "Add a custom name list first: Add Dictionary, then Custom Name List."
 msgstr ""
 
-#: src/dictui/dictionarymanagerdialog.cpp:609
+#: src/dictui/dictionarymanagerdialog.cpp:614
 #, kde-format
 msgctxt "@info:progress"
 msgid "Downloading %1…"
 msgstr ""
 
-#: src/dictui/dictionarymanagerdialog.cpp:613
+#: src/dictui/dictionarymanagerdialog.cpp:618
 #, kde-format
 msgctxt "@info:progress"
 msgid "Importing %1…"
 msgstr ""
 
-#: src/dictui/dictionarymanagerdialog.cpp:617
+#: src/dictui/dictionarymanagerdialog.cpp:622
 #, kde-format
 msgctxt "@info:progress"
 msgid "Checking %1 for updates…"
 msgstr ""
 
-#: src/dictui/dictionarymanagerdialog.cpp:623
+#: src/dictui/dictionarymanagerdialog.cpp:628
 #, kde-kuit-format
 msgctxt "@info"
 msgid "Select a source for <resource>%1</resource> in Configure Dictionary."
 msgstr ""
 
-#: src/dictui/dictionarymanagerdialog.cpp:670
-#: src/dictui/dictionarymanagerdialog.cpp:721
+#: src/dictui/dictionarymanagerdialog.cpp:675
+#: src/dictui/dictionarymanagerdialog.cpp:726
 #, kde-format
 msgctxt "@action:button"
 msgid "Retry"
 msgstr ""
 
-#: src/dictui/dictionarymanagerdialog.cpp:677
+#: src/dictui/dictionarymanagerdialog.cpp:682
 #, kde-kuit-format
 msgctxt "@info"
 msgid "<resource>%1</resource> could not be downloaded: %2"
 msgstr ""
 
-#: src/dictui/dictionarymanagerdialog.cpp:692
+#: src/dictui/dictionarymanagerdialog.cpp:697
 #, kde-kuit-format
 msgctxt "@info"
 msgid "<resource>%1</resource> is already up to date."
 msgstr ""
 
-#: src/dictui/dictionarymanagerdialog.cpp:711
+#: src/dictui/dictionarymanagerdialog.cpp:716
 #, kde-format
 msgctxt "@action:button"
 msgid "Configure Dictionary…"
 msgstr ""
 
-#: src/dictui/dictionarymanagerdialog.cpp:729
+#: src/dictui/dictionarymanagerdialog.cpp:734
 #, kde-kuit-format
 msgctxt "@info"
 msgid "<resource>%1</resource> could not be imported: %2"
 msgstr ""
 
-#: src/dictui/dictionarymanagerdialog.cpp:737
+#: src/dictui/dictionarymanagerdialog.cpp:742
 #, kde-kuit-format
 msgctxt "@info"
 msgid "<resource>%1</resource> was imported but could not be opened."
 msgstr ""
 
-#: src/dictui/dictionarymanagerdialog.cpp:744
+#: src/dictui/dictionarymanagerdialog.cpp:749
 #, kde-kuit-format
 msgctxt "@info"
 msgid "<resource>%1</resource> was imported: %2 entries."
 msgstr ""
 
-#: src/dictui/dictionarymanagerdialog.cpp:760
+#: src/dictui/dictionarymanagerdialog.cpp:765
 #, kde-kuit-format
 msgctxt "@info"
 msgid "<resource>%1</resource> could not be checked for updates: %2"
 msgstr ""
 
-#: src/dictui/dictionarymanagerdialog.cpp:767
+#: src/dictui/dictionarymanagerdialog.cpp:772
 #, kde-kuit-format
 msgctxt "@info"
 msgid "<resource>%1</resource> is up to date."
 msgstr ""
 
-#: src/dictui/dictionarymanagerdialog.cpp:777
+#: src/dictui/dictionarymanagerdialog.cpp:782
 #, kde-kuit-format
 msgctxt "@info"
 msgid "An update for <resource>%1</resource> is available."

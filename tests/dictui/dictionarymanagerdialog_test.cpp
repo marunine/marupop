@@ -18,6 +18,7 @@
 #include <QMenu>
 #include <QSignalSpy>
 #include <QTemporaryDir>
+#include <QTest>
 #include <QTreeView>
 
 #include <KActionCollection>
@@ -154,6 +155,33 @@ TEST(DictionaryManagerDialogTest, actionsFollowTheSelection)
     EXPECT_FALSE(fixture.action(QStringLiteral("move_down"))->isEnabled());
     // Neither custom list exists yet.
     EXPECT_FALSE(fixture.action(QStringLiteral("add_word"))->isEnabled());
+}
+
+// The move shortcuts trigger from the list, which holds the focus of the active dialog. A move
+// keeps the current index on the moved row and emits rowsMoved(). The Ctrl+Shift+Down press
+// after the first move triggers Move to Bottom when the dialog updates its actions on
+// rowsMoved().
+TEST(DictionaryManagerDialogTest, movesTheSelectedDictionaryWithTheShortcuts)
+{
+    Fixture fixture;
+    fixture.add(QStringLiteral("First"), dict::DictType::YomitanWord, fixture.directory.path());
+    fixture.add(QStringLiteral("Second"), dict::DictType::YomitanWord, fixture.directory.path());
+    fixture.add(QStringLiteral("Third"), dict::DictType::YomitanWord, fixture.directory.path());
+    fixture.dialog.show();
+    fixture.dialog.activateWindow();
+    ASSERT_TRUE(QTest::qWaitForWindowActive(&fixture.dialog));
+    fixture.dialog.view()->setFocus();
+    fixture.select(2);
+
+    const auto nameAt = [&fixture](int row) {
+        return fixture.dialog.model()->index(row, DictionaryModel::NameColumn).data().toString();
+    };
+    QTest::keyClick(fixture.dialog.view(), Qt::Key_Up, Qt::ControlModifier);
+    EXPECT_EQ(nameAt(1), QStringLiteral("Third"));
+    QTest::keyClick(fixture.dialog.view(), Qt::Key_Down, Qt::ControlModifier | Qt::ShiftModifier);
+    EXPECT_EQ(nameAt(2), QStringLiteral("Third"));
+    QTest::keyClick(fixture.dialog.view(), Qt::Key_Up, Qt::ControlModifier | Qt::ShiftModifier);
+    EXPECT_EQ(nameAt(0), QStringLiteral("Third"));
 }
 
 TEST(DictionaryManagerDialogTest, theUpdateActionSwitchesToDownloadWhenTheSourceIsGone)
