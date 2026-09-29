@@ -199,6 +199,12 @@ bool DictionaryManager::load()
     const QJsonDocument document = QJsonDocument::fromJson(file.readAll(), &error);
     if (error.error != QJsonParseError::NoError) {
         qCWarning(logDict) << "Cannot parse" << listPath() << error.errorString();
+        // Application::buildPipeline() seeds the built-in dictionaries after a failed load() and
+        // saves the list over the file. The copy keeps the unreadable list for a repair by hand.
+        // An existing copy is left unchanged.
+        const QString copy = listPath() + QLatin1String(".unreadable");
+        if (!QFile::exists(copy) && QFile::copy(listPath(), copy))
+            qCWarning(logDict) << "Kept the unreadable dictionary list as" << copy;
         return false;
     }
 
