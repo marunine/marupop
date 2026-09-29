@@ -9,6 +9,7 @@
 #include <QFile>
 #include <QFileInfo>
 #include <QMutexLocker>
+#include <QUrl>
 
 #include <cerrno>
 #include <cstdio>
@@ -112,7 +113,9 @@ OpenResult Store::open(const QString &dbPath)
     // immutable=1 tells SQLite the file cannot change while open, which removes the locking and
     // the change-counter checks. The file is written once by StoreWriter and renamed into place,
     // so the guarantee holds.
-    const QByteArray uri = QByteArray("file:") + QFile::encodeName(dbPath) + "?immutable=1";
+    // QUrl::fromLocalFile() yields file:///path and percent-encodes three sets: the URI
+    // delimiters #, ? and %, spaces, and non-ASCII bytes. SQLite decodes the percent-encoding.
+    const QByteArray uri = QUrl::fromLocalFile(dbPath).toEncoded() + "?immutable=1";
     const int flags = SQLITE_OPEN_READONLY | SQLITE_OPEN_NOMUTEX | SQLITE_OPEN_URI;
     if (sqlite3_open_v2(uri.constData(), &m_db, flags, nullptr) != SQLITE_OK) {
         qCWarning(logDict) << "Cannot open" << dbPath << sqlite3_errmsg(m_db);
