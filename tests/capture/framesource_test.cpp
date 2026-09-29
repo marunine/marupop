@@ -6,6 +6,7 @@
 // set, because it renders the tester's screen. It also needs an installed desktop entry whose
 // Exec names this binary; without one KWin answers every CaptureArea with NoAuthorized.
 #include "capture/framesource.h"
+#include "capture/kwinframesource.h"
 #include "capture/scanregion.h"
 #include "eventloop.h"
 #include "kwinsession.h"

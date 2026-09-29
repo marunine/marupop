@@ -166,9 +166,22 @@ void LookupWindow::setLookup(const lookup::Response &response, const scan::HitCo
     render();
 }
 
+void LookupWindow::clearLookup()
+{
+    m_response = {};
+    m_term.clear();
+    m_sentence = {};
+    render();
+}
+
 bool LookupWindow::isFrozen() const
 {
     return m_pointerInside;
+}
+
+const lookup::Response &LookupWindow::response() const
+{
+    return m_response;
 }
 
 SentenceSpan LookupWindow::sentence() const

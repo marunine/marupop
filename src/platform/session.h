@@ -26,15 +26,17 @@ enum class Session
     Hyprland,
     // zwlr_screencopy_manager_v1 is in the Wayland registry and neither of the two above holds.
     Wlroots,
+    // The Win32 desktop. The only session a Windows build detects.
+    Windows,
 };
 
 // The session this process is running in. Evaluated once and cached, because the answer cannot
 // change while the process lives: a compositor restart takes the Wayland connection with it.
 //
-// MARUPOP_PLATFORM overrides the answer with one of "kde", "hyprland", "wlroots" or "unknown",
-// which is what lets a suite drive a backend the host session does not offer and what lets a
-// user work around a detection this function gets wrong. An unrecognized value is reported
-// through qCWarning(logPlatform) and ignored.
+// MARUPOP_PLATFORM overrides the answer with one of "kde", "hyprland", "wlroots", "windows" or
+// "unknown", which is what lets a suite drive a backend the host session does not offer and what
+// lets a user work around a detection this function gets wrong. An unrecognized value is
+// reported through qCWarning(logPlatform) and ignored.
 [[nodiscard]] Session detect();
 
 // Re-runs the detection, discarding the cached answer. For a test that changes the environment
@@ -42,14 +44,14 @@ enum class Session
 [[nodiscard]] Session redetect();
 
 // The untranslated identifier, which is the value MARUPOP_PLATFORM takes and the string the
-// diagnostics print: "kde", "hyprland", "wlroots", "unknown".
+// diagnostics print: "kde", "hyprland", "wlroots", "windows", "unknown".
 [[nodiscard]] QString sessionId(Session session);
 // The parse of sessionId(), for MARUPOP_PLATFORM and for a test. Unknown for an unrecognized
 // string, with recognized set to false.
 [[nodiscard]] Session parseSessionId(const QString &id, bool *recognized = nullptr);
 
 // The name shown in the settings dialog and in --check-authorization: "KDE Plasma",
-// "Hyprland", "wlroots", "unrecognized".
+// "Hyprland", "wlroots", "Windows", "unrecognized".
 [[nodiscard]] QString sessionName(Session session);
 
 // True for a session whose pixel source composites marupop's own popup into the captured

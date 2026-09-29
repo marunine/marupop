@@ -4,10 +4,10 @@
 # shortcuts, the notification channels and the first-run model prompt. Everything here lives
 # directly in the maru namespace.
 target_sources(marupop_lib PRIVATE
+    appicon.cpp
+    appicon.h
     application.cpp
     application.h
-    hotkeyregistry.cpp
-    hotkeyregistry.h
     lookupwindow.cpp
     lookupwindow.h
     modeldownloaddialog.cpp
@@ -25,9 +25,21 @@ target_sources(marupop_lib PRIVATE
     shortcutregistry.cpp
     shortcutregistry.h
     trayicon.cpp
-    trayicon.h
-    wlrshortcuts.cpp
-    wlrshortcuts.h)
+    trayicon.h)
+
+if(MARUPOP_PLATFORM_WAYLAND)
+    target_sources(marupop_lib PRIVATE
+        autostart_xdg.cpp
+        hotkeyregistry.cpp
+        hotkeyregistry.h
+        wlrshortcuts.cpp
+        wlrshortcuts.h)
+else()
+    target_sources(marupop_lib PRIVATE
+        autostart_win.cpp
+        winshortcuts.cpp
+        winshortcuts.h)
+endif()
 
 # KF6::KIOCore supplies KIO::getJobTracker(), which the model download and the dictionary
 # update chain register their jobs with so Plasma's transfer applet shows them; KF6::KIOGui
@@ -37,11 +49,13 @@ target_sources(marupop_lib PRIVATE
 # KF6::WidgetsAddons KMessageWidget and KColorButton, and KF6::StatusNotifierItem the tray item.
 # All of them are already on marupop_lib's PUBLIC link line from src/CMakeLists.txt; they are
 # named here as well so the dependency is recorded where the source that needs it is.
-target_link_libraries(marupop_lib PRIVATE
-    KF6::GlobalAccel
-    KF6::JobWidgets
-    KF6::KIOCore
-    KF6::KIOGui
-    KF6::Notifications
-    KF6::StatusNotifierItem
-    KF6::WidgetsAddons)
+target_link_libraries(marupop_lib PRIVATE KF6::WidgetsAddons)
+if(MARUPOP_PLATFORM_WAYLAND)
+    target_link_libraries(marupop_lib PRIVATE
+        KF6::GlobalAccel
+        KF6::JobWidgets
+        KF6::KIOCore
+        KF6::KIOGui
+        KF6::Notifications
+        KF6::StatusNotifierItem)
+endif()

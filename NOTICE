@@ -65,8 +65,8 @@ swapped-pair fix, and vertical-segment assembly.
 
 The ONNX model weights are LGPL-3.0-only, by rtr46. MaruPop ships no weights.
 src/ocr/modelstore.* downloads them at runtime from the upstream Hugging Face repositories at a
-pinned commit, into $XDG_DATA_HOME/marupop/models, and verifies each file against a pinned
-SHA-256 digest and byte count.
+pinned commit, into $XDG_DATA_HOME/marupop/models (%LOCALAPPDATA%\marupop\models on
+Windows), and verifies each file against a pinned SHA-256 digest and byte count.
 
 ----------------------------------------------------------------------------------------------
 meikipop — https://github.com/rtr46/meikipop
@@ -112,9 +112,10 @@ src/ocr/screenaiproto.* is a protobuf wire-format reader for chrome_screen_ai.Vi
 The field numbers it reads are those declared in Chromium's
 services/screen_ai/proto/chrome_screen_ai.proto. No Chromium code is reproduced.
 
-The Chrome Screen AI component itself (libchromescreenai.so) is a proprietary Google component
-with no redistribution grant. MaruPop ships no copy of it and loads the one the user installed,
-from the directory the ScreenAiResourcesDir setting names.
+The Chrome Screen AI component itself (libchromescreenai.so on Linux, chrome_screen_ai.dll on
+Windows) is a proprietary Google component with no redistribution grant. MaruPop ships no copy
+of it and loads the one the user installed, from the directory the ScreenAiResourcesDir setting
+names.
 
 ----------------------------------------------------------------------------------------------
 JMdict, JMnedict and KANJIDIC2 — https://www.edrdg.org/
@@ -124,8 +125,9 @@ https://creativecommons.org/licenses/by-sa/4.0/
 
 MaruPop uses these dictionary files for Japanese definitions, names and kanji information.
 The complete dictionaries are downloaded at runtime from EDRDG distribution URLs into
-$XDG_DATA_HOME/marupop/dictionaries. The source test fixture MockJMdict.xml contains a small
-JMdict extract obtained through JL; this does not change EDRDG's rights in that material.
+$XDG_DATA_HOME/marupop/dictionaries (%LOCALAPPDATA%\marupop\dictionaries on Windows). The
+source test fixture MockJMdict.xml contains a small JMdict extract obtained through JL; this
+does not change EDRDG's rights in that material.
 Copyright in the dictionary material is held by James William BREEN and EDRDG. The CC BY-SA
 4.0 license text is in LICENSES/CC-BY-SA-4.0.txt; the governing source statement and dictionary
 documentation are available at:
@@ -174,3 +176,7 @@ from the build environment. They are not vendored here. Distributors must retain
 and license choices of the versions they ship; this source license does not replace those
 libraries' terms. The source and notice inventory above describes the code and data carried
 by this repository, not a redistribution grant for an externally installed Chrome component.
+
+The Windows build links the libraries of vcpkg.json, packaging/vcpkg/ports/ and
+cmake/MarupopOnnxRuntime.cmake dynamically. `cmake --install` installs their license texts
+under share/doc/marupop/third_party/.

@@ -55,9 +55,33 @@ TEST(PathsTest, expandsATildeAndAnEnvironmentVariable)
     EXPECT_EQ(paths::expandPath(QStringLiteral("$MARUPOP_TEST_VARIABLE/meiki")), QStringLiteral("/srv/models/meiki"));
     EXPECT_EQ(paths::expandPath(QStringLiteral("${MARUPOP_TEST_VARIABLE}x")), QStringLiteral("/srv/modelsx"));
     qunsetenv("MARUPOP_TEST_VARIABLE");
+#ifdef Q_OS_WIN
+    // A reference to an unset variable stays as written, as it does in cmd.exe.
+    EXPECT_EQ(paths::expandPath(QStringLiteral("$MARUPOP_TEST_VARIABLE/meiki")),
+              QStringLiteral("$MARUPOP_TEST_VARIABLE/meiki"));
+#else
     // An unset variable expands to nothing, which is the shell's own behavior.
     EXPECT_EQ(paths::expandPath(QStringLiteral("$MARUPOP_TEST_VARIABLE/meiki")), QStringLiteral("/meiki"));
+#endif
 }
+
+#ifdef Q_OS_WIN
+TEST(PathsTest, expandsEachWindowsReferenceOnce)
+{
+    qputenv("MARUPOP_TEST_VARIABLE", "D:\\$Models");
+    qputenv("Models", "unexpected");
+    EXPECT_EQ(paths::expandPath(QStringLiteral("%MARUPOP_TEST_VARIABLE%\\meiki")),
+              QStringLiteral("D:\\$Models\\meiki"));
+    EXPECT_EQ(paths::expandPath(QStringLiteral("%marupop_test_variable%\\meiki")),
+              QStringLiteral("D:\\$Models\\meiki"));
+    EXPECT_EQ(paths::expandPath(QStringLiteral("${MARUPOP_TEST_VARIABLE}\\meiki")),
+              QStringLiteral("D:\\$Models\\meiki"));
+    qunsetenv("Models");
+    qunsetenv("MARUPOP_TEST_VARIABLE");
+    EXPECT_EQ(paths::expandPath(QStringLiteral("C:\\$Recycle.Bin\\%MARUPOP_TEST_VARIABLE%")),
+              QStringLiteral("C:\\$Recycle.Bin\\%MARUPOP_TEST_VARIABLE%"));
+}
+#endif
 
 TEST(PathsTest, leavesAnEmptyPathEmpty)
 {

@@ -272,6 +272,44 @@ private:
 // The sidecar path for a store database path: the .db suffix replaced by .keys.
 [[nodiscard]] QString keyFilterPathFor(const QString &dbPath);
 
+// The path of the replacement file a reimport stages while the file at path is open: path with
+// the .staged suffix appended.
+[[nodiscard]] QString stagedPathFor(const QString &path);
+
+enum class StagedStore
+{
+    // No staged database or key filter exists beside dbPath.
+    None,
+    // The staged files replaced the files at dbPath.
+    Promoted,
+    // A staged file remains because the file it replaces is open. A later call completes the
+    // promotion.
+    Pending,
+    // Moving a staged file failed with an error other than an open file, such as a denied write.
+    // The unmoved staged files remain for a later call.
+    Failed,
+};
+
+// Moves the staged files of dbPath into place. The key filter beside the replaced database is
+// deleted before the staged database moves, and the staged key filter moves last. An interrupted
+// call therefore leaves the database at dbPath without a key filter, and SQLite answers every
+// query of that database. The key filter of another import would reject the keys the import
+// added. A call after Pending or Failed resumes at the first unmoved file.
+[[nodiscard]] StagedStore promoteStagedStore(const QString &dbPath);
+
+enum class StoreRemoval
+{
+    Removed,
+    // A file remains because it is open, which only Windows reports. A later call completes the
+    // removal.
+    Pending,
+    // Deleting a file failed with an error other than an open file, such as a denied write.
+    Failed,
+};
+
+// Deletes the database at dbPath, its key filter and their staged copies.
+StoreRemoval removeStoreFiles(const QString &dbPath);
+
 // Commits a transaction and starts the next one every 200 000 keys, as JL does with
 // DBUtils.TransactionBatchSize.
 inline constexpr qint64 storeTransactionKeyBatch = 200'000;

@@ -170,8 +170,85 @@ jobs:
           base=$BASE_REF
           git fetch --no-tags origin "+refs/heads/$base:refs/remotes/origin/$base"
           git diff -U0 "origin/$base...HEAD" -- {src,tests,tools}/'*.cpp' {src,tests,tools}/'*.h' \
+            | python3 tools/compdb-filter-diff.py build/compile_commands.json \
             | python3 /usr/share/clang/clang-tidy-diff.py -p1 -path build -quiet -j "$(nproc)" \
                 -clang-tidy-binary clang-tidy -warnings-as-errors='*'
+
+  # The job clones vcpkg at the builtin-baseline commit of vcpkg.json because the vcpkg copy in
+  # the runner image changes with each image release.
+  windows:
+    name: Windows build and test
+    # The windows-2025 image provides Visual Studio 2022 with the MSVC toolset, the Windows SDK
+    # and CMake.
+    runs-on: windows-2025
+    # timeout-minutes covers the vcpkg source builds that an empty binary cache requires:
+    # - qtbase
+    # - gettext
+    # - opencv4
+    # - the KF6 ports
+    timeout-minutes: 180
+    # The runner sets $PSNativeCommandUseErrorActionPreference, so a pwsh step stops at the first
+    # failing native command.
+    defaults:
+      run:
+        shell: pwsh
+    env:
+      VCPKG_ROOT: ${{ github.workspace }}\vcpkg
+      # The binary cache is a files cache that actions/cache stores. vcpkg's alternative, a NuGet
+      # feed on GitHub Packages, requires a token with the packages: write permission.
+      VCPKG_DEFAULT_BINARY_CACHE: ${{ github.workspace }}\vcpkg-archives
+      VCPKG_BINARY_SOURCES: clear;default,readwrite
+      VCPKG_DISABLE_METRICS: 1
+    steps:
+      - uses: actions/checkout@v6
+      - name: Check out vcpkg at the baseline of vcpkg.json
+        run: |
+          $baseline = (Get-Content vcpkg.json -Raw | ConvertFrom-Json).'builtin-baseline'
+          git clone --quiet https://github.com/microsoft/vcpkg.git $env:VCPKG_ROOT
+          git -C $env:VCPKG_ROOT checkout --quiet $baseline
+          & "$env:VCPKG_ROOT\bootstrap-vcpkg.bat" -disableMetrics
+          New-Item -ItemType Directory -Force $env:VCPKG_DEFAULT_BINARY_CACHE | Out-Null
+      # The key hashes vcpkg.json and the overlay ports, which determine every package ABI hash.
+      # After a manifest change, restore-keys restores the archives of the previous key, and vcpkg
+      # rebuilds the ports whose ABI hash changed.
+      - uses: actions/cache@v4
+        with:
+          path: vcpkg-archives
+          key: vcpkg-windows-x64-release-${{ hashFiles('vcpkg.json', 'packaging/vcpkg/**') }}
+          restore-keys: vcpkg-windows-x64-release-
+      # The key hashes cmake/MarupopOnnxRuntime.cmake, which pins the version and SHA-256 of the
+      # ONNX Runtime release that the configure step unpacks into build-ci/_deps.
+      - uses: actions/cache@v4
+        with:
+          path: build-ci/_deps
+          key: onnxruntime-windows-${{ hashFiles('cmake/MarupopOnnxRuntime.cmake') }}
+      # cl.exe and link.exe find the MSVC and Windows SDK headers and libraries through the
+      # INCLUDE, LIB and PATH values that vcvars64.bat sets.
+      - name: Enter the MSVC developer environment
+        run: |
+          $vs = & "${env:ProgramFiles(x86)}\Microsoft Visual Studio\Installer\vswhere.exe" -latest -products * `
+            -requires Microsoft.VisualStudio.Component.VC.Tools.x86.x64 -property installationPath
+          cmd /c "`"$vs\VC\Auxiliary\Build\vcvars64.bat`" >nul && set" | ForEach-Object {
+            if ($_ -match '^([^=]+)=(.*)$') { "$($Matches[1])=$($Matches[2])" >> $env:GITHUB_ENV }
+          }
+      - name: Configure
+        run: cmake --preset windows-ci
+      - name: Build
+        run: cmake --build --preset windows-ci
+      # The windows-2025 runner session is an interactive desktop, which the MARUPOP_LIVE_DESKTOP
+      # suites require.
+      - name: Test
+        env:
+          MARUPOP_LIVE_DESKTOP: 1
+        run: ctest --preset windows-ci
+      - name: Keep the test log
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: windows-test-log
+          path: build-ci/Testing/Temporary/LastTest.log
+          if-no-files-found: ignore
+          retention-days: 7
 
   sanitizers:
     name: Sanitizers

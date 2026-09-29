@@ -21,8 +21,6 @@
 #include <QTest>
 #include <QTreeView>
 
-#include <KActionCollection>
-
 #include <gtest/gtest.h>
 
 using namespace maru;
@@ -53,7 +51,7 @@ struct Fixture
 
     [[nodiscard]] QAction *action(const QString &name) const
     {
-        return dialog.actionCollection()->action(name);
+        return dialog.findChild<QAction *>(name);
     }
 
     dict::Dictionary *add(const QString &name, dict::DictType type, const QString &source)

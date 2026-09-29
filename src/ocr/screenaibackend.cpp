@@ -6,6 +6,7 @@
 #include "core/paths.h"
 #include "ocr/screenaiproto.h"
 
+#include <QDir>
 #include <QElapsedTimer>
 #include <QFile>
 #include <QFileInfo>
@@ -16,8 +17,13 @@
 
 #include <algorithm>
 #include <cstdint>
-#include <dlfcn.h>
 #include <memory>
+
+#ifdef Q_OS_WIN
+#include <windows.h>
+#else
+#include <dlfcn.h>
+#endif
 
 namespace maru::ocr
 {
@@ -102,9 +108,51 @@ void logSink(int severity, const char *message)
     }
 }
 
+// The file name of the Screen AI component library as the Chrome component updater installs it.
+#ifdef Q_OS_WIN
+constexpr QLatin1StringView kLibraryName{"chrome_screen_ai.dll"};
+#else
+constexpr QLatin1StringView kLibraryName{"libchromescreenai.so"};
+#endif
+
 QString libraryPathFor(const QString &resourcesDir)
 {
-    return paths::expandPath(resourcesDir) + QStringLiteral("/libchromescreenai.so");
+    return paths::expandPath(resourcesDir) + QLatin1Char('/') + kLibraryName;
+}
+
+void *openLibrary(const QString &path, QString *error)
+{
+#ifdef Q_OS_WIN
+    // The component folder holds the DLLs the component imports. LOAD_LIBRARY_SEARCH_DLL_LOAD_DIR
+    // adds the component folder to the DLL search path of the LoadLibraryExW() call alone. Windows
+    // resolves every import at load time.
+    HMODULE module = LoadLibraryExW(reinterpret_cast<LPCWSTR>(QDir::toNativeSeparators(path).utf16()),
+                                    nullptr,
+                                    LOAD_LIBRARY_SEARCH_DLL_LOAD_DIR | LOAD_LIBRARY_SEARCH_DEFAULT_DIRS);
+    if (module == nullptr) {
+        *error = QStringLiteral("LoadLibraryExW error %1").arg(GetLastError());
+    }
+    return reinterpret_cast<void *>(module);
+#else
+    // RTLD_LAZY is mandatory (the library fails to resolve eagerly); RTLD_LOCAL keeps its
+    // allocator and symbols out of our namespace.
+    void *handle = dlopen(qPrintable(path), RTLD_LAZY | RTLD_LOCAL);
+    if (handle == nullptr) {
+        // dlerror() reads a per-thread buffer and is the only diagnostic dlopen() offers.
+        // NOLINTNEXTLINE(concurrency-mt-unsafe)
+        *error = QString::fromLocal8Bit(dlerror());
+    }
+    return handle;
+#endif
+}
+
+void *librarySymbol(void *handle, const char *symbol)
+{
+#ifdef Q_OS_WIN
+    return reinterpret_cast<void *>(GetProcAddress(static_cast<HMODULE>(handle), symbol));
+#else
+    return dlsym(handle, symbol);
+#endif
 }
 
 // Tiles overlap so a line straddling a seam is fully visible in at least one tile.
@@ -191,30 +239,27 @@ ScreenAiBackend::Library *ScreenAiBackend::sharedLibrary(const QString &resource
         return nullptr;
     }
 
-    // RTLD_LAZY is mandatory (the library fails to resolve eagerly); RTLD_LOCAL keeps its
-    // allocator and symbols out of our namespace.
-    void *handle = dlopen(qPrintable(path), RTLD_LAZY | RTLD_LOCAL);
+    QString loadError;
+    void *handle = openLibrary(path, &loadError);
     if (handle == nullptr) {
-        // dlerror() reads a per-thread buffer and is the only diagnostic dlopen() offers.
-        // NOLINTNEXTLINE(concurrency-mt-unsafe)
-        qCWarning(logScreenAi) << "cannot load the Screen AI component:" << dlerror();
+        qCWarning(logScreenAi) << "cannot load the Screen AI component:" << loadError;
         return nullptr;
     }
 
     auto library = std::make_unique<Library>();
     library->handle = handle;
     const auto resolve = [handle](const char *symbol) {
-        void *address = dlsym(handle, symbol);
+        void *address = librarySymbol(handle, symbol);
         if (address == nullptr) {
             qCWarning(logScreenAi) << "the Screen AI component is missing" << symbol;
         }
         return address;
     };
     library->getVersion = reinterpret_cast<GetLibraryVersionFn>(resolve("GetLibraryVersion"));
-    library->setLogger = reinterpret_cast<SetLoggerFn>(dlsym(handle, "SetLogger"));
+    library->setLogger = reinterpret_cast<SetLoggerFn>(librarySymbol(handle, "SetLogger"));
     library->setFileContentFunctions = reinterpret_cast<SetFileContentFunctionsFn>(resolve("SetFileContentFunctions"));
     library->initOcr = reinterpret_cast<InitOcrFn>(resolve("InitOCRUsingCallback"));
-    library->setLightMode = reinterpret_cast<SetOcrLightModeFn>(dlsym(handle, "SetOCRLightMode"));
+    library->setLightMode = reinterpret_cast<SetOcrLightModeFn>(librarySymbol(handle, "SetOCRLightMode"));
     library->getMaxDimension = reinterpret_cast<GetMaxImageDimensionFn>(resolve("GetMaxImageDimension"));
     library->performOcr = reinterpret_cast<PerformOcrFn>(resolve("PerformOCR"));
     library->freeArray = reinterpret_cast<FreeCharArrayFn>(resolve("FreeLibraryAllocatedCharArray"));

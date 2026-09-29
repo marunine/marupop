@@ -16,7 +16,11 @@
 #include <QTemporaryDir>
 
 #include <KMessageWidget>
+#ifdef Q_OS_WIN
+#include "app/pathrequester.h"
+#else
 #include <KUrlRequester>
+#endif
 
 #include <gtest/gtest.h>
 
@@ -45,7 +49,11 @@ struct Fixture
 
     void setPath(const QString &path) const
     {
+#ifdef Q_OS_WIN
+        widget<maru::PathRequester>(QStringLiteral("pathRequester"))->setPath(path);
+#else
         widget<KUrlRequester>(QStringLiteral("pathRequester"))->setUrl(QUrl::fromLocalFile(path));
+#endif
     }
 
     [[nodiscard]] QString message() const

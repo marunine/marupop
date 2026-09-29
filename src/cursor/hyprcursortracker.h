@@ -31,9 +31,9 @@ public:
     // Starts the poll and reports the outcome through CursorTracker::availabilityChanged(). A
     // socket path that does not exist reports unavailable and keeps retrying at the idle rate,
     // so a Hyprland restart is picked up without restarting marupop.
-    void start();
+    void start() override;
     // Stops the poll. The tracker stays constructed and start() resumes it.
-    void stop();
+    void stop() override;
 
     void setTracking(bool tracking) override;
 
@@ -83,8 +83,8 @@ private:
     QPoint m_last;
     bool m_haveLast = false;
     quint64 m_samples = 0;
-    int m_trackingIntervalMs = 8;
-    int m_idleIntervalMs = 500;
+    int m_trackingIntervalMs = kTrackingPollIntervalMs;
+    int m_idleIntervalMs = kIdlePollIntervalMs;
     // Consecutive failed polls, so one warning is logged per outage rather than one per poll.
     int m_failures = 0;
 };

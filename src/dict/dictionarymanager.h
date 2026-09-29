@@ -13,10 +13,13 @@
 #include "dict/importers/importer.h"
 #include "dict/wordclasses.h"
 
+#include <QHash>
 #include <QList>
 #include <QMutex>
 #include <QObject>
+#include <QSet>
 #include <QString>
+#include <QTimer>
 #include <QUuid>
 
 #include <memory>
@@ -80,6 +83,12 @@ public:
     // the order, the options or the store of an enabled dictionary, which is where a store is
     // opened. A dictionary whose store does not open is absent from the snapshot.
     [[nodiscard]] DictionarySnapshot snapshot() const;
+
+    // True when store is the Store the manager holds open for a listed dictionary. Disabling,
+    // reimporting or removing the dictionary releases that Store. A released Store keeps its files
+    // open while a holder keeps it, and Windows refuses to replace or delete open files
+    // (docs/ARCHITECTURE.md, "Text recognition and lookup"). GUI thread only.
+    [[nodiscard]] bool isCurrentStore(const Store *store) const;
 
     // The word-class table the deconjugation gate reads, as a value a lookup thread can hold.
     // Thread-safe and republished by loadWordClassTable(). Never null.
@@ -168,6 +177,32 @@ private:
     // every store the rebuild opened and dictionaryChanged() for every entry it marked as needing
     // a re-import.
     void publishSnapshot();
+
+    void schedulePendingRetry();
+    void retryPending();
+    // pending-removals in the dictionary folder: one dictionary id per line, for each removal
+    // whose store files are still open. A removal pending at process exit completes at the next
+    // load(). load() deletes the store files of recorded ids only, because
+    // Application::buildPipeline() saves the list after every load(), including a load() that
+    // failed to parse the list.
+    [[nodiscard]] QString pendingRemovalsPath() const;
+    // Writes m_pendingRemovals to pendingRemovalsPath(), and deletes the file for an empty set.
+    void savePendingRemovals() const;
+    // Adds the recorded ids to m_pendingRemovals and retries them, except an id whose listed entry
+    // holds an import: those files belong to the import.
+    void adoptPendingRemovals();
+
+    static constexpr int kPendingRetryMs = 250;
+    static constexpr int kPendingRetryMaxMs = 4000;
+
+    QSet<QUuid> m_pendingPromotions;
+    // Dictionary ids whose store files wait for removal.
+    QSet<QUuid> m_pendingRemovals;
+    // The number of unfinished import jobs per dictionary id. StoreWriter::finish() writes the
+    // store files of such an id on the import thread, so the GUI thread leaves them in place.
+    QHash<QUuid, int> m_runningImports;
+    QTimer m_retryTimer;
+    int m_retryDelayMs = kPendingRetryMs;
 
     QString m_directory;
     std::vector<std::unique_ptr<Dictionary>> m_dictionaries;

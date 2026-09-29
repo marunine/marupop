@@ -17,6 +17,12 @@ class QScreen;
 namespace maru::cursor
 {
 
+// The poll intervals of the trackers that sample the pointer on a timer, while tracking and while
+// idle. data/kwin-script/marupopcursor/contents/code/main.js repeats both values as ACTIVE_MS and
+// IDLE_MS for the KWin relay.
+inline constexpr int kTrackingPollIntervalMs = 8;
+inline constexpr int kIdlePollIntervalMs = 500;
+
 class CursorTracker : public QObject
 {
     Q_OBJECT
@@ -29,6 +35,10 @@ public:
     // reporting them. The KWin relay drops from an 8 ms pump to a 500 ms heartbeat.
     virtual void setTracking(bool tracking);
     [[nodiscard]] bool isTracking() const;
+
+    // Starts and stops the pointer source. The default implementations are empty.
+    virtual void start();
+    virtual void stop();
 
 Q_SIGNALS:
     // logical is in logical global desktop coordinates, the space QScreen::geometry() uses.
@@ -56,7 +66,7 @@ public:
 
     // Reports the reason again. KWinScriptRelay reports its own failure from every start(), and
     // an application that drops the startup report because scanning was off would otherwise
-    // never hear it: Backend::startTracking() has nothing to call on this class.
+    // never hear it: UnavailableTracker keeps the empty CursorTracker::start().
     void setTracking(bool tracking) override;
 
 private:

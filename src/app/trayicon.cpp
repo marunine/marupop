@@ -2,39 +2,45 @@
 // SPDX-License-Identifier: LGPL-3.0-only
 #include "app/trayicon.h"
 
+#include "app/appicon.h"
+
 #include <QAction>
 #include <QIcon>
 #include <QMenu>
 
 #include <KLocalizedString>
+
+#ifdef Q_OS_WIN
+#include "win32/registrywatcher.h"
+
+#include <QSystemTrayIcon>
+#include <QTimer>
+#else
 #include <KStatusNotifierItem>
+#endif
 
 namespace maru
 {
 
-namespace
-{
-
-// The icon shown while scanning is off. Both names are installed by icons/CMakeLists.txt, in
-// the same five sizes, so the swap resolves in the hicolor theme rather than falling back to
-// the generic missing-icon glyph.
-constexpr QLatin1StringView pausedIconName(MARUPOP_APPLICATION_ID "-paused");
-
-} // namespace
-
 TrayIcon::TrayIcon(QObject *parent)
     : QObject(parent)
+#ifdef Q_OS_WIN
+    , m_item(new QSystemTrayIcon(this))
+#else
     , m_item(new KStatusNotifierItem(QStringLiteral("marupop"), this))
+#endif
     , m_menu(new QMenu)
 {
+#ifndef Q_OS_WIN
     m_item->setCategory(KStatusNotifierItem::ApplicationStatus);
     // Active in both scanning states. NeedsAttention is for a condition the user has to act
     // on, and a scanning toggle the user set is not one.
     m_item->setStatus(KStatusNotifierItem::Active);
     m_item->setTitle(i18n("MaruPop"));
-    m_item->setIconByName(pausedIconName);
     // The standard actions add a Quit entry that would bypass our own teardown.
     m_item->setStandardActionsEnabled(false);
+#endif
+    updateIcon();
 
     m_scanningAction = m_menu->addAction(QIcon::fromTheme(QStringLiteral("document-scan")),
                                          i18nc("@action:inmenu", "Enable Scanning"));
@@ -65,12 +71,35 @@ TrayIcon::TrayIcon(QObject *parent)
     m_item->setContextMenu(m_menu);
     updateToolTip();
 
+#ifdef Q_OS_WIN
+    connect(m_item, &QSystemTrayIcon::activated, this, [this](QSystemTrayIcon::ActivationReason reason) {
+        // Qt reports a double click as Trigger followed by DoubleClick.
+        if (reason == QSystemTrayIcon::Trigger) {
+            Q_EMIT toggleScanningRequested();
+        } else if (reason == QSystemTrayIcon::MiddleClick) {
+            Q_EMIT lookupWindowRequested();
+        }
+    });
+    // The taskbar mode is a Windows setting separate from the app mode that
+    // QStyleHints::colorScheme() reports.
+    connect(new win32::RegistryWatcher(QString{taskbarThemeKey}, this),
+            &win32::RegistryWatcher::changed,
+            this,
+            &TrayIcon::updateIcon);
+    m_hideAfterMessage = new QTimer(this);
+    m_hideAfterMessage->setSingleShot(true);
+    m_hideAfterMessage->setInterval(kMessageMs);
+    connect(m_hideAfterMessage, &QTimer::timeout, this, [this] {
+        m_item->setVisible(m_visible);
+    });
+#else
     // activateRequested is the primary click, which Plasma maps to a left click.
     connect(m_item, &KStatusNotifierItem::activateRequested, this, [this](bool /*active*/, const QPoint & /*pos*/) {
         Q_EMIT toggleScanningRequested();
     });
     // The middle click.
     connect(m_item, &KStatusNotifierItem::secondaryActivateRequested, this, &TrayIcon::lookupWindowRequested);
+#endif
 }
 
 QMenu *TrayIcon::contextMenu() const
@@ -80,8 +109,14 @@ QMenu *TrayIcon::contextMenu() const
 
 void TrayIcon::setVisible(bool visible)
 {
+#ifdef Q_OS_WIN
+    m_visible = visible;
+    m_hideAfterMessage->stop();
+    m_item->setVisible(visible);
+#else
     // KStatusNotifierItem has no hide: Passive is the status a host renders as absent.
     m_item->setStatus(visible ? KStatusNotifierItem::Active : KStatusNotifierItem::Passive);
+#endif
 }
 
 void TrayIcon::setScanning(bool scanning)
@@ -91,9 +126,30 @@ void TrayIcon::setScanning(bool scanning)
     }
     m_scanning = scanning;
     m_scanningAction->setChecked(scanning);
-    m_item->setIconByName(scanning ? QLatin1StringView(MARUPOP_APPLICATION_ID) : pausedIconName);
+    updateIcon();
     updateToolTip();
 }
+
+void TrayIcon::updateIcon()
+{
+#ifdef Q_OS_WIN
+    m_item->setIcon(applicationIcon(!m_scanning, IconBackground::Tray));
+#else
+    m_item->setIconByName(applicationIconName(!m_scanning));
+#endif
+}
+
+#ifdef Q_OS_WIN
+void TrayIcon::showMessage(const QString &title, const QString &text, bool failure)
+{
+    // QSystemTrayIcon shows a message only from a visible icon.
+    if (!m_visible) {
+        m_item->setVisible(true);
+        m_hideAfterMessage->start();
+    }
+    m_item->showMessage(title, text, failure ? QSystemTrayIcon::Warning : QSystemTrayIcon::Information, kMessageMs);
+}
+#endif
 
 void TrayIcon::setLookupWindowVisible(bool visible)
 {
@@ -131,8 +187,13 @@ void TrayIcon::updateToolTip()
         subtitle = m_scanning ? i18nc("@info:tooltip scanning state", "Scanning")
                               : i18nc("@info:tooltip scanning state", "Paused");
     }
-    m_item->setToolTip(
-        m_scanning ? QLatin1StringView(MARUPOP_APPLICATION_ID) : pausedIconName, i18n("MaruPop"), subtitle);
+#ifdef Q_OS_WIN
+    // QSystemTrayIcon takes a plain-text tooltip. The notification area truncates a tooltip at
+    // 127 characters.
+    m_item->setToolTip(i18n("MaruPop") + QLatin1Char('\n') + subtitle);
+#else
+    m_item->setToolTip(applicationIconName(!m_scanning), i18n("MaruPop"), subtitle);
+#endif
 }
 
 } // namespace maru

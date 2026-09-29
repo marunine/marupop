@@ -2,8 +2,9 @@
 // SPDX-License-Identifier: LGPL-3.0-only
 // The four session-dependent services, built for the session platform::detect() answers.
 //
-// Application holds one Backend rather than four named implementations, so a session family is
-// added by extending the four switch statements in backend.cpp and nothing else in src/app/.
+// Application holds one Backend rather than four named implementations, so adding a session
+// family extends the switch statements in backend_wayland.cpp or adds a backend_<family>.cpp,
+// such as backend_win.cpp, and leaves src/app/ unchanged.
 // The services themselves are reached through their interfaces: cursor::CursorTracker,
 // capture::FrameSource, cursor::LockWatcher and maru::ShortcutRegistry.
 #pragma once
@@ -17,13 +18,11 @@
 namespace maru::capture
 {
 class FrameSource;
-}
+} // namespace maru::capture
 
 namespace maru::cursor
 {
 class CursorTracker;
-class HyprCursorTracker;
-class KWinScriptRelay;
 class LockWatcher;
 } // namespace maru::cursor
 
@@ -76,8 +75,8 @@ public:
     [[nodiscard]] cursor::LockWatcher *lockWatcher() const;
     [[nodiscard]] ShortcutRegistry *shortcuts() const;
 
-    // Starts and stops the pointer source. The KDE relay loads and unloads a KWin script; the
-    // Hyprland tracker starts and stops a poll.
+    // Starts and stops the pointer source. stopTracking() also calls
+    // capture::FrameSource::release().
     void startTracking();
     void stopTracking();
 
@@ -99,11 +98,6 @@ private:
 
     Session m_session = Session::Unknown;
     cursor::CursorTracker *m_tracker = nullptr;
-    // The same object as m_tracker, typed, for the two implementations whose start() and stop()
-    // are not on the interface. Exactly one of the two is set, and both are null on a session
-    // whose tracker is an UnavailableTracker.
-    cursor::KWinScriptRelay *m_relay = nullptr;
-    cursor::HyprCursorTracker *m_hyprTracker = nullptr;
     capture::FrameSource *m_frames = nullptr;
     cursor::LockWatcher *m_lockWatcher = nullptr;
     ShortcutRegistry *m_shortcuts = nullptr;

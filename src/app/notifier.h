@@ -3,11 +3,14 @@
 #pragma once
 
 #include <QObject>
+#include <QPointer>
 #include <QString>
 #include <QStringList>
 
 namespace maru
 {
+
+class TrayIcon;
 
 // KNotification events from data/marupop.notifyrc. The notifyrc carries presentation defaults
 // alone; the application's own opt-in is NotifyOnError, which gates the failure channel and
@@ -47,8 +50,17 @@ public:
     // Failures never open a modal dialog; they go to the failed channel and the tray tooltip.
     void failure(const QString &title, const QString &message);
 
+#ifdef Q_OS_WIN
+    // Each event appears as a message of the tray item.
+    void setTrayIcon(TrayIcon *tray);
+#endif
+
 private:
     void notify(Event event, const QString &title, const QString &text, const QString &iconName);
+
+#ifdef Q_OS_WIN
+    QPointer<TrayIcon> m_tray;
+#endif
 };
 
 } // namespace maru

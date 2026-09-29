@@ -17,7 +17,14 @@ class QLabel;
 class QLineEdit;
 class QPushButton;
 class KMessageWidget;
+#ifdef Q_OS_WIN
+namespace maru
+{
+class PathRequester;
+}
+#else
 class KUrlRequester;
+#endif
 
 namespace maru::dict
 {
@@ -89,7 +96,12 @@ private:
 
     QComboBox *m_formatCombo = nullptr;
     QLabel *m_pathLabel = nullptr;
+    // The file-or-folder mode of KUrlRequester requires KIO.
+#ifdef Q_OS_WIN
+    PathRequester *m_pathRequester = nullptr;
+#else
     KUrlRequester *m_pathRequester = nullptr;
+#endif
     QLineEdit *m_nameEdit = nullptr;
     QLabel *m_treatAsLabel = nullptr;
     QComboBox *m_treatAsCombo = nullptr;

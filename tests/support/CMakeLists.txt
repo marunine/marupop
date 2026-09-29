@@ -8,14 +8,17 @@
 # suite that includes only fakes.h.
 add_library(marupop_testsupport STATIC
     cropframesource.cpp
-    privatebus.cpp
-    fakehyprsocket.cpp
-    fakekwin.cpp
-    fakescreensaver.cpp
-    kwinsession.cpp
     syntheticpage.cpp
     yomitanfixture.cpp
 )
+if(MARUPOP_PLATFORM_WAYLAND)
+    target_sources(marupop_testsupport PRIVATE
+        privatebus.cpp
+        fakehyprsocket.cpp
+        fakekwin.cpp
+        fakescreensaver.cpp
+        kwinsession.cpp)
+endif()
 set_target_properties(marupop_testsupport PROPERTIES AUTOMOC ON)
 
 # PUBLIC so a suite reaches "privatebus.h" and "fakes.h" by name alone, matching the way the
@@ -23,7 +26,10 @@ set_target_properties(marupop_testsupport PROPERTIES AUTOMOC ON)
 target_include_directories(marupop_testsupport PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
 # KF6::Archive is PUBLIC because yomitanfixture.cpp packs the .zip fixtures with KZip, and a
 # suite that links this library must resolve it too.
-target_link_libraries(marupop_testsupport PUBLIC marupop_lib Qt6::Core Qt6::Gui Qt6::DBus KF6::Archive)
+target_link_libraries(marupop_testsupport PUBLIC marupop_lib Qt6::Core Qt6::Gui KF6::Archive)
+if(MARUPOP_PLATFORM_WAYLAND)
+    target_link_libraries(marupop_testsupport PUBLIC Qt6::DBus)
+endif()
 
 # SyntheticPage is the one double with geometry of its own to get wrong, and every suite that hit
 # tests against it inherits that geometry. QImage, QPainter and QFont need a QGuiApplication, so the

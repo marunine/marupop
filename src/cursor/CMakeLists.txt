@@ -2,22 +2,33 @@
 # SPDX-License-Identifier: LGPL-3.0-only
 # Pointer tracking. Everything here lives in the maru::cursor namespace.
 target_sources(marupop_lib PRIVATE
-    cursorsink.cpp
-    cursorsink.h
     cursortracker.cpp
     cursortracker.h
-    hyprcursortracker.cpp
-    hyprcursortracker.h
-    hyprsocket.cpp
-    hyprsocket.h
-    kwinscriptrelay.cpp
-    kwinscriptrelay.h
     lockwatcher.cpp
-    lockwatcher.h
-    screensaverlockwatcher.cpp
-    screensaverlockwatcher.h
-    wlrlockwatcher.cpp
-    wlrlockwatcher.h)
+    lockwatcher.h)
+
+if(MARUPOP_PLATFORM_WAYLAND)
+    target_sources(marupop_lib PRIVATE
+        cursorsink.cpp
+        cursorsink.h
+        hyprcursortracker.cpp
+        hyprcursortracker.h
+        hyprsocket.cpp
+        hyprsocket.h
+        kwinscriptrelay.cpp
+        kwinscriptrelay.h
+        screensaverlockwatcher.cpp
+        screensaverlockwatcher.h
+        wlrlockwatcher.cpp
+        wlrlockwatcher.h)
+else()
+    target_sources(marupop_lib PRIVATE
+        wincursortracker.cpp
+        wincursortracker.h
+        winlockwatcher.cpp
+        winlockwatcher.h)
+    target_link_libraries(marupop_lib PRIVATE wtsapi32)
+endif()
 
 # Qt6::DBus carries the sink, the org.kde.kwin.Scripting bootstrap and the screen saver watcher;
 # KF6::ConfigCore carries the kwinrc edit that enables the relay package. src/CMakeLists.txt
@@ -27,4 +38,6 @@ target_sources(marupop_lib PRIVATE
 #
 # Qt6::Network carries the QLocalSocket the Hyprland pointer poll drives; src/CMakeLists.txt
 # already links it PUBLIC for the model and dictionary downloads.
-target_link_libraries(marupop_lib PUBLIC Qt6::DBus Qt6::Network KF6::ConfigCore)
+if(MARUPOP_PLATFORM_WAYLAND)
+    target_link_libraries(marupop_lib PUBLIC Qt6::DBus Qt6::Network KF6::ConfigCore)
+endif()

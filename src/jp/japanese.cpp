@@ -56,7 +56,10 @@ template <std::size_t N>
 
 [[nodiscard]] std::optional<char16_t> mapSupplementary(char32_t codePoint)
 {
-    const auto *const it = std::ranges::lower_bound(
+    // The std::array iterator is a pointer in libstdc++ and libc++ and a class type in the MSVC
+    // STL.
+    // NOLINTNEXTLINE(readability-qualified-auto)
+    const auto it = std::ranges::lower_bound(
         tables::kSupplementaryNormalization, codePoint, std::less<>{}, &SupplementaryPair::from);
     if (it == tables::kSupplementaryNormalization.end() || it->from != codePoint)
         return std::nullopt;

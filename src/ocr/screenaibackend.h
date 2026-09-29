@@ -10,10 +10,10 @@ namespace maru::ocr
 {
 
 // Chrome Screen AI OCR through the user's own component install (marupop never ships it — it
-// is a proprietary component of roughly 120 MB with no redistribution grant). Loaded with
-// dlopen(RTLD_LAZY | RTLD_LOCAL) and version-gated; the SkBitmap-shaped entry point is a
-// private C++ layout with no ABI contract. Inputs larger than GetMaxImageDimension() are
-// tiled, because an oversize submission returns nothing.
+// is a proprietary component of roughly 120 MB with no redistribution grant). Loaded at run
+// time and version-gated; the SkBitmap-shaped entry point is a private C++ layout with no ABI
+// contract. Inputs larger than GetMaxImageDimension() are tiled, because an oversize submission
+// returns nothing.
 //
 // Copied from marusnap's src/pipeline/screenaibackend.{h,cpp} (LGPL-3.0, same author) and
 // adapted to ocr::Backend and to the per-character boxes ocr/screenaiproto.h parses.

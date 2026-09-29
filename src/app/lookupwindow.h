@@ -67,7 +67,10 @@ public:
     // Shows response and the sentence it was looked up in. context.paragraphText is the text the
     // response's highlight indexes. Dropped while isFrozen() holds.
     void setLookup(const lookup::Response &response, const scan::HitContext &context);
+    // Shows no lookup and releases the response, also while isFrozen() holds.
+    void clearLookup();
     [[nodiscard]] bool isFrozen() const;
+    [[nodiscard]] const lookup::Response &response() const;
 
     [[nodiscard]] SentenceSpan sentence() const;
     // The source characters the first result matched, which the header line names.

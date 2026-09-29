@@ -7,6 +7,7 @@
 #include "core/paths.h"
 #include "core/settings.h"
 #include "ocr/modelstore.h"
+#include "platform/desktop.h"
 
 #include <QDir>
 #include <QHBoxLayout>
@@ -19,9 +20,6 @@
 #include <QUrl>
 #include <QVBoxLayout>
 
-#include <KIO/JobTracker>
-#include <KIO/OpenFileManagerWindowJob>
-#include <KJobTrackerInterface>
 #include <KLocalizedString>
 
 namespace maru
@@ -276,7 +274,7 @@ void ModelStatusWidget::startDownload(bool force)
     });
     // Plasma's job applet shows the transfer beside every other one, which is where a user
     // looks for a 46 MB download that is taking its time.
-    KIO::getJobTracker()->registerJob(job);
+    platform::registerJob(job);
     job->start();
 }
 
@@ -297,7 +295,7 @@ void ModelStatusWidget::showInFileManager() const
     const QString path = directory();
     // The directory is created on demand by the download, so a first run has none to open yet.
     QDir{}.mkpath(path);
-    KIO::highlightInFileManager({QUrl::fromLocalFile(path)});
+    platform::revealInFileManager(path);
 }
 
 } // namespace maru

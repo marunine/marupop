@@ -8,9 +8,9 @@
 // The Shortcuts page is the one page the manager knows nothing about -- the three hotkeys are
 // KGlobalAccel actions rather than marupoprc entries -- so its own updateSettings() and
 // hasChanged() are covered separately, over a dialog with no registry behind it.
-#include "app/hotkeyregistry.h"
 #include "app/settingsdialog.h"
 #include "app/shortcutbutton.h"
+#include "app/shortcutregistry.h"
 #include "core/settings.h"
 #include "popup/theme.h"
 
@@ -261,7 +261,7 @@ TEST(SettingsDialogTest, reportsAndAppliesAShortcutChange)
     const Fixture fixture;
     auto *button = fixture.widget<ShortcutButton>("shortcut_toggle-scanning");
     ASSERT_NE(button, nullptr);
-    EXPECT_EQ(button->keySequence(), HotkeyRegistry::defaultShortcut(QStringLiteral("toggle-scanning")).constFirst());
+    EXPECT_EQ(button->keySequence(), ShortcutRegistry::defaultShortcut(QStringLiteral("toggle-scanning")).constFirst());
     EXPECT_FALSE(fixture.applyEnabled());
 
     // The signal a finished recording emits; KKeySequenceRecorder needs a grabbed keyboard,

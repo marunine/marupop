@@ -52,8 +52,8 @@ target_sources(marupop_lib PRIVATE
 # Qt6::Network downloads a built-in dictionary. None of them appears in a header this module
 # installs, so all four stay off marupop_lib's public link interface.
 target_link_libraries(marupop_lib PRIVATE
-    PkgConfig::SQLITE3
-    PkgConfig::XXHASH
+    marupop::sqlite3
+    marupop::xxhash
     KF6::Archive
     KF6::CoreAddons
     Qt6::Network)

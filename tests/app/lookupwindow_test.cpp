@@ -159,6 +159,23 @@ TEST_F(LookupWindowTest, dropsEveryResponseWhileThePointerIsInside)
     EXPECT_FALSE(window.isFrozen());
 }
 
+// A dictionary change releases the Store a shown result holds, also while the pointer is inside.
+TEST_F(LookupWindowTest, clearsTheLookupWhileThePointerIsInside)
+{
+    LookupWindow window;
+    window.show();
+    window.setLookup(responseWith(2), context());
+    QEnterEvent enter{QPointF{10, 10}, QPointF{10, 10}, QPointF{10, 10}};
+    QApplication::sendEvent(&window, &enter);
+    ASSERT_TRUE(window.isFrozen());
+
+    window.clearLookup();
+    EXPECT_TRUE(window.response().results.isEmpty());
+    EXPECT_EQ(shownCount(window), 0);
+    EXPECT_TRUE(window.term().isEmpty());
+    EXPECT_TRUE(window.sentence().text.isEmpty());
+}
+
 TEST_F(LookupWindowTest, reportsItsVisibility)
 {
     LookupWindow window;

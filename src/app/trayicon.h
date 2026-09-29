@@ -8,6 +8,8 @@
 class KStatusNotifierItem;
 class QAction;
 class QMenu;
+class QSystemTrayIcon;
+class QTimer;
 
 namespace maru
 {
@@ -39,6 +41,12 @@ public:
     // which the subtitle falls back to while no failure is set.
     void setStatusText(const QString &status);
 
+#ifdef Q_OS_WIN
+    // Windows 10 and 11 present the notification as a toast attributed to the executable. An icon
+    // that setVisible() hid appears for kMessageMs.
+    void showMessage(const QString &title, const QString &text, bool failure);
+#endif
+
 Q_SIGNALS:
     void toggleScanningRequested();
     void lookupWindowRequested();
@@ -49,8 +57,17 @@ Q_SIGNALS:
 
 private:
     void updateToolTip();
+    void updateIcon();
 
+#ifdef Q_OS_WIN
+    static constexpr int kMessageMs = 10000;
+    QSystemTrayIcon *m_item = nullptr;
+    QTimer *m_hideAfterMessage = nullptr;
+    // The visibility requested by setVisible(). QSystemTrayIcon starts hidden.
+    bool m_visible = false;
+#else
     KStatusNotifierItem *m_item = nullptr;
+#endif
     QMenu *m_menu = nullptr;
     QAction *m_scanningAction = nullptr;
     QAction *m_lookupWindowAction = nullptr;

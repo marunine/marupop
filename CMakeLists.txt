@@ -41,6 +41,20 @@ include(ECMInstallIcons)
 include(ECMQtDeclareLoggingCategory)
 include(ECMSetupVersion)
 
+# KDECompilerSettings writes GCC-spelled options for every Clang front end, and clang-cl reads
+# cl.exe-spelled options. clang-cl reads -Wall as /Wall, which enables -Weverything. clang-cl
+# ignores -pedantic, -fno-operator-names and -fno-exceptions with one warning per translation
+# unit. clang-cl reads /W4 as -Wall -Wextra, the warning set of the Linux build. Exceptions stay
+# enabled, matching the cl.exe settings of KDECompilerSettings.
+if(MSVC AND CMAKE_CXX_COMPILER_ID MATCHES "Clang")
+    foreach(flags CMAKE_C_FLAGS CMAKE_CXX_FLAGS)
+        string(REPLACE "-Wall" "/W4" ${flags} "${${flags}}")
+        foreach(ignored -pedantic -fno-operator-names -fno-exceptions)
+            string(REPLACE "${ignored}" "" ${flags} "${${flags}}")
+        endforeach()
+    endforeach()
+endif()
+
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
@@ -53,54 +67,97 @@ ecm_setup_version(PROJECT
                   VARIABLE_PREFIX MARUPOP
                   VERSION_HEADER "${CMAKE_BINARY_DIR}/src/marupop_version.h")
 
+# MARUPOP_PLATFORM_WAYLAND covers the Linux desktops that the session backends in src/platform/
+# detect. src/ and tests/ test MARUPOP_PLATFORM_* in place of UNIX and WIN32, so each condition
+# names the platform family of its source list.
+if(WIN32)
+    set(MARUPOP_PLATFORM_WIN32 ON)
+    set(MARUPOP_PLATFORM_WAYLAND OFF)
+else()
+    set(MARUPOP_PLATFORM_WIN32 OFF)
+    set(MARUPOP_PLATFORM_WAYLAND ON)
+endif()
+
 # Widgets for the whole UI, DBus for the KWin cursor relay and the ScreenShot2 grabber,
 # Concurrent for the OCR and import worker pools, Network for the model and dictionary
 # downloads, Sql for the dictionary import and administration paths (the read path uses the
 # sqlite3 C API directly).
-find_package(Qt6 ${QT_MIN_VERSION} REQUIRED COMPONENTS Widgets DBus Concurrent Network Sql)
+set(marupop_qt_components Widgets Concurrent Network Sql)
+if(MARUPOP_PLATFORM_WAYLAND)
+    list(APPEND marupop_qt_components DBus)
+else()
+    # Svg for the compiled-in application icons.
+    list(APPEND marupop_qt_components Svg)
+endif()
+find_package(Qt6 ${QT_MIN_VERSION} REQUIRED COMPONENTS ${marupop_qt_components})
 find_package(KF6Config ${KF_MIN_VERSION} REQUIRED)        # KConfigXT settings
 find_package(KF6ConfigWidgets ${KF_MIN_VERSION} REQUIRED) # KConfigDialog settings window, KStyleManager
 find_package(KF6CoreAddons ${KF_MIN_VERSION} REQUIRED)    # KAboutData, KJob
-find_package(KF6Crash ${KF_MIN_VERSION} REQUIRED)         # DrKonqi handler for a tray-resident process
-find_package(KF6XmlGui ${KF_MIN_VERSION} REQUIRED)        # KAboutApplicationDialog only; no KXmlGuiWindow
 find_package(KF6I18n ${KF_MIN_VERSION} REQUIRED)
-find_package(KF6DBusAddons ${KF_MIN_VERSION} REQUIRED)    # KDBusService(Unique)
-find_package(KF6GlobalAccel ${KF_MIN_VERSION} REQUIRED)   # in-process global shortcuts
 find_package(KF6GuiAddons ${KF_MIN_VERSION} REQUIRED)     # KSystemClipboard, KKeySequenceRecorder
-find_package(KF6Service ${KF_MIN_VERSION} REQUIRED)       # KWin's desktop-entry lookup, in capture/authorization
-find_package(KF6KIO ${KF_MIN_VERSION} REQUIRED)           # download jobs, highlightInFileManager
-find_package(KF6Notifications ${KF_MIN_VERSION} REQUIRED) # marupop.notifyrc events
-find_package(KF6StatusNotifierItem ${KF_MIN_VERSION} REQUIRED) # tray icon
 find_package(KF6WidgetsAddons ${KF_MIN_VERSION} REQUIRED) # KMessageWidget in the dictionary manager
 find_package(KF6Archive ${KF_MIN_VERSION} REQUIRED)       # KZip, for Yomitan dictionary archives
-find_package(KF6JobWidgets ${KF_MIN_VERSION} REQUIRED)    # KJob progress in the dictionary manager
 find_package(KF6ColorScheme ${KF_MIN_VERSION} REQUIRED)   # popup theme presets against the session palette
-# The popup is positioned by the compositor: a plain Wayland toplevel cannot place itself at an
-# arbitrary global coordinate, and the popup has to sit beside the pointer.
-find_package(LayerShellQt REQUIRED)
-# The three protocols a wlroots-family compositor answers where KDE Plasma answers over D-Bus:
-# zwlr_screencopy_unstable_v1 for region pixels, hyprland_lock_notify_v1 for the session lock
-# state and hyprland_global_shortcuts_v1 for the three hotkeys. Qt's platform plugin binds none
-# of them, so src/wayland/ binds them itself on the wl_display the plugin already owns.
-#
-# The two ECM find modules supply the halves that need finding: Wayland::Client for the library
-# and WaylandScanner for ecm_add_wayland_client_protocol(). The protocol XML is vendored under
-# third_party/protocols/, so no wayland-protocols or hyprland-protocols package is required.
-find_package(Wayland ${WAYLAND_MIN_VERSION} REQUIRED COMPONENTS Client)
-find_package(WaylandScanner REQUIRED)
-find_package(PkgConfig REQUIRED)
-# ONNX Runtime executes the meikiocr detection and recognition models. Arch ships the
-# libonnxruntime.pc file under that name rather than onnxruntime.
-pkg_check_modules(ONNXRUNTIME REQUIRED IMPORTED_TARGET libonnxruntime)
-# The dictionary read path drives sqlite3 through its C API, for PRAGMA query_only, a set
-# mmap_size and one cached prepared statement per store.
-pkg_check_modules(SQLITE3 REQUIRED IMPORTED_TARGET sqlite3)
-# xxh3, for the frame hash that skips an OCR pass over an unchanged frame and for the sorted
-# key-filter sidecar that rejects a dictionary miss before the sqlite3 query.
-pkg_check_modules(XXHASH REQUIRED IMPORTED_TARGET libxxhash)
-# The meikiocr preprocessing steps are one bilinear resize and one color conversion, which is
-# what these two components supply. The full OpenCV package is not required.
-find_package(OpenCV 5 REQUIRED COMPONENTS core imgproc)
+if(MARUPOP_PLATFORM_WAYLAND)
+    # Wayland-family frameworks: each one calls a Plasma service or a service that a Plasma
+    # session runs.
+    find_package(KF6Crash ${KF_MIN_VERSION} REQUIRED)         # DrKonqi handler for a tray-resident process
+    find_package(KF6XmlGui ${KF_MIN_VERSION} REQUIRED)        # KAboutApplicationDialog only; no KXmlGuiWindow
+    find_package(KF6DBusAddons ${KF_MIN_VERSION} REQUIRED)    # KDBusService(Unique)
+    find_package(KF6GlobalAccel ${KF_MIN_VERSION} REQUIRED)   # in-process global shortcuts
+    find_package(KF6Service ${KF_MIN_VERSION} REQUIRED)       # KWin's desktop-entry lookup, in capture/authorization
+    find_package(KF6KIO ${KF_MIN_VERSION} REQUIRED)           # download jobs, highlightInFileManager
+    find_package(KF6Notifications ${KF_MIN_VERSION} REQUIRED) # marupop.notifyrc events
+    find_package(KF6StatusNotifierItem ${KF_MIN_VERSION} REQUIRED) # tray icon
+    find_package(KF6JobWidgets ${KF_MIN_VERSION} REQUIRED)    # KJob progress in the dictionary manager
+    # The popup is positioned by the compositor: a plain Wayland toplevel cannot place itself at
+    # an arbitrary global coordinate, and the popup has to sit beside the pointer.
+    find_package(LayerShellQt REQUIRED)
+    # The three protocols a wlroots-family compositor answers where KDE Plasma answers over
+    # D-Bus: zwlr_screencopy_unstable_v1 for region pixels, hyprland_lock_notify_v1 for the
+    # session lock state and hyprland_global_shortcuts_v1 for the three hotkeys. Qt's platform
+    # plugin binds none of them, so src/wayland/ binds them itself on the wl_display the plugin
+    # already owns.
+    #
+    # The two ECM find modules supply the halves that need finding: Wayland::Client for the
+    # library and WaylandScanner for ecm_add_wayland_client_protocol(). The protocol XML is
+    # vendored under third_party/protocols/, so no wayland-protocols or hyprland-protocols
+    # package is required.
+    find_package(Wayland ${WAYLAND_MIN_VERSION} REQUIRED COMPONENTS Client)
+    find_package(WaylandScanner REQUIRED)
+endif()
+
+# The Win32 build finds the vcpkg CMake packages because the vcpkg pkg-config files name the
+# release libraries, and a Debug build requires the debug libraries.
+if(MARUPOP_PLATFORM_WAYLAND)
+    find_package(PkgConfig REQUIRED)
+    # ONNX Runtime executes the meikiocr detection and recognition models. Arch ships the
+    # libonnxruntime.pc file under that name rather than onnxruntime.
+    pkg_check_modules(ONNXRUNTIME REQUIRED IMPORTED_TARGET libonnxruntime)
+    # The dictionary read path drives sqlite3 through its C API, for PRAGMA query_only, a set
+    # mmap_size and one cached prepared statement per store.
+    pkg_check_modules(SQLITE3 REQUIRED IMPORTED_TARGET sqlite3)
+    # xxh3, for the frame hash that skips an OCR pass over an unchanged frame and for the sorted
+    # key-filter sidecar that rejects a dictionary miss before the sqlite3 query.
+    pkg_check_modules(XXHASH REQUIRED IMPORTED_TARGET libxxhash)
+    add_library(marupop::onnxruntime ALIAS PkgConfig::ONNXRUNTIME)
+    add_library(marupop::sqlite3 ALIAS PkgConfig::SQLITE3)
+    add_library(marupop::xxhash ALIAS PkgConfig::XXHASH)
+else()
+    include(cmake/MarupopOnnxRuntime.cmake)
+    find_package(unofficial-sqlite3 CONFIG REQUIRED)
+    find_package(xxHash CONFIG REQUIRED)
+    add_library(marupop::sqlite3 ALIAS unofficial::sqlite3::sqlite3)
+    add_library(marupop::xxhash ALIAS xxHash::xxhash)
+endif()
+# The meikiocr preprocessing is one bilinear resize, which OpenCV core and imgproc supply. The
+# meikiocr code compiles against OpenCV 4 and OpenCV 5. The Win32 build requires OpenCV 4 because
+# vcpkg ships the 4.x series alone at the vcpkg.json baseline.
+if(MARUPOP_PLATFORM_WAYLAND)
+    find_package(OpenCV 5 REQUIRED COMPONENTS core imgproc)
+else()
+    find_package(OpenCV 4 REQUIRED COMPONENTS core imgproc)
+endif()
 
 # The target and optional hook both use the checked-in formatting policy. ECM also preserves
 # an existing custom .clang-format; the explicit target keeps its source scope visible here.
@@ -170,8 +227,12 @@ endif()
 ki18n_install(po)
 
 add_subdirectory(src)
-add_subdirectory(data)
-add_subdirectory(icons)
+if(MARUPOP_PLATFORM_WAYLAND)
+    # A freedesktop.org session reads the files that data/ and icons/ install from the install
+    # prefix.
+    add_subdirectory(data)
+    add_subdirectory(icons)
+endif()
 add_subdirectory(tools)
 
 # Preserve the notice's relative license paths for binary recipients.
@@ -182,9 +243,25 @@ foreach(component IN ITEMS JL nazeka similar-kanji)
     install(FILES third_party/${component}/LICENSE
             DESTINATION ${MARUPOP_NOTICE_DIR}/third_party/${component})
 endforeach()
-install(DIRECTORY third_party/protocols/
-        DESTINATION ${MARUPOP_NOTICE_DIR}/third_party/protocols
-        FILES_MATCHING PATTERN "*.xml" PATTERN "README.md")
+if(MARUPOP_PLATFORM_WAYLAND)
+    install(DIRECTORY third_party/protocols/
+            DESTINATION ${MARUPOP_NOTICE_DIR}/third_party/protocols
+            FILES_MATCHING PATTERN "*.xml" PATTERN "README.md")
+else()
+    install(FILES ${MARUPOP_ONNXRUNTIME_NOTICES} DESTINATION ${MARUPOP_NOTICE_DIR}/third_party/onnxruntime)
+    # The excluded ports are build inputs with no installed file.
+    if(DEFINED VCPKG_INSTALLED_DIR AND DEFINED VCPKG_TARGET_TRIPLET)
+        file(GLOB marupop_vcpkg_copyrights ${VCPKG_INSTALLED_DIR}/${VCPKG_TARGET_TRIPLET}/share/*/copyright)
+        foreach(copyright IN LISTS marupop_vcpkg_copyrights)
+            get_filename_component(port ${copyright} DIRECTORY)
+            get_filename_component(port ${port} NAME)
+            if(port MATCHES "^(vcpkg-.*|ECM|gtest|gettext|egl-registry|opengl|opengl-registry)$")
+                continue()
+            endif()
+            install(FILES ${copyright} DESTINATION ${MARUPOP_NOTICE_DIR}/third_party/vcpkg/${port})
+        endforeach()
+    endif()
+endif()
 
 if(BUILD_TESTING)
     find_package(GTest REQUIRED)

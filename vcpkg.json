@@ -1,0 +1,69 @@
+{
+  "$schema": "https://raw.githubusercontent.com/microsoft/vcpkg-tool/main/docs/vcpkg.schema.json",
+  "name": "marupop",
+  "version": "0.1.0",
+  "description": "The Windows dependency set. Linux builds take their dependencies from the distribution.",
+  "license": "LGPL-3.0-only",
+  "supports": "windows & x64",
+  "builtin-baseline": "e06f5848a317ffc5e56e8b6327146d8e5d723cd5",
+  "vcpkg-configuration": {
+    "overlay-ports": [
+      "packaging/vcpkg/ports"
+    ]
+  },
+  "dependencies": [
+    "ecm",
+    "karchive",
+    "kcolorscheme",
+    "kconfig",
+    "kconfigwidgets",
+    "kcoreaddons",
+    "kguiaddons",
+    "ki18n",
+    "kwidgetsaddons",
+    {
+      "name": "opencv4",
+      "default-features": false,
+      "features": [
+        "intrinsics",
+        "thread"
+      ]
+    },
+    {
+      "name": "qtbase",
+      "default-features": false,
+      "features": [
+        "concurrent",
+        "doubleconversion",
+        "freetype",
+        "gui",
+        "harfbuzz",
+        "network",
+        "pcre2",
+        "png",
+        "sql",
+        "sql-sqlite",
+        "thread",
+        "widgets"
+      ]
+    },
+    "qtsvg",
+    "sqlite3",
+    "xxhash"
+  ],
+  "features": {
+    "tests": {
+      "description": "GoogleTest and Qt Test for the test suites",
+      "dependencies": [
+        "gtest",
+        {
+          "name": "qtbase",
+          "default-features": false,
+          "features": [
+            "testlib"
+          ]
+        }
+      ]
+    }
+  }
+}

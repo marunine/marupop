@@ -25,7 +25,8 @@ class PopupView;
 // corner of the target screen and positioned through its margins, which is the only way a
 // client can place a window at desktop coordinates on Wayland. On every other platform, the
 // offscreen platform plugin the tests run under included, the window is a frameless tool
-// window positioned with QWidget::move().
+// window positioned with QWidget::move(). On Windows, the tool window is topmost, stays inactive
+// while passive and carries WDA_EXCLUDEFROMCAPTURE (win32/window.h).
 //
 // The card is input-transparent while it is not pinned. Pinning drops the transparency and
 // enables wheel scrolling; a layer surface fixes its input region when it is mapped, so
@@ -135,7 +136,12 @@ private:
     [[nodiscard]] static bool isLayerShellSession();
 
     PopupView *m_view = nullptr;
+#ifdef Q_OS_WIN
+    // The HWND that was foreground when the card was pinned.
+    void *m_previousForeground = nullptr;
+#else
     QPointer<QWindow> m_previousFocusWindow;
+#endif
     Theme m_theme;
     RenderOptions m_options;
     PopupPositionMode m_positionMode = PopupPositionMode::VisualNovel;

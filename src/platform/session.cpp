@@ -3,12 +3,8 @@
 #include "platform/session.h"
 
 #include "core/logging.h"
-#include "cursor/hyprsocket.h"
-#include "wayland/registry.h"
+#include "platform/session_p.h"
 
-#include <QDBusConnection>
-#include <QDBusConnectionInterface>
-#include <QFileInfo>
 #include <QString>
 
 #include <KLocalizedString>
@@ -20,30 +16,6 @@ namespace maru::platform
 
 namespace
 {
-
-// The three probes, in the order detect() runs them. Each is cheap: one cached D-Bus name list,
-// one stat(2), one hash lookup in the registry the process already bound.
-
-bool kwinOwnsItsName()
-{
-    const QDBusConnection bus = QDBusConnection::sessionBus();
-    if (!bus.isConnected()) {
-        return false;
-    }
-    return bus.interface()->isServiceRegistered(QStringLiteral("org.kde.KWin")).value();
-}
-
-bool hyprlandSocketExists()
-{
-    const QString path = cursor::hyprSocketPath();
-    return !path.isEmpty() && QFileInfo::exists(path);
-}
-
-bool wlrScreencopyAdvertised()
-{
-    wl::Registry *registry = wl::Registry::instance();
-    return registry != nullptr && registry->has(QByteArrayLiteral("zwlr_screencopy_manager_v1"));
-}
 
 Session detectUncached()
 {
@@ -58,21 +30,7 @@ Session detectUncached()
         qCWarning(logPlatform) << "MARUPOP_PLATFORM holds" << override << "which names no session; detecting instead";
     }
 
-    // Check Hyprland first: its instance signature and socket identify the compositor used by
-    // this process. A nested compositor may inherit a Plasma session bus, so merely finding
-    // org.kde.KWin on that bus does not identify the current Wayland compositor.
-    if (hyprlandSocketExists()) {
-        return Session::Hyprland;
-    }
-    if (kwinOwnsItsName()) {
-        return Session::KdePlasma;
-    }
-    // Last, because a Hyprland session advertises zwlr_screencopy_manager_v1 as well and a Plasma
-    // session running a wlroots-protocol bridge would answer this probe too.
-    if (wlrScreencopyAdvertised()) {
-        return Session::Wlroots;
-    }
-    return Session::Unknown;
+    return detectNative();
 }
 
 std::optional<Session> cachedSession;
@@ -103,6 +61,8 @@ QString sessionId(Session session)
         return QStringLiteral("hyprland");
     case Session::Wlroots:
         return QStringLiteral("wlroots");
+    case Session::Windows:
+        return QStringLiteral("windows");
     case Session::Unknown:
         break;
     }
@@ -127,6 +87,9 @@ Session parseSessionId(const QString &id, bool *recognized)
     if (lowered == QLatin1String("wlroots")) {
         return answer(Session::Wlroots, true);
     }
+    if (lowered == QLatin1String("windows")) {
+        return answer(Session::Windows, true);
+    }
     if (lowered == QLatin1String("unknown")) {
         return answer(Session::Unknown, true);
     }
@@ -142,6 +105,8 @@ QString sessionName(Session session)
         return i18n("Hyprland");
     case Session::Wlroots:
         return i18n("wlroots");
+    case Session::Windows:
+        return i18n("Windows");
     case Session::Unknown:
         break;
     }
@@ -155,6 +120,7 @@ bool capturesOwnWindows(Session session)
     case Session::Wlroots:
         return true;
     case Session::KdePlasma:
+    case Session::Windows:
     case Session::Unknown:
         break;
     }

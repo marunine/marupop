@@ -23,6 +23,10 @@ bool CursorTracker::isTracking() const
     return m_tracking;
 }
 
+void CursorTracker::start() {}
+
+void CursorTracker::stop() {}
+
 UnavailableTracker::UnavailableTracker(QString reason, QObject *parent)
     : CursorTracker(parent)
     , m_reason(std::move(reason))

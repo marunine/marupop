@@ -29,6 +29,12 @@
 #include <malloc.h>
 #endif
 
+#ifdef Q_OS_WIN
+#include <windows.h>
+// psapi.h declares its functions with the types windows.h defines.
+#include <psapi.h>
+#endif
+
 using namespace maru::dict;
 
 namespace
@@ -55,9 +61,22 @@ bool inputsPresent()
             GTEST_SKIP() << "set MARUPOP_REAL_DATA=1 to run the real-data imports";                                    \
     } while (false)
 
-// The peak resident set of this process, in bytes, from /proc/self/status.
+#ifdef Q_OS_WIN
+PROCESS_MEMORY_COUNTERS processMemory()
+{
+    PROCESS_MEMORY_COUNTERS counters{};
+    if (K32GetProcessMemoryInfo(GetCurrentProcess(), &counters, sizeof(counters)) == FALSE)
+        return {};
+    return counters;
+}
+#endif
+
+// The peak resident set of this process, in bytes.
 qint64 peakResidentBytes()
 {
+#ifdef Q_OS_WIN
+    return static_cast<qint64>(processMemory().PeakWorkingSetSize);
+#else
     QFile status(QStringLiteral("/proc/self/status"));
     if (!status.open(QIODevice::ReadOnly | QIODevice::Text))
         return 0;
@@ -70,6 +89,7 @@ qint64 peakResidentBytes()
             return fields.at(1).toLongLong() * 1024;
     }
     return 0;
+#endif
 }
 
 qint64 currentResidentBytes()
@@ -80,6 +100,9 @@ qint64 currentResidentBytes()
     // than the high-water mark of the process.
     malloc_trim(0);
 #endif
+#ifdef Q_OS_WIN
+    return static_cast<qint64>(processMemory().WorkingSetSize);
+#else
     QFile status(QStringLiteral("/proc/self/status"));
     if (!status.open(QIODevice::ReadOnly | QIODevice::Text))
         return 0;
@@ -92,6 +115,7 @@ qint64 currentResidentBytes()
             return fields.at(1).toLongLong() * 1024;
     }
     return 0;
+#endif
 }
 
 double megabytes(qint64 bytes)
