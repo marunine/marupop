@@ -169,6 +169,30 @@ TEST(DictDictionaryManager, PersistsTheListAcrossReloads)
         EXPECT_EQ(dictionary->priority, expected++);
 }
 
+// A list that fails to parse is copied before the first start saves over it.
+TEST(DictDictionaryManager, KeepsACopyOfAnUnreadableList)
+{
+    QTemporaryDir directory;
+    ASSERT_TRUE(directory.isValid());
+    const QString listPath = directory.filePath(QStringLiteral("dictionaries.json"));
+    const QByteArray truncated = QByteArrayLiteral(R"({"dictionaries": [{"id": )");
+    {
+        QFile file(listPath);
+        ASSERT_TRUE(file.open(QIODevice::WriteOnly));
+        ASSERT_EQ(file.write(truncated), truncated.size());
+    }
+
+    for (int start = 0; start < 2; ++start) {
+        DictionaryManager manager(directory.path(), nullptr);
+        EXPECT_EQ(manager.load(), start > 0);
+        manager.seedBuiltIns();
+        ASSERT_TRUE(manager.save());
+    }
+    QFile copy(listPath + QStringLiteral(".unreadable"));
+    ASSERT_TRUE(copy.open(QIODevice::ReadOnly));
+    EXPECT_EQ(copy.readAll(), truncated);
+}
+
 TEST(DictDictionaryManager, EditsTheList)
 {
     QTemporaryDir directory;
