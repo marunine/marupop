@@ -396,3 +396,31 @@ TEST(DictStore, MissesAreRejectedByTheKeyFilter)
     EXPECT_EQ(store.find(QStringLiteral("走る")).size(), 1U);
     EXPECT_TRUE(store.find(QStringLiteral("歩く")).empty());
 }
+
+namespace
+{
+
+void writeStore(const QString &path, const QString &word, qint32 id)
+{
+    StoreWriter writer;
+    ASSERT_TRUE(writer.begin(path, DictType::JMdict));
+    ASSERT_GE(writer.addRecord(jmdictRecord(word, QStringLiteral("よみ"), id), keys({word})), 0);
+    ASSERT_TRUE(writer.finish());
+}
+
+} // namespace
+
+// Store::open() passes the path in a file: URI, where # starts a fragment and % starts a
+// percent-encoded byte.
+TEST(DictStore, OpensAStoreUnderAFolderNameWithUriDelimiters)
+{
+    QTemporaryDir directory;
+    ASSERT_TRUE(directory.isValid());
+    const QString folder = QStringLiteral("辞書 #1 %20");
+    ASSERT_TRUE(QDir(directory.path()).mkdir(folder));
+    const QString path = directory.filePath(folder + QStringLiteral("/日本語.db"));
+    writeStore(path, QStringLiteral("走る"), 1);
+    Store store;
+    ASSERT_EQ(store.open(path), OpenResult::Ok);
+    EXPECT_EQ(store.find(QStringLiteral("走る")).size(), 1U);
+}
