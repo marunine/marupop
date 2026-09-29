@@ -220,21 +220,6 @@ private:
     bool m_ready = false;
 };
 
-// The character under the pointer and nothing more, so an assertion on the popup content reads the
-// hit test's answer directly.
-lookup::Response cannedResponse(const lookup::Request &request)
-{
-    lookup::Result result;
-    result.matchedText = request.sourceText.mid(request.cursorIndex, 1);
-    result.primarySpelling = result.matchedText;
-
-    lookup::Response response;
-    response.highlightStart = request.cursorIndex;
-    response.highlightLength = 1;
-    response.results.append(result);
-    return response;
-}
-
 void pump(const std::function<bool()> &done, int timeoutMs = 5000)
 {
     const QDeadlineTimer deadline{timeoutMs};
@@ -277,7 +262,9 @@ struct Harness
         controller = std::make_unique<ScanController>(
             tracker, frames, ocrService, [counter = lookupCount](const lookup::Request &request) {
                 counter->fetch_add(1);
-                return cannedResponse(request);
+                // The character under the pointer alone, so an assertion on the popup content reads
+                // the hit test's answer directly.
+                return test::cannedResponse(request);
             });
         QObject::connect(controller.get(),
                          &ScanController::lookupReady,

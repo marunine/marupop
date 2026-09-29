@@ -7,6 +7,7 @@
 
 #include "cursor/cursortracker.h"
 #include "cursor/lockwatcher.h"
+#include "lookup/lookuptypes.h"
 #include "ocr/backend.h"
 
 #include <QGuiApplication>
@@ -23,6 +24,21 @@
 
 namespace maru::test
 {
+
+// A lookup::Response with one lookup::Result whose matchedText is the length characters of
+// request.sourceText at request.cursorIndex.
+inline lookup::Response cannedResponse(const lookup::Request &request, qsizetype length = 1)
+{
+    lookup::Result result;
+    result.matchedText = request.sourceText.mid(request.cursorIndex, length);
+    result.primarySpelling = result.matchedText;
+
+    lookup::Response response;
+    response.highlightStart = request.cursorIndex;
+    response.highlightLength = length;
+    response.results.append(result);
+    return response;
+}
 
 // Emits positions on demand, at whatever rate the caller chooses. KWinScriptRelay emits at
 // 8 ms intervals while the pointer moves.
