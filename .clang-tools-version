@@ -1,0 +1,19 @@
+# SPDX-FileCopyrightText: 2026 marunine
+# SPDX-License-Identifier: LGPL-3.0-only
+#
+# The LLVM major version of the clang-format and clang-tidy that check this tree. .clang-tidy
+# enables check groups such as readability-*, and each LLVM major release adds checks to those
+# groups. The CI format and clang-tidy steps, .githooks/pre-commit and the clang-format target
+# require this version.
+#
+# The CI clang-tidy step holds the changed lines of a pull request to every enabled check, and the
+# tree keeps the findings of earlier lines. A raise of the version therefore requires a review of
+# each check that the new release adds to the enabled groups:
+# 1. Compare `clang-tidy --list-checks` of the old and the new release. The difference lists the
+#    added checks.
+# 2. Run each added check over the tree with
+#    `run-clang-tidy -p build -quiet -checks='-*,<check>' '/marupop/(src|tests|tools)/'`.
+#    The output lists its findings.
+# 3. Disable in .clang-tidy each added check whose findings contradict .clang-format or the style
+#    of the tree.
+23

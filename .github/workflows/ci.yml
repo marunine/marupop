@@ -166,13 +166,13 @@ jobs:
         if: github.event_name == 'pull_request'
         env:
           BASE_REF: ${{ github.base_ref }}
+        # .githooks/pre-commit runs tools/clang-tidy-diff.sh over the staged lines. The script
+        # fails on a clang-tidy of another LLVM major version than .clang-tools-version.
         run: |
           base=$BASE_REF
           git fetch --no-tags origin "+refs/heads/$base:refs/remotes/origin/$base"
           git diff -U0 "origin/$base...HEAD" -- {src,tests,tools}/'*.cpp' {src,tests,tools}/'*.h' \
-            | python3 tools/compdb-filter-diff.py build/compile_commands.json \
-            | python3 /usr/share/clang/clang-tidy-diff.py -p1 -path build -quiet -j "$(nproc)" \
-                -clang-tidy-binary clang-tidy -warnings-as-errors='*'
+            | tools/clang-tidy-diff.sh build
 
   # The job clones vcpkg at the builtin-baseline commit of vcpkg.json because the vcpkg copy in
   # the runner image changes with each image release.
@@ -304,7 +304,9 @@ jobs:
         run: git config --global --add safe.directory "$GITHUB_WORKSPACE"
       # The same .clang-format the clang-format target and .githooks/pre-commit read.
       - name: Format
-        run: git ls-files -z '*.cpp' '*.h' | xargs -0 -r clang-format --dry-run --Werror
+        run: |
+          tools/check-clang-tools-version.sh clang-format
+          git ls-files -z '*.cpp' '*.h' | xargs -0 -r clang-format --dry-run --Werror
       # Fails when po/marupop.pot no longer matches the i18n calls in src/.
       - name: Message template
         run: po/extract-messages.sh --check
