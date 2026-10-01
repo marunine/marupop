@@ -2,42 +2,60 @@
 # SPDX-FileCopyrightText: 2026 marunine
 # SPDX-License-Identifier: LGPL-3.0-only
 #
-# Rejects a commit whose staged C++ content differs from what clang-format produces, or whose
-# staged po/marupop.pot differs from what po/extract-messages.sh extracts from the staged sources.
+# Rejects a commit when one of three CI checks fails on the staged content:
+# - The staged C++ content differs from what clang-format produces.
+# - The staged po/marupop.pot differs from what po/extract-messages.sh extracts from the staged
+#   sources.
+# - tools/clang-tidy-diff.sh reports a finding on a staged line of src/, tests/ or tools/.
 #
 # The staged content is what is checked, rather than the file on disk: a partially staged file
 # commits only the hunks that were added, and the rest of the working tree is not part of this
 # commit. A regenerated template left unstaged would pass a working-tree check and fail CI.
+#
+# clang-format and clang-tidy require the LLVM major version in .clang-tools-version.
+# MARUPOP_CLANG_FORMAT and MARUPOP_CLANG_TIDY name the two binaries, and default to clang-format
+# and clang-tidy on PATH. MARUPOP_BUILD_DIR names the build folder whose compile_commands.json
+# clang-tidy reads, and defaults to build. MARUPOP_SKIP_CLANG_TIDY=1 skips the clang-tidy check.
 #
 # `git config core.hooksPath .githooks` enables this hook, which a configure of the build tree
 # does with MARUPOP_GIT_HOOKS=ON.
 set -eu
 
 status=0
+clang_format=${MARUPOP_CLANG_FORMAT:-clang-format}
+build_dir=${MARUPOP_BUILD_DIR:-build}
+work=$(mktemp -d)
+trap 'rm -rf "$work"' EXIT
 
-if ! command -v clang-format >/dev/null 2>&1; then
-    echo "pre-commit: clang-format is absent, so the format check is skipped." >&2
-    echo "pre-commit: the CI format job runs the same check over a pushed branch." >&2
-else
-    unformatted=""
-    for file in $(git diff --cached --name-only --diff-filter=ACMR -- '*.cpp' '*.h'); do
-        staged=$(git show ":$file")
-        # --assume-filename gives clang-format the path it resolves .clang-format and the include
-        # categories from, since the content arrives on stdin. Command substitution drops trailing
-        # newlines from both sides, so the comparison covers every other byte.
-        formatted=$(printf '%s\n' "$staged" | clang-format --assume-filename="$file")
-        if [ "$staged" != "$formatted" ]; then
-            unformatted="$unformatted $file"
-        fi
-    done
-
-    if [ -n "$unformatted" ]; then
-        echo "pre-commit: the staged content of these files differs from clang-format output:" >&2
-        for file in $unformatted; do
-            echo "  $file" >&2
-        done
-        echo "pre-commit: \`clang-format -i$unformatted\` rewrites them, and the result needs staging." >&2
+format_files=$(git diff --cached --name-only --diff-filter=ACMR -- '*.cpp' '*.h')
+if [ -n "$format_files" ]; then
+    if ! command -v "$clang_format" >/dev/null 2>&1; then
+        echo "pre-commit: $clang_format is absent, so the format check is skipped." >&2
+        echo "pre-commit: the CI format job runs the same check over a pushed branch." >&2
+    elif ! tools/check-clang-tools-version.sh "$clang_format"; then
+        echo "pre-commit: set MARUPOP_CLANG_FORMAT to a clang-format of the pinned version." >&2
         status=1
+    else
+        unformatted=""
+        for file in $format_files; do
+            staged=$(git show ":$file")
+            # --assume-filename gives clang-format the path it resolves .clang-format and the
+            # include categories from, since the content arrives on stdin. Command substitution
+            # drops trailing newlines from both sides, so the comparison covers every other byte.
+            formatted=$(printf '%s\n' "$staged" | "$clang_format" --assume-filename="$file")
+            if [ "$staged" != "$formatted" ]; then
+                unformatted="$unformatted $file"
+            fi
+        done
+
+        if [ -n "$unformatted" ]; then
+            echo "pre-commit: the staged content of these files differs from clang-format output:" >&2
+            for file in $unformatted; do
+                echo "  $file" >&2
+            done
+            echo "pre-commit: \`$clang_format -i$unformatted\` rewrites them, and the result needs staging." >&2
+            status=1
+        fi
     fi
 fi
 
@@ -48,8 +66,7 @@ if [ -n "$(git diff --cached --name-only -- src data po CMakeLists.txt)" ]; then
         echo "pre-commit: xgettext is absent, so the translation template check is skipped." >&2
         echo "pre-commit: the CI translations job runs the same check over a pushed branch." >&2
     else
-        snapshot=$(mktemp -d)
-        trap 'rm -rf "$snapshot"' EXIT
+        snapshot=$work/snapshot
         # Only the extraction inputs are written out. GIT_WORK_TREE points the script's
         # `git ls-files` at the snapshot, so it lists the index entries that were written there.
         git ls-files -z -- src data po CMakeLists.txt \
@@ -58,6 +75,51 @@ if [ -n "$(git diff --cached --name-only -- src data po CMakeLists.txt)" ]; then
             "$snapshot/po/extract-messages.sh" --check >/dev/null; then
             echo "pre-commit: the staged po/marupop.pot differs from the staged sources' messages." >&2
             echo "pre-commit: \`po/extract-messages.sh\` rewrites it, and the result needs staging." >&2
+            status=1
+        fi
+    fi
+fi
+
+# The pathspecs of the CI clang-tidy step. -M keeps a moved file to its changed lines.
+set -- 'src/*.cpp' 'src/*.h' 'tests/*.cpp' 'tests/*.h' 'tools/*.cpp' 'tools/*.h'
+tidy_files=$(git diff --cached --name-only --diff-filter=ACMR -M -- "$@")
+if [ -n "$tidy_files" ]; then
+    if [ "${MARUPOP_SKIP_CLANG_TIDY:-0}" = 1 ]; then
+        echo "pre-commit: MARUPOP_SKIP_CLANG_TIDY=1 skips the clang-tidy check." >&2
+    elif [ "$status" -ne 0 ]; then
+        echo "pre-commit: the clang-tidy check runs after the checks above pass." >&2
+    elif [ ! -f "$build_dir/compile_commands.json" ]; then
+        echo "pre-commit: $build_dir/compile_commands.json is absent, so the clang-tidy check is skipped." >&2
+        echo "pre-commit: a configure of $build_dir writes it, or MARUPOP_BUILD_DIR names another build folder." >&2
+    elif ! command -v python3 >/dev/null 2>&1; then
+        echo "pre-commit: python3 is absent, so the clang-tidy check is skipped." >&2
+    else
+        # clang-tidy reads files from the working tree. The overlay maps the working-tree path of
+        # each staged file to a copy of its index entry, so clang-tidy reads the staged content.
+        echo "$tidy_files" | git checkout-index --stdin --prefix="$work/staged/"
+        echo "$tidy_files" | python3 -c '
+import json, os, sys
+root, staged = sys.argv[1], sys.argv[2]
+roots = [{"type": "file", "name": os.path.join(root, f), "external-contents": os.path.join(staged, f)}
+         for f in sys.stdin.read().split()]
+print(json.dumps({"version": 0, "case-sensitive": "true", "use-external-names": False, "roots": roots}))
+' "$PWD" "$work/staged" >"$work/overlay.yaml"
+        # The explicit options override the diff settings of the git configuration, which change
+        # the header lines that tools/compdb-filter-diff.py and clang-tidy-diff.py parse.
+        git diff --cached -U0 -M --no-color --no-ext-diff --src-prefix=a/ --dst-prefix=b/ -- "$@" \
+            >"$work/tidy.diff"
+        tidy_status=0
+        tools/clang-tidy-diff.sh "$build_dir" "$work/overlay.yaml" <"$work/tidy.diff" >"$work/tidy.log" 2>&1 \
+            || tidy_status=$?
+        # clang-tidy-diff.py prints a blank line for each translation unit without a finding.
+        if [ "$tidy_status" -eq 77 ]; then
+            grep -v '^$' "$work/tidy.log" >&2 || true
+            echo "pre-commit: the clang-tidy check is skipped. The CI build job runs it over a pull request." >&2
+        elif [ "$tidy_status" -ne 0 ]; then
+            grep -v '^$' "$work/tidy.log" >&2 || true
+            echo "pre-commit: clang-tidy reports the findings above on staged lines." >&2
+            echo "pre-commit: a clang-diagnostic-error finding can come from generated headers older than" >&2
+            echo "pre-commit: the sources, which \`cmake --build $build_dir\` regenerates." >&2
             status=1
         fi
     fi

@@ -171,12 +171,29 @@ if(CLANG_FORMAT_EXECUTABLE)
          ${CMAKE_SOURCE_DIR}/src/*.cpp ${CMAKE_SOURCE_DIR}/src/*.h
          ${CMAKE_SOURCE_DIR}/tests/*.cpp ${CMAKE_SOURCE_DIR}/tests/*.h
          ${CMAKE_SOURCE_DIR}/tools/*.cpp ${CMAKE_SOURCE_DIR}/tools/*.h)
-    # Rewrites the tree in place, through the same .clang-format the hook and the CI format job
-    # read, so all three agree on what the output is.
-    add_custom_target(clang-format
-                      COMMAND ${CLANG_FORMAT_EXECUTABLE} -i ${MARUPOP_FORMAT_SOURCES}
-                      COMMENT "Formatting ${CMAKE_SOURCE_DIR} through clang-format"
-                      VERBATIM)
+    # The hook and the CI format job require the LLVM major version in .clang-tools-version, and
+    # another major version can format the same file differently.
+    file(STRINGS ${CMAKE_SOURCE_DIR}/.clang-tools-version clang_tools_major REGEX "^[0-9]+$")
+    execute_process(COMMAND ${CLANG_FORMAT_EXECUTABLE} --version
+                    OUTPUT_VARIABLE clang_format_version_output
+                    ERROR_QUIET)
+    string(REGEX MATCH "version ([0-9]+)\\." clang_format_version_match "${clang_format_version_output}")
+    if(CMAKE_MATCH_1 STREQUAL clang_tools_major)
+        # Rewrites the tree in place, through the same .clang-format the hook and the CI format job
+        # read, so all three agree on what the output is.
+        add_custom_target(clang-format
+                          COMMAND ${CLANG_FORMAT_EXECUTABLE} -i ${MARUPOP_FORMAT_SOURCES}
+                          COMMENT "Formatting ${CMAKE_SOURCE_DIR} through clang-format"
+                          VERBATIM)
+    else()
+        set(clang_format_mismatch
+            "${CLANG_FORMAT_EXECUTABLE} has LLVM ${CMAKE_MATCH_1}, and .clang-tools-version pins LLVM ${clang_tools_major}. CLANG_FORMAT_EXECUTABLE names a clang-format of the pinned version.")
+        message(STATUS "clang-format target: ${clang_format_mismatch}")
+        add_custom_target(clang-format
+                          COMMAND ${CMAKE_COMMAND} -E echo "${clang_format_mismatch}"
+                          COMMAND ${CMAKE_COMMAND} -E false
+                          VERBATIM)
+    endif()
 endif()
 
 # core.hooksPath is per-checkout configuration, so a clone runs no hook until something sets it.

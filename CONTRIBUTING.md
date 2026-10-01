@@ -36,8 +36,19 @@ Before submitting a pull request:
 - Explain skipped checks and platform limitations.
 - Include a regression test when the suite can reproduce the bug.
 
-To enable the supplied pre-commit hook, configure with `-DMARUPOP_GIT_HOOKS=ON`. It checks the
-staged C++ formatting and the staged translation template, as the CI format job does.
+To enable the supplied pre-commit hook, configure with `-DMARUPOP_GIT_HOOKS=ON`. The hook runs
+three CI checks on the staged changes:
+
+- clang-format over the staged C++ files
+- `po/extract-messages.sh --check` over the staged translation template
+- `tools/clang-tidy-diff.sh` over the staged lines of `src/`, `tests/` and `tools/`
+
+The clang-tidy check reads `build/compile_commands.json`. `MARUPOP_BUILD_DIR` names another build
+folder, and `MARUPOP_SKIP_CLANG_TIDY=1` skips the check. The hook, the CI checks and the
+`clang-format` target require the LLVM major version in
+[`.clang-tools-version`](.clang-tools-version). `MARUPOP_CLANG_FORMAT` and `MARUPOP_CLANG_TIDY`
+name binaries of that version for the hook, and `CLANG_FORMAT_EXECUTABLE` names one for the
+target.
 
 ## Packaging
 
